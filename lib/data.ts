@@ -316,6 +316,266 @@ export const articles: Article[] = [
     seoTitle: 'Behavioral Economics of Overconfidence in Prediction Markets | PredictaView',
     metaDescription: 'Analysis of the favorite-longshot bias in prediction markets, with data from 4,200 resolved Polymarket contracts showing persistent mispricing patterns.',
   },
+  {
+    id: 'article-9',
+    title: '5 Cross-Platform Arbitrage Strategies for the 2026 World Cup (Polymarket × Kalshi)',
+    slug: '5-cross-platform-arbitrage-strategies-2026-world-cup-polymarket-kalshi',
+    excerpt: 'Five prediction market platforms now list World Cup contracts simultaneously. When the same event trades on multiple venues at different prices, that gap is money sitting on the table. Here are five concrete strategies with real numbers, real fee formulas, and real order book depths.',
+    content: `<p>The 2026 FIFA World Cup has generated massive amounts of money in trading volume on Polymarket alone. Kalshi's outright winner market has crossed $15.4 million with group-stage match markets pulling in six figures per game. Five prediction market platforms now list World Cup contracts simultaneously: Polymarket, Polymarket US, Kalshi, Gemini, and OG Predictions. When the same event trades on multiple venues at different prices, and those prices don't agree, that gap is money sitting on the table.</p>
+<p>This article breaks down five concrete cross-platform arbitrage strategies for the 2026 World Cup using live market data pulled from Polymarket's CLOB API and Kalshi's public pricing on June 11, 2026. Every calculation here uses real numbers, real fee formulas, and real order book depths. Nothing hypothetical.</p>
+<h2>How Cross-Platform Prediction Market Arbitrage Works</h2>
+<p>The mechanics are blunt. Every prediction market contract settles at $1.00 if the outcome occurs, $0.00 if it doesn't. When you buy YES on one platform at a lower price than the corresponding NO on another platform, the combined cost is less than $1.00. One side always wins. You collect $1.00 and keep the difference.</p>
+<p>Say Spain trades at 16.9¢ YES on Polymarket and 83.1¢ NO on the same platform. That's $1.00 combined, so no arb exists within a single venue. But if Kalshi prices Spain YES at 17.6¢ while Polymarket prices Spain YES at 16.9¢, those 0.7 cents represent a real discrepancy that can be traded.</p>
+<p>The cross-platform spread on the World Cup winner market currently averages 2.0% for the top four favorites and widens to 5-8 cents on mid-tier teams. According to DeFi Rate's aggregator data from June 8, 2026, Spain shows a 2.0% spread across venues, France sits at 2.0%, Portugal at 1.1%, and England at 1.2%. The widest gaps appear on teams ranked 7th through 15th in the probability distribution, where lower liquidity on one or both platforms lets prices drift further apart.</p>
+<p>Before jumping into the strategies, two things matter more than the math: fee structures and settlement risk.</p>
+<h2>The Fee Math You Cannot Ignore</h2>
+<p>Kalshi and Polymarket have fundamentally different fee architectures, and every arbitrage calculation that ignores fees is fiction.</p>
+<p><strong>Kalshi's formula</strong> is parabolic. Taker fees follow <code>0.07 × C × P × (1 - P)</code>, where P is the contract price in dollars and C is the number of contracts. Maker fees use the same formula but at 0.0175 instead of 0.07. The fee peaks at 50¢ (where P × (1 - P) = 0.25) and drops toward zero at the extremes. For a $1,000 position on Spain YES at 17.6¢:</p>
+<ul>
+<li>Contracts: 1,000 ÷ 0.176 = 5,682 contracts</li>
+<li>Fee per contract: 0.07 × 0.176 × 0.824 = $0.01015</li>
+<li>Total taker fee: 5,682 × $0.01015 = $57.67</li>
+<li>As percentage of position: 5.77%</li>
+</ul>
+<p>That 5.77% fee on a 17.6¢ contract is steep, but it's the taker rate. If you rest your order and get filled as a maker, the fee drops to 0.0175 × 0.176 × 0.824 = $0.00254 per contract, bringing total maker fees to $14.42 (1.44% of position). The difference between taker and maker on Kalshi can make or break an arb.</p>
+<p><strong>Polymarket</strong> charges a flat percentage by category. Sports markets carry a 0.75% taker fee with zero maker fees. For the same $1,000 position on Spain YES at 17.0¢:</p>
+<ul>
+<li>Taker fee: $1,000 × 0.0075 = $7.50</li>
+<li>As percentage: 0.75%</li>
+</ul>
+<p>That's a 7.7x cost difference between Kalshi taker and Polymarket taker. Any arb strategy involving Kalshi must either (a) place limit orders to get maker pricing, or (b) account for the full taker fee and only trade spreads wide enough to absorb it.</p>
+<p><strong>The combined fee floor</strong>: A taker-taker arb between both platforms on a 17¢ contract costs approximately 5.77% + 0.75% = 6.52% of position value. Your cross-platform spread needs to exceed 6.52 cents on a $1.00 contract to generate profit as a taker. If you can get maker pricing on Kalshi, that floor drops to 1.44% + 0.75% = 2.19%.</p>
+<h2>Strategy 1: Outright Winner Spread Arbitrage</h2>
+<p>This is the most documented and accessible strategy. The World Cup winner market trades on both Polymarket and Kalshi with 48 teams each. Here is the current pricing side by side, pulled from live data:</p>
+<table>
+<thead>
+<tr><th>Team</th><th>Polymarket YES</th><th>Kalshi YES (June 9)</th><th>Spread (cents)</th><th>Direction</th></tr>
+</thead>
+<tbody>
+<tr><td>Spain</td><td>16.9-17.0¢</td><td>17.6-17.7¢</td><td>0.7</td><td>Kalshi higher</td></tr>
+<tr><td>France</td><td>16.0-16.1¢</td><td>15.9-16.0¢</td><td>0.1</td><td>Polymarket higher</td></tr>
+<tr><td>England</td><td>10.8-10.9¢</td><td>10.7-10.8¢</td><td>0.1</td><td>Polymarket higher</td></tr>
+<tr><td>Portugal</td><td>10.8-10.9¢</td><td>11.1-11.2¢</td><td>0.3</td><td>Kalshi higher</td></tr>
+<tr><td>Argentina</td><td>8.9-9.0¢</td><td>8.9-9.0¢</td><td>0.0</td><td>Aligned</td></tr>
+<tr><td>Brazil</td><td>8.6-8.7¢</td><td>8.4¢</td><td>0.3</td><td>Polymarket higher</td></tr>
+<tr><td>Germany</td><td>5.2-5.3¢</td><td>5.5-5.6¢</td><td>0.3</td><td>Kalshi higher</td></tr>
+<tr><td>Netherlands</td><td>4.2-4.3¢</td><td>4.7¢</td><td>0.5</td><td>Kalshi higher</td></tr>
+<tr><td>Norway</td><td>2.3-2.4¢</td><td>2.5¢</td><td>0.2</td><td>Kalshi higher</td></tr>
+</tbody>
+</table>
+The spread on most top-tier teams is 0.1 to 0.7 cents. At taker-taker rates, none of these generate profit. The combined fee floor on a 17¢ contract is approximately 6.5 cents, and the widest spread here is 0.7 cents. That gap is 9.3x too narrow for a pure taker play.
+<p><strong>Where it works</strong>: Maker-maker execution. If you post a limit buy on Polymarket (0% maker fee) and a limit sell/NO buy on Kalshi (0.25% maker fee for the maker tier), your combined fee drops below 0.5%. Spain at 16.9¢ on Polymarket vs. 17.6¢ on Kalshi becomes a 0.7¢ gross spread minus \\~0.08¢ in maker fees, netting approximately 0.62¢ per contract, which is a 3.6% return on the cheaper leg.</p>
+<p><strong>The execution problem</strong>: Maker orders require patience. You're posting limit orders and waiting. During a World Cup with breaking news every few hours (injuries, lineup announcements, group results), posted orders can get run over. You post a bid at 16.9¢ on Polymarket for Spain, a goal goes in during a Spain match, and your bid gets lifted instantly at a stale price while the Kalshi side hasn't filled yet. Now you own Spain YES on Polymarket at 16.9¢ with no offsetting position.</p>
+<p><strong>Practical sizing</strong>: Polymarket's order book shows massive depth on the top teams. Spain has $252,760 in bid depth across 10 price levels, with the top ask at 17.0¢ carrying 628,431 shares. You can push $50,000 through with zero slippage. Kalshi's volume is thinner ($214,400 total volume vs. Polymarket's $2.3 million on Spain alone), so the binding constraint on size is always the Kalshi side.</p>
+<p><strong>Worked example for Spain</strong>:</p>
+<ul>
+<li>Buy 10,000 shares Spain YES on Polymarket at 17.0¢ = $1,700</li>
+<li>Buy 10,000 shares Spain NO on Kalshi at 82.4¢ = $8,240 (equivalent to selling Spain YES)</li>
+<li>Total outlay: $9,940</li>
+<li>If Spain wins: collect $10,000 from Polymarket YES, lose $8,240 on Kalshi NO → net: +$60</li>
+<li>If Spain loses: lose $1,700 on Polymarket YES, collect $10,000 from Kalshi NO → net: +$60</li>
+<li>Minus Polymarket taker fee: $1,700 × 0.0075 = $12.75</li>
+<li>Minus Kalshi taker fee on NO at 82.4¢: 0.07 × 10,000 × 0.824 × 0.176 = $101.56</li>
+<li>Net profit after fees: $60 - $12.75 - $101.56 = -$54.31</li>
+</ul>
+<p>Negative. The Kalshi taker fee on a high-priced NO contract (82.4¢) is where this strategy dies for small spreads. The fee formula peaks at 50¢ and is still punishing at 82.4¢. Flipping the direction (buy YES on Kalshi, buy NO on Polymarket) changes the fee distribution but doesn't solve the core problem: 0.7¢ is not enough spread for taker execution.</p>
+<p><strong>When this strategy activates</strong>: During high-volatility moments (a major favorite getting eliminated, a shocking group-stage result), spreads between platforms can blow out to 3-5 cents for 10-30 minutes. A pre-positioned bot monitoring both platforms can catch these windows. The SI.com comparison from May 28 documented $90+ payout differences on a $100 wager for Portugal, Argentina, and Netherlands, meaning the spread had widened to roughly 2-3 cents at that snapshot. Those are the moments this strategy pays.</p>
+<h2>Strategy 2: Group Stage Match Market Arbitrage</h2>
+<p>Group-stage match markets are three-way (Win/Draw/Lose) and trade on both platforms. This is where the spreads get interesting because match markets have shorter duration, lower volume, and more emotional pricing.</p>
+<p>Current data for upcoming group-stage matches:</p>
+<p><strong>Mexico vs. South Africa (June 11)</strong></p>
+<table>
+<thead>
+<tr><th>Outcome</th><th>Polymarket</th><th>Kalshi</th><th>Spread</th></tr>
+</thead>
+<tbody>
+<tr><td>Mexico Win</td><td>\\~69%</td><td>69% ($0.69)</td><td>\\~0%</td></tr>
+<tr><td>South Africa Win</td><td>\\~12%</td><td>12% ($0.12)</td><td>\\~0%</td></tr>
+<tr><td>Draw</td><td>\\~21%</td><td>21% ($0.21)</td><td>\\~0%</td></tr>
+<tr><td>Volume</td><td>$4.42M</td><td>$143,370</td><td>30:1 ratio</td></tr>
+</tbody>
+</table>
+<strong>USA vs. Paraguay (June 13)</strong>
+<table>
+<thead>
+<tr><th>Outcome</th><th>Polymarket</th><th>Kalshi</th><th>Spread</th></tr>
+</thead>
+<tbody>
+<tr><td>USA Win</td><td>\\~50%</td><td>50% ($0.50)</td><td>\\~0%</td></tr>
+<tr><td>Paraguay Win</td><td>\\~25%</td><td>25% ($0.24)</td><td>\\~1%</td></tr>
+<tr><td>Draw</td><td>\\~28%</td><td>28% ($0.28)</td><td>\\~0%</td></tr>
+<tr><td>Volume</td><td>$758K</td><td>$116,953</td><td>6.5:1 ratio</td></tr>
+</tbody>
+</table>
+<strong>Brazil vs. Morocco (June 13)</strong>
+<table>
+<thead>
+<tr><th>Outcome</th><th>Polymarket</th><th>Kalshi</th><th>Spread</th></tr>
+</thead>
+<tbody>
+<tr><td>Brazil Win</td><td>\\~62%</td><td>62% ($0.62)</td><td>\\~0%</td></tr>
+<tr><td>Morocco Win</td><td>\\~17%</td><td>17% ($0.17)</td><td>\\~0%</td></tr>
+<tr><td>Draw</td><td>\\~22%</td><td>22% ($0.22)</td><td>\\~0%</td></tr>
+<tr><td>Volume</td><td>$451K</td><td>$81,040</td><td>5.6:1 ratio</td></tr>
+</tbody>
+</table>
+The pre-match pricing is currently aligned. The volume differential is the signal here: Polymarket handles 6 to 30 times more volume per match. When a match kicks off and in-play pricing begins adjusting, the platform with less depth (Kalshi) will lag.
+<p><strong>The three-way market advantage</strong>: In a binary (YES/NO) market, the two sides mechanically sum to $1.00 on the same platform. In a three-way market (Win/Draw/Lose), each outcome is a separate contract. The three prices should sum to $1.00, but they rarely do because the book-making margin pushes the total above $1.00. If Kalshi's three-way sum is 1.02 and Polymarket's is 1.04, there may be specific combinations where buying one outcome on Kalshi and selling another on Polymarket yields a locked profit.</p>
+<p><strong>Worked example using the three-way structure:</strong></p>
+<p>Suppose during the USA vs. Paraguay match, Paraguay scores and the live odds shift. Polymarket updates within seconds: USA Win drops from 50¢ to 35¢, Paraguay Win jumps to 38¢, Draw moves to 30¢. Kalshi takes 30-60 seconds to adjust, still showing USA Win at 45¢, Paraguay Win at 30¢, Draw at 28¢. In that window:</p>
+<ul>
+<li>Buy Paraguay Win on Polymarket at 38¢ (already moved)</li>
+<li>Buy USA Win on Kalshi at 45¢ (hasn't moved yet)</li>
+<li>Combined cost on these two legs: 83¢</li>
+<li>Draw outcome is uncovered, which is a real risk</li>
+</ul>
+<p>This is not a pure arbitrage in the textbook sense because the Draw outcome creates exposure. But if you add a third leg (Draw on whichever platform offers a lower price), you can potentially cover all three outcomes for under $1.00. The math only works during the lag window, and only if the three-platform combined total dips below $1.00 after fees.</p>
+<p><strong>Fee calculation for match markets:</strong> On Kalshi, a contract at 45¢ generates the highest possible fee: 0.07 × 0.45 × 0.55 = $0.01733 per contract. On Polymarket, the 0.75% flat rate on a 38¢ contract costs $0.00285 per contract. Total fee per pair: $0.02018, or about 2.4% of the combined 83¢ outlay. The spread between platforms needs to be larger than 2.4 cents for this to work.</p>
+<h2>Strategy 3: Advancement Market Layering</h2>
+<p>Both platforms offer group advancement markets (Will Team X qualify for the knockout round?). These are binary YES/NO contracts, but they're derived from group-stage results, which means their pricing is structurally linked to match markets and outright winner odds.</p>
+<p>Here's where pricing discrepancies compound. From Kalshi's CBS Sports data (June 9):</p>
+<table>
+<thead>
+<tr><th>Team</th><th>Win Group (Kalshi)</th><th>Advance (Kalshi)</th><th>Outright Winner (Kalshi)</th><th>Outright Winner (Polymarket)</th></tr>
+</thead>
+<tbody>
+<tr><td>Brazil</td><td>$0.71</td><td>$0.98</td><td>$0.084</td><td>$0.087</td></tr>
+<tr><td>USA</td><td>$0.40</td><td>$0.84</td><td>$0.016</td><td>$0.013</td></tr>
+<tr><td>Mexico</td><td>$0.57</td><td>$0.92</td><td>$0.020</td><td>$0.014</td></tr>
+<tr><td>Japan</td><td>$0.27</td><td>$0.83</td><td>$0.017</td><td>$0.018</td></tr>
+<tr><td>Belgium</td><td>$0.68</td><td>$0.95</td><td>$0.023</td><td>$0.021</td></tr>
+<tr><td>Spain</td><td>$0.79</td><td>$0.99</td><td>$0.169</td><td>$0.170</td></tr>
+</tbody>
+</table>
+The arbitrage here is structural, not just about price differences. These markets are mathematically related: a team's outright winner probability is bounded by its advancement probability. If Spain has a 99% chance of advancing (Kalshi) but only a 17% chance of winning the whole tournament, the implied probability of winning conditional on advancing is 17% ÷ 99% = 17.2%. That number should be consistent across platforms.
+<p><strong>The layered play:</strong></p>
+<p>Take Mexico. Kalshi prices Mexico's advancement at $0.92 (92%). Kalshi prices Mexico's outright winner at $0.020 (2.0%). Polymarket prices Mexico's outright winner at $0.014 (1.4%). The conditional probability of Mexico winning given advancement differs between platforms:</p>
+<ul>
+<li>Kalshi implied: 2.0% ÷ 92% = 2.17%</li>
+<li>Polymarket implied (using Kalshi advancement since Polymarket doesn't have a comparable advancement market at the same depth): 1.4% ÷ 92% = 1.52%</li>
+</ul>
+<p>If you believe the conditional probability should be the same regardless of platform, you can:</p>
+<ol>
+<li>Buy Mexico outright winner YES on Polymarket at 1.4¢</li>
+<li>Sell Mexico outright winner YES on Kalshi at 2.0¢ (or buy the NO)</li>
+</ol>
+<p>The spread is 0.6 cents. On a 2¢ contract, the Kalshi taker fee is 0.07 × 0.02 × 0.98 = $0.001372 per contract (0.14¢). Polymarket taker fee on a 1.4¢ contract: $0.0014 × 0.0075 = negligible at $0.0000105. Combined fees are approximately 0.14¢, well below the 0.6¢ spread. This is a positive-expectation trade after fees.</p>
+<p><strong>Scaling problem:</strong> The volume on Mexico's outright winner contract is thin on Kalshi. You're competing for $0.020 bids that might represent only a few hundred dollars of depth. Getting $5,000+ through both sides simultaneously requires patience and slicing orders across multiple price levels.</p>
+<p><strong>Advancement market timing:</strong> Group advancement probabilities move violently during and after group-stage matches. If Mexico loses its first match, advancement drops from 92% to perhaps 70%. The outright winner price should drop proportionally, but it often doesn't react at the same rate on both platforms. The hour after a surprise group-stage result is when advancement-market arbitrage is most fertile.</p>
+<h2>Strategy 4: Latency Arbitrage During Live Matches</h2>
+<p>This is the highest-return, highest-barrier strategy. It requires automation, pre-funded accounts on both platforms, and real-time data feeds.</p>
+<p>The core mechanic: when a goal is scored, a red card is given, or any significant match event occurs, prediction market prices update at different speeds. Polymarket's CLOB (Central Limit Order Book) runs on the Polygon blockchain with a WebSocket feed at <code>wss://ws-subscriptions-clob.polymarket.com/ws/market</code>. Price updates propagate within 1-3 seconds of a major event. Kalshi updates through its own order book, typically within 5-15 seconds for programmatic traders and 30-60 seconds for the broader market.</p>
+<p>That 5-60 second window is the entire opportunity.</p>
+<p><strong>Real-time data infrastructure needed:</strong></p>
+<p>On Polymarket, subscribe to the WebSocket with <code>{"assets\\_ids": \\[<token\\_ids>\\], "type": "market"}</code>. Note the <code>assets\\_ids</code> spelling (not <code>asset\\_ids</code>). The first message for each token delivers a full order book snapshot, followed by <code>price\\_change</code> differential updates.</p>
+<p>On Kalshi, the public API at <code>api.elections.kalshi.com</code> provides market data, but execution requires authentication and a funded account. Kalshi's API documentation at <code>trading-api.kalshi.com</code> describes the order placement endpoints.</p>
+<p><strong>Order book reality check using live Polymarket data:</strong></p>
+<p>Spain's order book on Polymarket (pulled June 11, 2026): - Top bid: 16.9¢ with 239,644 shares ($40,501 notional) - Top ask: 17.0¢ with 628,431 shares ($106,833 notional) - 10-level bid depth: $252,760 - 10-level ask depth: $125,362</p>
+<p>At $50,000 market buy, you fill at 17.0¢ flat with zero slippage. The book is deep enough for institutional-sized orders on major teams.</p>
+<p>But move to a mid-tier team like Netherlands, and the picture changes: - Top bid: 4.3¢ with only 7,254 shares ($312 notional) - 10-level ask depth: $79,753 - $1,000 market buy fills at 4.48¢ (4.3% slippage from best ask at 4.4¢) - $5,000 market buy fills at 4.50¢ (4.6% slippage) - $50,000 market buy fills at 4.78¢ (11.1% slippage)</p>
+<p>Portugal is worse. Only $9,037 in 10-level ask depth. A $10,000 market buy fills at 11.18¢ versus a 10.9¢ best ask (2.6% slippage), and $50,000 fills at 19.43¢ (78% slippage). The book simply doesn't have the depth.</p>
+<p><strong>The latency play execution flow:</strong></p>
+<ol>
+<li>Pre-deploy $5,000-$20,000 on each platform, split across USDC (Polymarket) and USD (Kalshi)</li>
+<li>Run a bot that monitors both platforms' order books in real time</li>
+<li>When a match event occurs (via a sports data API or the prediction market price movement itself), compare prices across platforms</li>
+<li>If Platform A's price has moved but Platform B's hasn't, buy the "new correct price" side on Platform B before it adjusts</li>
+<li>Immediately list the offsetting position on Platform A or hold until Platform B's price catches up and sell there</li>
+</ol>
+<p><strong>Realistic return estimate:</strong> If you catch one 3-cent spread per match day across 4 matches, trading $2,000 per opportunity, gross profit is $2,000 × 0.03 × 4 = $240 per day. Subtract combined platform fees of approximately 3% ($72), infrastructure costs, and the occasional mis-execution where both sides move against you (budget 20% loss rate). Net daily expectation in the group stage: roughly $100-$130 on $10,000 deployed capital. Annualized that's astronomical, but the window is 25 days of group-stage matches. Realistic total for the tournament: $2,500-$3,500 on $10,000 capital.</p>
+<p><strong>Risk:</strong> Execution failure. You buy on one platform and the other platform's order gets rejected, times out, or fills at a moved price. Now you're directionally exposed on a single match outcome. This happens. Budget for it.</p>
+<h2>Strategy 5: Overround Arbitrage via Synthetic Cross-Platform NO Positions</h2>
+<p>This is the most technically sophisticated strategy and the one with the most persistent edge.</p>
+<p>Every multi-outcome market (like "Who wins the World Cup?" with 48 teams) has an overround: the sum of all implied probabilities exceeds 100%. The overround represents the market-maker's margin. When different platforms have different overrounds, a cross-platform synthetic position can exploit the gap.</p>
+<p><strong>Current overround data (June 11, 2026):</strong></p>
+<p>Polymarket's overround on the 48-team World Cup winner market: 103.70%. The sum of all YES prices across 48 teams is $1.037. For every dollar the market implies, $0.037 is excess.</p>
+<p>The live intra-platform arbitrage scan on Polymarket shows: - Sum of all best asks (buying YES on every team): $1.061 - Sum of all best bids (selling YES on every team): $1.013</p>
+<p>That $1.013 sum of best bids means selling YES on every team at the best bid prices would collect $1.013 for a guaranteed $1.00 payout (since exactly one team wins). That's a 1.3% gross profit on a risk-free position within a single platform. But there's a catch: 12 of the 48 teams have zero bids. Jordan, New Zealand, Cape Verde, Curaçao, and others are so improbable that nobody is bidding on their YES shares. You can't actually execute the arb because you can't sell YES on teams with empty bid books.</p>
+<p><strong>The cross-platform synthetic approach:</strong></p>
+<p>Instead of trying to sell all 48 teams' YES on one platform (which requires all 48 to have bids), you construct a partial basket:</p>
+<ol>
+<li>On Polymarket, sell YES (buy NO) on the top 10 teams. Their best bids sum to: 0.169 + 0.160 + 0.108 + 0.108 + 0.089 + 0.086 + 0.052 + 0.042 + 0.023 + 0.020 = 0.857</li>
+<li>On Kalshi, buy YES on the same top 10 teams. Their prices sum to: 0.176 + 0.163 + 0.108 + 0.111 + 0.090 + 0.084 + 0.058 + 0.047 + 0.025 + 0.023 = 0.885</li>
+</ol>
+<p>The Kalshi basket costs 2.8 cents more per unit than the Polymarket basket. If you buy the whole Kalshi basket and sell the whole Polymarket basket, you're paying the Kalshi overround premium (higher prices on YES) and collecting the Polymarket bid prices. The net position is long on the top-10 teams via Kalshi and short via Polymarket.</p>
+<p><strong>Where the profit hides:</strong> The profit doesn't come from the basket itself but from the overround differential. If Kalshi's overround on these 10 teams is 88.5% and Polymarket's is 85.7%, the 2.8% gap means the "remaining 48 minus 10 = 38 teams" are priced differently across platforms. Kalshi allocates less probability mass to longshots, Polymarket allocates more. A dollar-neutral basket on the top 10 teams (long Kalshi, short Polymarket) effectively bets that the longshot tail is overpriced on Polymarket relative to Kalshi.</p>
+<p>This is not risk-free. If a massive longshot wins (New Zealand takes the Cup), you lose on both legs because neither covers that outcome. But the conditional probability of a top-10 team winning is historically 85-95%, so the risk is bounded.</p>
+<p><strong>Fee impact on the basket:</strong> For a $1,000 position per team across 10 teams ($10,000 total per platform, $20,000 gross):</p>
+<p>Polymarket side (selling YES / buying NO on 10 teams): - Average price: 8.57¢ - Total taker fee: $10,000 × 0.0075 = $75</p>
+<p>Kalshi side (buying YES on 10 teams): - Average price: 8.85¢ - Weighted fee using the formula (varies by price): approximately $107 total across 10 legs</p>
+<p>Combined fees: $182, or 0.91% of total capital deployed. The 2.8 cents of gross spread across $20,000 deployed generates $280 gross. Net after fees: $98, or 0.49% return on a position that resolves in roughly 30 days. Annualized: \\~6%. Not exciting on its own, but it's as close to risk-free as prediction market trading gets, and it scales.</p>
+<h2>Practical Execution Checklist</h2>
+<p><strong>Account setup:</strong> You need funded accounts on both Polymarket and Kalshi. Polymarket requires a crypto wallet (MetaMask, Coinbase Wallet, or similar) with USDC on the Polygon network. Kalshi accepts USD via ACH bank transfer (free) or debit card (2% fee). For Kenya-based traders, Polymarket is accessible globally since it runs on-chain; Kalshi is US-only. You would need a US-based intermediary or VPN setup for Kalshi, which raises regulatory and terms-of-service questions.</p>
+<p><strong>Capital allocation:</strong> Split 60/40 between platforms, with the larger share on the platform where you expect to be the taker more often. For strategies 1-3, that means more capital on Polymarket (lower taker fees). For strategy 4, equal allocation since you don't know which direction the lag will go.</p>
+<p><strong>Tools:</strong> - DeFi Rate's World Cup odds aggregator (<code>defirate.com/prediction-markets/world-cup-odds/</code>) shows side-by-side pricing across Kalshi, Polymarket, Polymarket US, Gemini, and OG in real time - MarketMath.io's arbitrage calculator (<code>marketmath.io/tools/arbitrage-calculator</code>) handles the fee math for any two platforms - Polymarket's CLOB API (<code>clob.polymarket.com</code>) for real-time order books - Kalshi's trading API for programmatic order placement</p>
+<p><strong>Monitoring cadence:</strong> During the group stage (June 11-27), check cross-platform spreads every 30 minutes and immediately before/after each match. The knockout rounds (June 28 onward) will see fewer games per day but higher volume and larger price swings per event.</p>
+<h2>The Risk Table Nobody Wants to Read</h2>
+<table>
+<thead>
+<tr><th>Risk</th><th>Impact</th><th>Mitigation</th></tr>
+</thead>
+<tbody>
+<tr><td>Settlement delay mismatch</td><td>Kalshi settles within 3 hours; Polymarket settles on-chain within minutes. Capital locked on Kalshi between matches.</td><td>Budget for the delay. Don't count on re-deploying Kalshi capital intra-day.</td></tr>
+<tr><td>Counterparty risk</td><td>Kalshi is CFTC-regulated (DCM). Polymarket is an on-chain protocol on Polygon.</td><td>Accept that these are different risk profiles. Size positions accordingly.</td></tr>
+<tr><td>Execution failure on one leg</td><td>You fill on Polymarket but Kalshi rejects or the price moved. You're now directionally exposed.</td><td>Use limit orders on both sides. Accept that some arb attempts will only half-fill.</td></tr>
+<tr><td>Fee changes mid-tournament</td><td>Either platform can adjust fees. Polymarket's taker fee is "at the sole discretion of Polymarket."</td><td>Build 50bps of fee buffer into every calculation.</td></tr>
+<tr><td>Platform downtime during a match</td><td>Heavy load during popular matches can slow UI and API.</td><td>Pre-position orders before kickoff rather than during live play.</td></tr>
+<tr><td>Regulatory action</td><td>Polymarket's US re-entry is limited (invite-only beta with 1M+ waitlist). Kalshi is US-only.</td><td>Don't build a strategy that requires US residency you don't have.</td></tr>
+<tr><td>Gas fees on Polygon</td><td>On-chain transactions cost gas in MATIC. Usually <$0.01 but can spike during network congestion.</td><td>Keep MATIC in your wallet. Budget $5-10 for a full tournament's worth of transactions.</td></tr>
+</tbody>
+</table>
+<h2>What the Volume Numbers Actually Tell You</h2>
+<p>Polymarket has traded $2 billion on the World Cup winner market. Kalshi's equivalent market has $15.4 million. That's a 130:1 volume ratio. On individual match markets, the ratio narrows to 5:1 through 30:1 depending on the matchup.</p>
+<p>This asymmetry is the entire reason cross-platform arbs exist. If both platforms had identical volume and identical user bases, prices would converge instantly. The volume gap means different populations of traders set prices on each platform, with different information, different biases, and different reaction speeds.</p>
+<p>Crypto-native traders dominate Polymarket. They update positions quickly, run bots, and react to on-chain whale movements. Kalshi's user base skews toward US sports bettors converting from DraftKings and FanDuel, who trade more on narrative and less on data. When a credible injury report surfaces on X at 2 AM Eastern, Polymarket reprices within minutes. Kalshi might not move until the US market opens.</p>
+<p>That behavioral divergence is the permanent alpha in cross-platform prediction market trading. Fee structures will change. Spreads will compress as more arb bots come online. But as long as the two platforms serve different trader populations with different information processing speeds, price gaps will keep appearing.</p>
+<h2>Group-by-Group Arb Opportunities</h2>
+<p>Here's the group-by-group breakdown of where the biggest cross-platform spreads are likely to appear during the group stage, based on the current pricing differential patterns and liquidity profiles.</p>
+<p><strong>Groups with highest arb potential</strong> (wide spreads, sufficient liquidity on both platforms):</p>
+<ul>
+<li><strong>Group C (Brazil, Morocco, Scotland, Haiti)</strong>: Brazil vs. Morocco on June 13 has $451K Polymarket volume vs. $81K Kalshi. Morocco is the swing team. If Morocco takes the lead or equalizes, their advancement probability should spike on both platforms, but Kalshi's thinner book will lag. Morocco's outright winner odds show a 0.4¢ gap between platforms already.</li>
+</ul>
+<ul>
+<li><strong>Group D (USA, Turkey, Paraguay, Australia)</strong>: USA vs. Paraguay draws the largest American audience, which means heavy Kalshi volume relative to other groups. The $117K Kalshi volume is closer to Polymarket's $758K, narrowing the ratio to 6.5:1. With more balanced flow, prices should converge faster, but the raw Kalshi interest means deeper books for execution.</li>
+</ul>
+<ul>
+<li><strong>Group H (Spain, Uruguay, Saudi Arabia, Cape Verde)</strong>: Spain is priced at 99% to advance (Kalshi), so there's no edge on Spain's advancement. But Uruguay's advancement market ($0.90 Kalshi) and outright winner ($0.010 both platforms) could diverge if Saudi Arabia delivers a surprise (the 2022 template). Saudi Arabia beating Argentina in 2022 caused a 15-20 cent repricing across every market within 4 minutes.</li>
+</ul>
+<p><strong>Groups with lowest arb potential</strong> (tight spreads, either too liquid or too illiquid):</p>
+<ul>
+<li><strong>Group A (Mexico, Korea Republic, Czechia, South Africa)</strong>: Balanced group with no extreme favorite or longshot, pricing is already tight.</li>
+<li><strong>Group G (Belgium, Egypt, Iran, New Zealand)</strong>: Belgium dominates at 68% to win the group, and the remaining teams have too little liquidity on both platforms to execute meaningful size.</li>
+</ul>
+<h2>Building a Tournament-Long Arb Portfolio</h2>
+<p>Rather than chasing individual trades, the systematic approach builds a portfolio across all five strategies:</p>
+<ol>
+<li><strong>Allocate 40% to Strategy 1</strong> (outright winner spreads) with maker-only orders on both platforms. This is the lowest-effort, lowest-return bucket. Set limit orders based on DeFi Rate's aggregator and adjust daily.</li>
+</ol>
+<ol>
+<li><strong>Allocate 20% to Strategy 3</strong> (advancement market layering). Focus on the 8-10 teams where Polymarket and Kalshi advancement odds differ by more than 2 percentage points. Rebalance after each match day.</li>
+</ol>
+<ol>
+<li><strong>Allocate 20% to Strategy 4</strong> (latency arb). This requires a bot or at minimum a dual-screen setup with both platforms open during every match. Capital here needs to be liquid and ready to deploy in seconds.</li>
+</ol>
+<ol>
+<li><strong>Allocate 10% to Strategy 5</strong> (overround arb via synthetic basket). Set up the basket on day one and hold through the tournament. This is the "set and forget" allocation.</li>
+</ol>
+<ol>
+<li><strong>Keep 10% in reserve</strong> for Strategy 2 (match market arb) as opportunities present themselves during specific high-volatility matches.</li>
+</ol>
+<p><strong>Expected tournament-long return on $20,000 deployed</strong>: Conservative estimate of 5-12% net of all fees, or $1,000-$2,400 over the tournament's 30-day duration. This assumes maker pricing on 70% of trades, no catastrophic execution failures, and daily monitoring.</p>
+<p>The World Cup runs 25 group-stage match days and approximately 15 knockout-round days. Each match day produces 2-4 repricing events. With 5 platforms listing the same markets and a $2 billion liquidity pool on the primary venue, the number of exploitable moments across 40 match days will be in the hundreds. Not every one will clear the fee hurdle. But the ones that do are real money.</p>`,
+    featuredImage: '/images/wc-arbitrage-cover.png',
+    authorId: 'author-1',
+    categorySlug: 'strategy',
+    tags: ['arbitrage', 'world-cup', '2026', 'polymarket', 'kalshi', 'cross-platform', 'FIFA', 'sports-betting', 'prediction-markets'],
+    publishDate: '2026-06-11',
+    readTime: 24,
+    featured: true,
+    status: 'published',
+    seoTitle: '5 Cross-Platform Arbitrage Strategies for the 2026 World Cup (Polymarket × Kalshi) | PredictaView',
+    metaDescription: 'Five concrete cross-platform arbitrage strategies for the 2026 FIFA World Cup using live Polymarket CLOB API and Kalshi pricing data. Real fee calculations, order book depths, and expected returns.',
+  },
 ];
 
 // Helper functions
