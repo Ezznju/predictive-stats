@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -71,6 +72,8 @@ function Divider() {
 }
 
 export function RichEditor({ content = '', onChange, placeholder = 'Start writing your article...' }: RichEditorProps) {
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -111,11 +114,32 @@ export function RichEditor({ content = '', onChange, placeholder = 'Start writin
     }
   };
 
-  const addImage = () => {
+  const addImageUrl = () => {
     const url = window.prompt('Enter image URL:');
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
     }
+  };
+
+  const uploadImage = async (file: File) => {
+    if (!file.type.startsWith('image/')) return;
+    setUploadingImage(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      editor.chain().focus().setImage({ src: data.url }).run();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Image upload failed');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const addImageFromDevice = () => {
+    imageInputRef.current?.click();
   };
 
   const addTable = () => {
@@ -182,9 +206,27 @@ export function RichEditor({ content = '', onChange, placeholder = 'Start writin
         <ToolbarButton onClick={addLink} active={editor.isActive('link')} title="Insert link">
           <Link2 className="w-4 h-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={addImage} title="Insert image">
-          <ImageIcon className="w-4 h-4" />
+        <ToolbarButton onClick={addImageFromDevice} title="Upload image from device">
+          {uploadingImage ? (
+            <span className="block w-4 h-4 border-2 border-ink border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <ImageIcon className="w-4 h-4" />
+          )}
         </ToolbarButton>
+        <ToolbarButton onClick={addImageUrl} title="Insert image from URL">
+          <Link2 className="w-4 h-4 rotate-45" />
+        </ToolbarButton>
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) uploadImage(f);
+            e.target.value = '';
+          }}
+        />
         <ToolbarButton onClick={addTable} title="Insert table">
           <TableIcon className="w-4 h-4" />
         </ToolbarButton>

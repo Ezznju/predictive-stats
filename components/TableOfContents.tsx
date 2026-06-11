@@ -58,16 +58,16 @@ export function TableOfContents() {
   if (items.length < 3) return null;
 
   return (
-    <nav className="my-8 p-5 bg-white rounded-2xl border border-white/20 shadow-sm">
+    <nav className="my-8 p-5 bg-[#C90184] rounded-2xl border-2 border-black shadow-pop">
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 w-full text-left"
       >
-        <List className="w-4 h-4 text-black" />
-        <span className="font-display font-semibold text-sm text-ink">
+        <List className="w-4 h-4 text-white" />
+        <span className="font-display font-semibold text-sm text-white">
           Table of Contents
         </span>
-        <span className="ml-auto text-xs text-ink-muted">{open ? '▲' : '▼'}</span>
+        <span className="ml-auto text-xs text-white/70">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
         <ol className="mt-3 space-y-1 list-none pl-0">
@@ -83,8 +83,8 @@ export function TableOfContents() {
                   item.level === 3 ? 'pl-4' : 'pl-0'
                 } ${
                   activeId === item.id
-                    ? 'text-black font-medium'
-                    : 'text-ink-muted hover:text-ink'
+                    ? 'text-[#D9F24B] font-semibold'
+                    : 'text-white/85 hover:text-white'
                 }`}
               >
                 {item.text}
