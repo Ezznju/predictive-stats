@@ -31,29 +31,29 @@ export default function AuthorPage({ params }: Props) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-xs text-slate-500 mb-6">
-        <Link href="/" className="hover:text-white transition-colors">Home</Link>
+      <nav className="flex items-center gap-2 text-xs text-ink-muted mb-6">
+        <Link href="/" className="hover:text-ink transition-colors">Home</Link>
         <ChevronRight className="w-3 h-3" />
-        <span className="text-slate-300">{author.name}</span>
+        <span className="text-ink-secondary">{author.name}</span>
       </nav>
 
       {/* Author header */}
-      <div className="flex flex-col md:flex-row items-start gap-6 mb-10 p-6 bg-surface-raised rounded-xl border border-surface-border">
-        <div className="w-24 h-24 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-brand-red/30">
+      <div className="flex flex-col md:flex-row items-start gap-6 mb-10 p-6 bg-surface-raised rounded-2xl border border-surface-border shadow-sm">
+        <div className="w-24 h-24 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-brand-amber/30">
           <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
         </div>
         <div>
-          <h1 className="font-display font-bold text-3xl text-white">{author.name}</h1>
-          <p className="text-brand-yellow text-sm mt-1">{author.title}</p>
-          <p className="text-slate-400 mt-3 leading-relaxed max-w-2xl">{author.bio}</p>
+          <h1 className="font-display font-bold text-3xl text-ink">{author.name}</h1>
+          <p className="text-brand-amber text-sm mt-1">{author.title}</p>
+          <p className="text-ink-secondary mt-3 leading-relaxed max-w-2xl">{author.bio}</p>
           <div className="flex items-center gap-3 mt-4">
             {author.twitter && (
-              <a href={`https://twitter.com/${author.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-surface-overlay rounded-lg text-slate-400 hover:text-brand-cyan transition-colors">
+              <a href={`https://twitter.com/${author.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-surface-overlay rounded-lg text-ink-secondary hover:text-brand-orange transition-colors">
                 <Twitter className="w-4 h-4" />
               </a>
             )}
             {author.linkedin && (
-              <a href={`https://linkedin.com/in/${author.linkedin}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-surface-overlay rounded-lg text-slate-400 hover:text-brand-cyan transition-colors">
+              <a href={`https://linkedin.com/in/${author.linkedin}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-surface-overlay rounded-lg text-ink-secondary hover:text-brand-orange transition-colors">
                 <Linkedin className="w-4 h-4" />
               </a>
             )}
@@ -63,9 +63,9 @@ export default function AuthorPage({ params }: Props) {
 
       {/* Articles */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-1 h-6 bg-brand-red rounded-full" />
-        <h2 className="font-display font-bold text-xl text-white">Articles by {author.name}</h2>
-        <span className="text-sm text-slate-500">({authorArticles.length})</span>
+        <div className="w-1 h-6 bg-brand-orange rounded-full" />
+        <h2 className="font-display font-bold text-xl text-ink">Articles by {author.name}</h2>
+        <span className="text-sm text-ink-muted">({authorArticles.length})</span>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {authorArticles.map((article) => (

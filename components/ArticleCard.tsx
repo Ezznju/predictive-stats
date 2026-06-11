@@ -17,7 +17,7 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
   if (variant === 'featured') {
     return (
       <Link href={`/articles/${article.slug}`} className="group block">
-        <div className="relative overflow-hidden rounded-2xl aspect-[16/9] mb-4">
+        <div className="relative overflow-hidden rounded-2xl aspect-[16/9] mb-4 shadow-md">
           <Image
             src={article.featuredImage}
             alt={article.title}
@@ -26,12 +26,12 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
             sizes="(max-width: 768px) 100vw, 66vw"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6">
             {category && (
               <span
                 className="category-badge mb-3"
-                style={{ backgroundColor: category.color, color: '#000' }}
+                style={{ backgroundColor: category.color, color: '#fff' }}
               >
                 {category.name}
               </span>
@@ -39,8 +39,8 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
             <h2 className="font-display font-bold text-2xl md:text-3xl text-white leading-tight group-hover:text-brand-yellow transition-colors">
               {article.title}
             </h2>
-            <p className="text-slate-300 text-sm mt-2 line-clamp-2">{article.excerpt}</p>
-            <div className="flex items-center gap-3 mt-3 text-xs text-slate-400">
+            <p className="text-white/80 text-sm mt-2 line-clamp-2">{article.excerpt}</p>
+            <div className="flex items-center gap-3 mt-3 text-xs text-white/60">
               {author && <span>{author.name}</span>}
               <span>·</span>
               <span>{formatDate(article.publishDate)}</span>
@@ -56,7 +56,7 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
   if (variant === 'horizontal') {
     return (
       <Link href={`/articles/${article.slug}`} className="group flex gap-4 items-start">
-        <div className="relative w-24 h-24 md:w-28 md:h-20 rounded-lg overflow-hidden flex-shrink-0">
+        <div className="relative w-24 h-24 md:w-28 md:h-20 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
           <Image
             src={article.featuredImage}
             alt={article.title}
@@ -71,10 +71,10 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
               {category.name}
             </span>
           )}
-          <h3 className="font-display font-semibold text-sm text-white leading-snug group-hover:text-brand-red transition-colors line-clamp-2 mt-0.5">
+          <h3 className="font-display font-semibold text-sm text-ink leading-snug group-hover:text-brand-orange transition-colors line-clamp-2 mt-0.5">
             {article.title}
           </h3>
-          <span className="text-[11px] text-slate-500 mt-1 block">{article.readTime} min read</span>
+          <span className="text-[11px] text-ink-muted mt-1 block">{article.readTime} min read</span>
         </div>
       </Link>
     );
@@ -83,10 +83,10 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
   if (variant === 'compact') {
     return (
       <Link href={`/articles/${article.slug}`} className="group block">
-        <h3 className="font-display font-semibold text-sm text-white leading-snug group-hover:text-brand-red transition-colors line-clamp-2">
+        <h3 className="font-display font-semibold text-sm text-ink leading-snug group-hover:text-brand-orange transition-colors line-clamp-2">
           {article.title}
         </h3>
-        <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-500">
+        <div className="flex items-center gap-2 mt-1 text-[11px] text-ink-muted">
           {category && <span style={{ color: category.color }}>{category.name}</span>}
           <span>·</span>
           <span>{article.readTime} min</span>
@@ -98,7 +98,7 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
   // Default card
   return (
     <Link href={`/articles/${article.slug}`} className="group block card-hover">
-      <div className="bg-surface-raised rounded-xl overflow-hidden border border-surface-border hover:border-brand-red/30 transition-all">
+      <div className="bg-surface-raised rounded-2xl overflow-hidden border border-surface-border hover:border-brand-amber/40 transition-all shadow-sm hover:shadow-md">
         <div className="relative aspect-[16/9] overflow-hidden">
           <Image
             src={article.featuredImage}
@@ -110,24 +110,24 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
           {category && (
             <span
               className="absolute top-3 left-3 category-badge"
-              style={{ backgroundColor: category.color, color: '#000' }}
+              style={{ backgroundColor: category.color, color: '#fff' }}
             >
               {category.name}
             </span>
           )}
         </div>
         <div className="p-5">
-          <h3 className="font-display font-bold text-lg text-white leading-snug group-hover:text-brand-red transition-colors line-clamp-2">
+          <h3 className="font-display font-bold text-lg text-ink leading-snug group-hover:text-brand-orange transition-colors line-clamp-2">
             {article.title}
           </h3>
-          <p className="text-sm text-slate-400 mt-2 line-clamp-2 leading-relaxed">{article.excerpt}</p>
-          <div className="flex items-center justify-between mt-4 text-xs text-slate-500">
+          <p className="text-sm text-ink-secondary mt-2 line-clamp-2 leading-relaxed">{article.excerpt}</p>
+          <div className="flex items-center justify-between mt-4 text-xs text-ink-muted">
             <div className="flex items-center gap-2">
-              {author && <span className="text-slate-400">{author.name}</span>}
+              {author && <span className="text-ink-secondary">{author.name}</span>}
               <span>·</span>
               <span>{formatDate(article.publishDate)}</span>
             </div>
-            <span className="text-brand-yellow font-medium">{article.readTime} min</span>
+            <span className="text-brand-orange font-medium">{article.readTime} min</span>
           </div>
         </div>
       </div>

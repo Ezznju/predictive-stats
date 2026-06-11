@@ -14,22 +14,22 @@ export function Navbar() {
         {/* Top bar */}
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-red via-brand-yellow to-brand-green flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-black" />
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-amber via-brand-yellow to-brand-orange flex items-center justify-center shadow-sm">
+              <TrendingUp className="w-4.5 h-4.5 text-white" />
             </div>
-            <span className="font-display font-bold text-xl text-white group-hover:text-brand-red transition-colors">
+            <span className="font-display font-bold text-xl text-ink group-hover:text-brand-orange transition-colors">
               {siteSettings.siteName}
             </span>
           </Link>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/articles" className="text-sm text-slate-400 hover:text-white transition-colors">Articles</Link>
-            <Link href="/about" className="text-sm text-slate-400 hover:text-white transition-colors">About</Link>
-            <Link href="/contact" className="text-sm text-slate-400 hover:text-white transition-colors">Contact</Link>
-            <Link href="/newsletter" className="text-sm text-slate-400 hover:text-white transition-colors">Newsletter</Link>
-            <Link href="/search" className="text-slate-400 hover:text-white transition-colors">
+            <Link href="/articles" className="text-sm text-ink-secondary hover:text-ink transition-colors font-medium">Articles</Link>
+            <Link href="/about" className="text-sm text-ink-secondary hover:text-ink transition-colors font-medium">About</Link>
+            <Link href="/contact" className="text-sm text-ink-secondary hover:text-ink transition-colors font-medium">Contact</Link>
+            <Link href="/newsletter" className="text-sm text-ink-secondary hover:text-ink transition-colors font-medium">Newsletter</Link>
+            <Link href="/search" className="text-ink-secondary hover:text-ink transition-colors">
               <Search className="w-4 h-4" />
             </Link>
           </nav>
@@ -37,7 +37,7 @@ export function Navbar() {
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 text-slate-400 hover:text-white"
+            className="md:hidden p-2 text-ink-secondary hover:text-ink"
           >
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -49,14 +49,14 @@ export function Navbar() {
             <Link
               key={cat.id}
               href={`/category/${cat.slug}`}
-              className="px-3 py-1 text-xs font-medium text-slate-500 hover:text-white rounded-full hover:bg-surface-overlay transition-all whitespace-nowrap"
+              className="px-3 py-1 text-xs font-medium text-ink-muted hover:text-ink rounded-full hover:bg-surface-overlay transition-all whitespace-nowrap"
             >
               {cat.name}
             </Link>
           ))}
           <Link
             href="/articles"
-            className="px-3 py-1 text-xs font-medium text-brand-red hover:text-brand-red/80 rounded-full transition-all whitespace-nowrap"
+            className="px-3 py-1 text-xs font-medium text-brand-orange hover:text-brand-orange/80 rounded-full transition-all whitespace-nowrap"
           >
             All Topics →
           </Link>
@@ -65,21 +65,21 @@ export function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-surface-border bg-surface-raised">
+        <div className="md:hidden border-t border-surface-border bg-surface-raised shadow-lg">
           <nav className="px-4 py-4 space-y-1">
-            <Link href="/articles" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-surface-overlay rounded-lg transition-colors">Articles</Link>
-            <Link href="/about" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-surface-overlay rounded-lg transition-colors">About</Link>
-            <Link href="/contact" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-surface-overlay rounded-lg transition-colors">Contact</Link>
-            <Link href="/newsletter" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-surface-overlay rounded-lg transition-colors">Newsletter</Link>
-            <Link href="/search" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-surface-overlay rounded-lg transition-colors">Search</Link>
+            <Link href="/articles" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-ink-secondary hover:text-ink hover:bg-surface-overlay rounded-lg transition-colors">Articles</Link>
+            <Link href="/about" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-ink-secondary hover:text-ink hover:bg-surface-overlay rounded-lg transition-colors">About</Link>
+            <Link href="/contact" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-ink-secondary hover:text-ink hover:bg-surface-overlay rounded-lg transition-colors">Contact</Link>
+            <Link href="/newsletter" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-ink-secondary hover:text-ink hover:bg-surface-overlay rounded-lg transition-colors">Newsletter</Link>
+            <Link href="/search" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-ink-secondary hover:text-ink hover:bg-surface-overlay rounded-lg transition-colors">Search</Link>
             <div className="pt-3 border-t border-surface-border mt-3">
-              <p className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Topics</p>
+              <p className="px-3 text-xs font-semibold text-ink-muted uppercase tracking-wider mb-2">Topics</p>
               {categories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/category/${cat.slug}`}
                   onClick={() => setMobileOpen(false)}
-                  className="block px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
+                  className="block px-3 py-1.5 text-sm text-ink-secondary hover:text-ink transition-colors"
                 >
                   <span className="inline-block w-2 h-2 rounded-full mr-2" style={{ backgroundColor: cat.color }} />
                   {cat.name}

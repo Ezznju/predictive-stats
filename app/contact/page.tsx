@@ -9,30 +9,30 @@ export default function ContactPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-      <h1 className="font-display font-bold text-4xl text-white mb-4">Contact Us</h1>
-      <p className="text-slate-400 mb-8">Have a tip, correction, or pitch? We read everything.</p>
+      <h1 className="font-display font-bold text-4xl text-ink mb-4">Contact Us</h1>
+      <p className="text-ink-secondary mb-8">Have a tip, correction, or pitch? We read everything.</p>
 
       {submitted ? (
-        <div className="text-center py-16 bg-surface-raised rounded-xl border border-surface-border">
+        <div className="text-center py-16 bg-surface-raised rounded-2xl border border-surface-border shadow-sm">
           <Check className="w-12 h-12 text-brand-green mx-auto mb-4" />
-          <h2 className="font-display font-bold text-2xl text-white">Message sent!</h2>
-          <p className="text-slate-400 mt-2">We&apos;ll get back to you soon.</p>
+          <h2 className="font-display font-bold text-2xl text-ink">Message sent!</h2>
+          <p className="text-ink-secondary mt-2">We&apos;ll get back to you soon.</p>
         </div>
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Name</label>
-              <input type="text" required className="w-full bg-surface-raised border border-surface-border rounded-lg px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-red transition-colors" placeholder="Your name" />
+              <label className="block text-sm font-medium text-ink mb-2">Name</label>
+              <input type="text" required className="w-full bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:border-brand-amber focus:ring-1 focus:ring-brand-amber/30 transition-colors" placeholder="Your name" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
-              <input type="email" required className="w-full bg-surface-raised border border-surface-border rounded-lg px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-red transition-colors" placeholder="your@email.com" />
+              <label className="block text-sm font-medium text-ink mb-2">Email</label>
+              <input type="email" required className="w-full bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:border-brand-amber focus:ring-1 focus:ring-brand-amber/30 transition-colors" placeholder="your@email.com" />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Subject</label>
-            <select className="w-full bg-surface-raised border border-surface-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-brand-red transition-colors">
+            <label className="block text-sm font-medium text-ink mb-2">Subject</label>
+            <select className="w-full bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-ink focus:outline-none focus:border-brand-amber focus:ring-1 focus:ring-brand-amber/30 transition-colors">
               <option value="general">General Inquiry</option>
               <option value="pitch">Article Pitch</option>
               <option value="correction">Correction</option>
@@ -41,22 +41,22 @@ export default function ContactPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Message</label>
-            <textarea required rows={6} className="w-full bg-surface-raised border border-surface-border rounded-lg px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:border-brand-red transition-colors resize-none" placeholder="Your message..." />
+            <label className="block text-sm font-medium text-ink mb-2">Message</label>
+            <textarea required rows={6} className="w-full bg-surface-raised border border-surface-border rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:border-brand-amber focus:ring-1 focus:ring-brand-amber/30 transition-colors resize-none" placeholder="Your message..." />
           </div>
-          <button type="submit" className="bg-brand-red hover:bg-brand-red/90 text-white px-6 py-3 rounded-lg font-display font-semibold transition-colors flex items-center gap-2">
+          <button type="submit" className="bg-brand-orange hover:bg-brand-orange/90 text-white px-6 py-3 rounded-xl font-display font-semibold transition-colors flex items-center gap-2 shadow-sm">
             <Send className="w-4 h-4" /> Send Message
           </button>
         </form>
       )}
 
-      <div className="mt-12 p-6 bg-surface-raised rounded-xl border border-surface-border">
+      <div className="mt-12 p-6 bg-surface-raised rounded-2xl border border-surface-border shadow-sm">
         <div className="flex items-center gap-2 mb-3">
-          <Mail className="w-4 h-4 text-brand-yellow" />
-          <span className="font-display font-semibold text-white">Direct Email</span>
+          <Mail className="w-4 h-4 text-brand-amber" />
+          <span className="font-display font-semibold text-ink">Direct Email</span>
         </div>
-        <p className="text-slate-400 text-sm">For press inquiries, pitch submissions, and partnership proposals:</p>
-        <a href="mailto:contact@predictaview.com" className="text-brand-red hover:text-brand-red/80 text-sm mt-1 inline-block">contact@predictaview.com</a>
+        <p className="text-ink-secondary text-sm">For press inquiries, pitch submissions, and partnership proposals:</p>
+        <a href="mailto:contact@predictaview.com" className="text-brand-orange hover:text-brand-orange/80 text-sm mt-1 inline-block">contact@predictaview.com</a>
       </div>
     </div>
   );

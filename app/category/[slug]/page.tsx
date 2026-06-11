@@ -31,22 +31,22 @@ export default function CategoryPage({ params }: Props) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-2 text-xs text-slate-500 mb-6">
-        <Link href="/" className="hover:text-white transition-colors">Home</Link>
+      <nav className="flex items-center gap-2 text-xs text-ink-muted mb-6">
+        <Link href="/" className="hover:text-ink transition-colors">Home</Link>
         <ChevronRight className="w-3 h-3" />
-        <Link href="/articles" className="hover:text-white transition-colors">Articles</Link>
+        <Link href="/articles" className="hover:text-ink transition-colors">Articles</Link>
         <ChevronRight className="w-3 h-3" />
-        <span className="text-slate-300">{category.name}</span>
+        <span className="text-ink-secondary">{category.name}</span>
       </nav>
 
       {/* Header */}
       <div className="mb-10">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-4 h-4 rounded-full" style={{ backgroundColor: category.color }} />
-          <h1 className="font-display font-bold text-4xl text-white">{category.name}</h1>
+          <h1 className="font-display font-bold text-4xl text-ink">{category.name}</h1>
         </div>
-        <p className="text-slate-400 max-w-2xl">{category.description}</p>
-        <p className="text-sm text-slate-500 mt-2">{categoryArticles.length} article{categoryArticles.length !== 1 ? 's' : ''}</p>
+        <p className="text-ink-secondary max-w-2xl">{category.description}</p>
+        <p className="text-sm text-ink-muted mt-2">{categoryArticles.length} article{categoryArticles.length !== 1 ? 's' : ''}</p>
       </div>
 
       {/* Articles */}
@@ -58,8 +58,8 @@ export default function CategoryPage({ params }: Props) {
         </div>
       ) : (
         <div className="text-center py-20">
-          <p className="text-slate-500 text-lg">No articles in this category yet.</p>
-          <Link href="/articles" className="text-brand-red hover:text-brand-red/80 mt-2 inline-block">Browse all articles →</Link>
+          <p className="text-ink-secondary text-lg">No articles in this category yet.</p>
+          <Link href="/articles" className="text-brand-orange hover:text-brand-orange/80 mt-2 inline-block">Browse all articles →</Link>
         </div>
       )}
     </div>

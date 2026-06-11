@@ -8,13 +8,13 @@ export default function DisclaimerPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
       <div className="flex items-center gap-3 mb-8">
-        <AlertTriangle className="w-8 h-8 text-brand-yellow" />
-        <h1 className="font-display font-bold text-4xl text-white">Disclaimer</h1>
+        <AlertTriangle className="w-8 h-8 text-brand-amber" />
+        <h1 className="font-display font-bold text-4xl text-ink">Disclaimer</h1>
       </div>
-      <div className="prose prose-invert max-w-none prose-headings:font-display prose-p:text-slate-400 prose-li:text-slate-400 prose-h2:text-xl prose-h2:text-white">
-        <div className="bg-brand-yellow/10 border border-brand-yellow/20 rounded-xl p-6 mb-8 not-prose">
-          <p className="text-brand-yellow font-display font-semibold text-lg">This website does not provide financial advice.</p>
-          <p className="text-slate-400 text-sm mt-2">All content is for informational and educational purposes only.</p>
+      <div className="prose max-w-none prose-headings:font-display prose-p:text-ink-secondary prose-li:text-ink-secondary prose-h2:text-xl prose-h2:text-ink prose-a:text-brand-orange">
+        <div className="bg-brand-amber/10 border border-brand-amber/20 rounded-2xl p-6 mb-8 not-prose">
+          <p className="text-brand-amber font-display font-semibold text-lg">This website does not provide financial advice.</p>
+          <p className="text-ink-secondary text-sm mt-2">All content is for informational and educational purposes only.</p>
         </div>
         <h2>General Disclaimer</h2>
         <p>{siteSettings.siteName} provides analysis, commentary, and educational content about prediction markets, forecasting, and related topics. This content should not be construed as financial advice, investment recommendations, or trading guidance.</p>

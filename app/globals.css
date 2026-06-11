@@ -4,11 +4,11 @@
 
 @layer base {
   body {
-    @apply bg-surface text-slate-200 antialiased;
+    @apply bg-surface text-ink antialiased;
   }
 
   ::selection {
-    @apply bg-brand-red/30 text-white;
+    @apply bg-brand-amber/30 text-ink;
   }
 
   ::-webkit-scrollbar {
@@ -18,54 +18,52 @@
     @apply bg-surface;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-surface-border rounded-full;
+    @apply bg-surface-border-strong rounded-full;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-600;
+    @apply bg-ink-faint;
   }
 }
 
 @layer components {
   .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-red via-brand-yellow to-brand-green;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-amber via-brand-orange to-brand-yellow;
   }
 
-  .gradient-border {
-    @apply border border-transparent;
-    background-clip: padding-box;
-    position: relative;
+  .glow-amber {
+    box-shadow: 0 0 20px rgba(255, 191, 0, 0.12), 0 0 60px rgba(255, 191, 0, 0.04);
   }
 
-  .glow-red {
-    box-shadow: 0 0 20px rgba(255, 45, 45, 0.15), 0 0 60px rgba(255, 45, 45, 0.05);
-  }
-
-  .glow-yellow {
-    box-shadow: 0 0 20px rgba(255, 214, 10, 0.15), 0 0 60px rgba(255, 214, 10, 0.05);
-  }
-
-  .glow-green {
-    box-shadow: 0 0 20px rgba(0, 230, 118, 0.15), 0 0 60px rgba(0, 230, 118, 0.05);
+  .glow-orange {
+    box-shadow: 0 0 20px rgba(255, 121, 0, 0.12), 0 0 60px rgba(255, 121, 0, 0.04);
   }
 
   .card-hover {
-    @apply transition-all duration-300 hover:-translate-y-1;
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
   }
 
   .category-badge {
     @apply inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full;
   }
+
+  /* Decorative geometric shapes */
+  .geo-circle {
+    @apply absolute rounded-full opacity-[0.07];
+  }
+  .geo-square {
+    @apply absolute rounded-2xl opacity-[0.06] rotate-12;
+  }
 }
 
 /* Reading progress bar */
 .reading-progress {
-  @apply fixed top-0 left-0 h-1 bg-gradient-to-r from-brand-red via-brand-yellow to-brand-green z-50;
+  @apply fixed top-0 left-0 h-1 bg-gradient-to-r from-brand-amber via-brand-orange to-brand-yellow z-50;
   transition: width 0.1s ease;
 }
 
 /* TipTap Editor Styles */
 .tiptap-editor .ProseMirror {
-  @apply min-h-[500px] px-6 py-5 text-slate-200 leading-relaxed outline-none;
+  @apply min-h-[500px] px-6 py-5 text-ink leading-relaxed outline-none;
 }
 
 .tiptap-editor .ProseMirror p {
@@ -73,19 +71,19 @@
 }
 
 .tiptap-editor .ProseMirror h2 {
-  @apply text-2xl font-display font-bold text-white mt-8 mb-3;
+  @apply text-2xl font-display font-bold text-ink mt-8 mb-3;
 }
 
 .tiptap-editor .ProseMirror h3 {
-  @apply text-xl font-display font-semibold text-white mt-6 mb-2;
+  @apply text-xl font-display font-semibold text-ink mt-6 mb-2;
 }
 
 .tiptap-editor .ProseMirror h4 {
-  @apply text-lg font-display font-semibold text-white mt-5 mb-2;
+  @apply text-lg font-display font-semibold text-ink mt-5 mb-2;
 }
 
 .tiptap-editor .ProseMirror blockquote {
-  @apply border-l-4 border-brand-red pl-4 italic text-slate-400 my-4;
+  @apply border-l-4 border-brand-amber pl-4 italic text-ink-secondary my-4;
 }
 
 .tiptap-editor .ProseMirror ul {
@@ -97,7 +95,7 @@
 }
 
 .tiptap-editor .ProseMirror a {
-  @apply text-brand-red underline;
+  @apply text-brand-orange underline;
 }
 
 .tiptap-editor .ProseMirror img {
@@ -122,7 +120,7 @@
 }
 
 .tiptap-editor .ProseMirror code {
-  @apply bg-surface-overlay text-brand-yellow px-1.5 py-0.5 rounded text-sm font-mono;
+  @apply bg-surface-overlay text-brand-orange px-1.5 py-0.5 rounded text-sm font-mono;
 }
 
 .tiptap-editor .ProseMirror pre {
@@ -134,7 +132,7 @@
 }
 
 .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
-  @apply text-slate-600 italic;
+  @apply text-ink-faint italic;
   content: attr(data-placeholder);
   float: left;
   height: 0;

@@ -57,8 +57,8 @@ function ToolbarButton({
       title={title}
       className={`p-2 rounded-md transition-colors ${
         active
-          ? 'bg-brand-red text-white'
-          : 'text-slate-500 hover:text-white hover:bg-surface-overlay'
+          ? 'bg-brand-amber text-ink'
+          : 'text-ink-muted hover:text-ink hover:bg-surface-overlay'
       }`}
     >
       {children}
@@ -79,7 +79,7 @@ export function RichEditor({ content = '', onChange, placeholder = 'Start writin
       Underline,
       TiptapLink.configure({
         openOnClick: false,
-        HTMLAttributes: { class: 'text-brand-red underline' },
+        HTMLAttributes: { class: 'text-brand-orange underline' },
       }),
       TiptapImage.configure({
         HTMLAttributes: { class: 'rounded-lg max-w-full' },
@@ -127,7 +127,7 @@ export function RichEditor({ content = '', onChange, placeholder = 'Start writin
   const readTime = Math.max(1, Math.ceil(words / 250));
 
   return (
-    <div className="tiptap-editor border border-surface-border rounded-xl overflow-hidden focus-within:border-brand-red/50 transition-colors bg-surface-raised">
+    <div className="tiptap-editor border border-surface-border rounded-xl overflow-hidden focus-within:border-brand-amber/50 transition-colors bg-surface-raised">
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-surface-border bg-surface-overlay/50 sticky top-0 z-10">
         {/* Block format */}
@@ -206,7 +206,7 @@ export function RichEditor({ content = '', onChange, placeholder = 'Start writin
         </ToolbarButton>
 
         {/* Word count */}
-        <div className="ml-auto flex items-center gap-4 text-[11px] text-slate-500">
+        <div className="ml-auto flex items-center gap-4 text-[11px] text-ink-muted">
           <span>{words.toLocaleString()} words</span>
           <span>{chars.toLocaleString()} chars</span>
           <span>~{readTime} min read</span>
@@ -217,7 +217,7 @@ export function RichEditor({ content = '', onChange, placeholder = 'Start writin
       <EditorContent editor={editor} />
 
       {/* Bottom bar */}
-      <div className="px-4 py-2 border-t border-surface-border bg-surface-overlay/30 flex flex-wrap gap-4 text-[10px] text-slate-600">
+      <div className="px-4 py-2 border-t border-surface-border bg-surface-overlay/30 flex flex-wrap gap-4 text-[10px] text-ink-faint">
         <span>Ctrl+B bold · Ctrl+I italic · Ctrl+U underline · Ctrl+Z undo</span>
         <span>Use H2 for main sections, H3 for subsections</span>
       </div>

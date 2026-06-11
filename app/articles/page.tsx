@@ -16,20 +16,20 @@ export default function ArticlesPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
       {/* Header */}
       <div className="mb-10">
-        <h1 className="font-display font-bold text-4xl text-white">All Articles</h1>
-        <p className="text-slate-400 mt-2">Prediction market analysis, forecasting research, and data-driven commentary.</p>
+        <h1 className="font-display font-bold text-4xl text-ink">All Articles</h1>
+        <p className="text-ink-secondary mt-2">Prediction market analysis, forecasting research, and data-driven commentary.</p>
       </div>
 
       {/* Category filters */}
       <div className="flex flex-wrap gap-2 mb-8">
-        <Link href="/articles" className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-full bg-brand-red text-white transition-all">
+        <Link href="/articles" className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-full bg-brand-orange text-white transition-all shadow-sm">
           All
         </Link>
         {categories.map((cat) => (
           <Link
             key={cat.id}
             href={`/category/${cat.slug}`}
-            className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-full border border-surface-border text-slate-400 hover:text-white hover:border-brand-red/50 transition-all"
+            className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-full border border-surface-border text-ink-secondary hover:text-ink hover:border-brand-amber/50 hover:bg-surface-overlay transition-all"
           >
             {cat.name}
           </Link>

@@ -91,14 +91,14 @@ export default function ArticlePage({ params }: Props) {
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-xs text-slate-500 mb-6">
-          <Link href="/" className="hover:text-white transition-colors">Home</Link>
+        <nav className="flex items-center gap-2 text-xs text-ink-muted mb-6">
+          <Link href="/" className="hover:text-ink transition-colors">Home</Link>
           <ChevronRight className="w-3 h-3" />
-          <Link href="/articles" className="hover:text-white transition-colors">Articles</Link>
+          <Link href="/articles" className="hover:text-ink transition-colors">Articles</Link>
           {category && (
             <>
               <ChevronRight className="w-3 h-3" />
-              <Link href={`/category/${category.slug}`} className="hover:text-white transition-colors">{category.name}</Link>
+              <Link href={`/category/${category.slug}`} className="hover:text-ink transition-colors">{category.name}</Link>
             </>
           )}
         </nav>
@@ -108,15 +108,15 @@ export default function ArticlePage({ params }: Props) {
           {category && (
             <span
               className="category-badge mb-4 inline-block"
-              style={{ backgroundColor: category.color, color: '#000' }}
+              style={{ backgroundColor: category.color, color: '#fff' }}
             >
               {category.name}
             </span>
           )}
-          <h1 className="font-display font-bold text-3xl md:text-4xl lg:text-5xl text-white leading-tight">
+          <h1 className="font-display font-bold text-3xl md:text-4xl lg:text-5xl text-ink leading-tight">
             {article.title}
           </h1>
-          <p className="text-lg text-slate-400 mt-4 leading-relaxed">{article.excerpt}</p>
+          <p className="text-lg text-ink-secondary mt-4 leading-relaxed">{article.excerpt}</p>
 
           {/* Meta */}
           <div className="flex flex-wrap items-center gap-4 mt-6 pb-6 border-b border-surface-border">
@@ -126,12 +126,12 @@ export default function ArticlePage({ params }: Props) {
                   <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-white group-hover:text-brand-red transition-colors">{author.name}</span>
-                  <span className="text-xs text-slate-500 block">{author.title}</span>
+                  <span className="text-sm font-medium text-ink group-hover:text-brand-orange transition-colors">{author.name}</span>
+                  <span className="text-xs text-ink-muted block">{author.title}</span>
                 </div>
               </Link>
             )}
-            <div className="flex items-center gap-4 text-xs text-slate-500 ml-auto">
+            <div className="flex items-center gap-4 text-xs text-ink-muted ml-auto">
               <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(article.publishDate)}</span>
               <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{article.readTime} min read</span>
             </div>
@@ -139,7 +139,7 @@ export default function ArticlePage({ params }: Props) {
         </header>
 
         {/* Featured Image */}
-        <div className="relative aspect-[16/9] rounded-2xl overflow-hidden mb-10">
+        <div className="relative aspect-[16/9] rounded-2xl overflow-hidden mb-10 shadow-md">
           <Image
             src={article.featuredImage}
             alt={article.title}
@@ -152,23 +152,23 @@ export default function ArticlePage({ params }: Props) {
 
         {/* Pull Quote */}
         {article.pullQuote && (
-          <blockquote className="border-l-4 border-brand-red pl-6 py-2 my-8 text-xl font-display text-white/80 italic">
+          <blockquote className="border-l-4 border-brand-amber pl-6 py-2 my-8 text-xl font-display text-ink/80 italic">
             {article.pullQuote}
           </blockquote>
         )}
 
         {/* Article Body */}
         <div
-          className="prose prose-invert prose-lg max-w-none
+          className="prose prose-lg max-w-none
             prose-headings:font-display
-            prose-h2:text-2xl prose-h2:font-bold prose-h2:text-white prose-h2:mt-10 prose-h2:mb-4
-            prose-h3:text-xl prose-h3:font-semibold prose-h3:text-white prose-h3:mt-8 prose-h3:mb-3
-            prose-p:text-slate-300 prose-p:leading-relaxed
-            prose-a:text-brand-red prose-a:no-underline hover:prose-a:underline
-            prose-strong:text-white
-            prose-blockquote:border-l-brand-red prose-blockquote:text-slate-400
-            prose-code:text-brand-yellow prose-code:bg-surface-overlay prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-            prose-li:text-slate-300"
+            prose-h2:text-2xl prose-h2:font-bold prose-h2:text-ink prose-h2:mt-10 prose-h2:mb-4
+            prose-h3:text-xl prose-h3:font-semibold prose-h3:text-ink prose-h3:mt-8 prose-h3:mb-3
+            prose-p:text-ink-secondary prose-p:leading-relaxed
+            prose-a:text-brand-orange prose-a:no-underline hover:prose-a:underline
+            prose-strong:text-ink
+            prose-blockquote:border-l-brand-amber prose-blockquote:text-ink-secondary
+            prose-code:text-brand-orange prose-code:bg-surface-overlay prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+            prose-li:text-ink-secondary"
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
 
@@ -176,7 +176,7 @@ export default function ArticlePage({ params }: Props) {
         <div className="mt-10 pt-6 border-t border-surface-border">
           <div className="flex flex-wrap gap-2">
             {article.tags.map((tag) => (
-              <span key={tag} className="px-3 py-1 text-xs bg-surface-overlay text-slate-400 rounded-full border border-surface-border">
+              <span key={tag} className="px-3 py-1 text-xs bg-surface-overlay text-ink-secondary rounded-full border border-surface-border">
                 #{tag}
               </span>
             ))}
@@ -185,12 +185,12 @@ export default function ArticlePage({ params }: Props) {
 
         {/* Share */}
         <div className="flex items-center gap-3 mt-6 pb-8 border-b border-surface-border">
-          <span className="text-sm text-slate-500 font-medium">Share:</span>
+          <span className="text-sm text-ink-muted font-medium">Share:</span>
           <a
             href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(articleUrl)}&text=${encodeURIComponent(article.title)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2 bg-surface-overlay rounded-lg text-slate-400 hover:text-brand-cyan hover:bg-surface-border transition-all"
+            className="p-2 bg-surface-overlay rounded-lg text-ink-secondary hover:text-brand-orange hover:bg-surface-border transition-all"
           >
             <Twitter className="w-4 h-4" />
           </a>
@@ -198,7 +198,7 @@ export default function ArticlePage({ params }: Props) {
             href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(articleUrl)}&title=${encodeURIComponent(article.title)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2 bg-surface-overlay rounded-lg text-slate-400 hover:text-brand-cyan hover:bg-surface-border transition-all"
+            className="p-2 bg-surface-overlay rounded-lg text-ink-secondary hover:text-brand-orange hover:bg-surface-border transition-all"
           >
             <Linkedin className="w-4 h-4" />
           </a>
@@ -206,15 +206,15 @@ export default function ArticlePage({ params }: Props) {
 
         {/* Author Bio */}
         {author && (
-          <div className="mt-8 p-6 bg-surface-raised rounded-xl border border-surface-border">
+          <div className="mt-8 p-6 bg-surface-raised rounded-2xl border border-surface-border shadow-sm">
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
                 <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
               </div>
               <div>
-                <Link href={`/author/${author.slug}`} className="font-display font-bold text-white hover:text-brand-red transition-colors">{author.name}</Link>
-                <p className="text-xs text-brand-yellow mt-0.5">{author.title}</p>
-                <p className="text-sm text-slate-400 mt-2 leading-relaxed">{author.bio}</p>
+                <Link href={`/author/${author.slug}`} className="font-display font-bold text-ink hover:text-brand-orange transition-colors">{author.name}</Link>
+                <p className="text-xs text-brand-amber mt-0.5">{author.title}</p>
+                <p className="text-sm text-ink-secondary mt-2 leading-relaxed">{author.bio}</p>
               </div>
             </div>
           </div>
@@ -226,9 +226,9 @@ export default function ArticlePage({ params }: Props) {
         </div>
 
         {/* Disclaimer */}
-        <div className="mt-8 p-4 bg-surface-overlay rounded-lg border border-surface-border">
-          <p className="text-xs text-slate-500 leading-relaxed">
-            <strong className="text-slate-400">Disclaimer:</strong> This content is for informational and educational purposes only. It does not constitute financial advice, investment recommendations, or trading guidance. Prediction market participation involves risk of loss. Always conduct your own research before making any financial decisions.
+        <div className="mt-8 p-4 bg-surface-overlay rounded-xl border border-surface-border">
+          <p className="text-xs text-ink-muted leading-relaxed">
+            <strong className="text-ink-secondary">Disclaimer:</strong> This content is for informational and educational purposes only. It does not constitute financial advice, investment recommendations, or trading guidance. Prediction market participation involves risk of loss. Always conduct your own research before making any financial decisions.
           </p>
         </div>
       </article>
@@ -238,7 +238,7 @@ export default function ArticlePage({ params }: Props) {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 border-t border-surface-border">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-1 h-6 bg-brand-green rounded-full" />
-            <h2 className="font-display font-bold text-2xl text-white">Related Articles</h2>
+            <h2 className="font-display font-bold text-2xl text-ink">Related Articles</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {related.map((a) => (
