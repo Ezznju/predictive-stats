@@ -24,10 +24,31 @@ export function NewsletterBlock({
 }: NewsletterBlockProps) {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) setSubmitted(true);
+    if (!email || submitting) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, source: variant }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSubmitted(true);
+      } else {
+        setError(data.error || 'Subscription failed. Please try again.');
+      }
+    } catch {
+      setError('Subscription failed. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (variant === 'inline') {
@@ -56,11 +77,12 @@ export function NewsletterBlock({
                 className="flex-1 bg-white border border-white/40 rounded-xl px-3 py-2 text-sm text-black placeholder:text-black/40 focus:outline-none focus:border-black/30 focus:ring-1 focus:ring-black/20"
                 required
               />
-              <button type="submit" className="bg-black hover:bg-black/80 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
-                Subscribe
+              <button type="submit" disabled={submitting} className="bg-black hover:bg-black/80 disabled:opacity-60 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+                {submitting ? '...' : 'Subscribe'}
               </button>
             </form>
           )}
+          {error && !submitted && <p className="text-xs text-red-700 mt-2">{error}</p>}
         </div>
       </div>
     );
@@ -100,11 +122,12 @@ export function NewsletterBlock({
               className="flex-1 bg-white border border-white/40 rounded-xl px-4 py-3 text-black placeholder:text-black/40 focus:outline-none focus:border-black/30 focus:ring-2 focus:ring-black/10 transition-colors shadow-sm"
               required
             />
-            <button type="submit" className="bg-black hover:bg-black/80 text-white px-6 py-3 rounded-xl font-display font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm">
-              Subscribe <ArrowRight className="w-4 h-4" />
+            <button type="submit" disabled={submitting} className="bg-black hover:bg-black/80 disabled:opacity-60 text-white px-6 py-3 rounded-xl font-display font-semibold transition-colors flex items-center justify-center gap-2 shadow-sm">
+              {submitting ? 'Subscribing…' : 'Subscribe'} <ArrowRight className="w-4 h-4" />
             </button>
           </form>
         )}
+        {error && !submitted && <p className="text-sm text-red-700 mt-3">{error}</p>}
       </div>
     </section>
   );
