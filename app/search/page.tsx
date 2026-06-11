@@ -21,7 +21,25 @@ export default function SearchPage() {
           fetch('/api/categories'),
         ]);
         const allArticles = await aRes.json();
-        setArticles(allArticles.filter((a: any) => a.status === 'published'));
+        // The API returns raw snake_case DB rows — normalize to the camelCase
+        // Article shape that ArticleCard expects.
+        const normalized: Article[] = (Array.isArray(allArticles) ? allArticles : []).map((a: any) => ({
+          id: a.id,
+          title: a.title,
+          slug: a.slug,
+          excerpt: a.excerpt ?? '',
+          content: '',
+          featuredImage: a.featured_image ?? a.featuredImage ?? '',
+          authorId: a.author_id ?? a.authorId ?? '',
+          categorySlug: a.category_slug ?? a.categorySlug ?? '',
+          tags: a.tags ?? [],
+          publishDate: a.publish_date ?? a.publishDate ?? '',
+          updatedDate: a.updated_date ?? a.updatedDate ?? undefined,
+          readTime: a.read_time ?? a.readTime ?? 5,
+          featured: a.featured ?? false,
+          status: a.status ?? 'draft',
+        }));
+        setArticles(normalized.filter((a) => a.status === 'published'));
         setAuthors(await auRes.json());
         setCategories(await cRes.json());
       } catch {

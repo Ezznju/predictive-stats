@@ -3,6 +3,24 @@ import Image from 'next/image';
 import { Article, Category, Author } from '@/types';
 import { formatDate } from '@/lib/db';
 
+
+/** Renders the article image, falling back to a styled placeholder when missing. */
+function CardImage({ src, alt, sizes, priority = false }: { src?: string; alt: string; sizes: string; priority?: boolean }) {
+  if (!src) {
+    return <div className="absolute inset-0 bg-gradient-to-br from-zinc-200 via-zinc-100 to-zinc-300" aria-hidden="true" />;
+  }
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      className="object-cover transition-transform duration-500 group-hover:scale-105"
+      sizes={sizes}
+      priority={priority}
+    />
+  );
+}
+
 type Variant = 'default' | 'featured' | 'compact' | 'horizontal';
 
 interface ArticleCardProps {
@@ -17,14 +35,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
     return (
       <Link href={`/articles/${article.slug}`} className="group block">
         <div className="relative overflow-hidden rounded-2xl aspect-[16/9] mb-4 shadow-md">
-          <Image
-            src={article.featuredImage}
-            alt={article.title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, 66vw"
-            priority
-          />
+          <CardImage src={article.featuredImage} alt={article.title} sizes="(max-width: 768px) 100vw, 66vw" priority />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6">
             {category && (
@@ -56,13 +67,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
     return (
       <Link href={`/articles/${article.slug}`} className="group flex gap-4 items-start">
         <div className="relative w-24 h-24 md:w-28 md:h-20 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
-          <Image
-            src={article.featuredImage}
-            alt={article.title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="120px"
-          />
+          <CardImage src={article.featuredImage} alt={article.title} sizes="120px" />
         </div>
         <div className="flex-1 min-w-0">
           {category && (
@@ -99,13 +104,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
     <Link href={`/articles/${article.slug}`} className="group block card-hover">
       <div className="bg-white rounded-2xl overflow-hidden border border-white/30 hover:border-black/20 transition-all shadow-sm hover:shadow-md">
         <div className="relative aspect-[16/9] overflow-hidden">
-          <Image
-            src={article.featuredImage}
-            alt={article.title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
+          <CardImage src={article.featuredImage} alt={article.title} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
           {category && (
             <span
               className="absolute top-3 left-3 category-badge"

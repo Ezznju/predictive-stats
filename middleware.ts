@@ -22,6 +22,9 @@ const PUBLIC_API_PREFIXES = [
   '/api/settings',
 ];
 
+// Public POST routes (visitor-facing forms)
+const PUBLIC_POST_ROUTES = ['/api/contact', '/api/newsletter'];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -37,6 +40,11 @@ export async function middleware(request: NextRequest) {
 
   // Allow GET requests on public API routes (read-only for frontend)
   if (request.method === 'GET' && PUBLIC_API_PREFIXES.some(p => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  // Allow public form submissions (contact form, newsletter signup)
+  if (request.method === 'POST' && PUBLIC_POST_ROUTES.includes(pathname)) {
     return NextResponse.next();
   }
 
