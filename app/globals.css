@@ -155,3 +155,50 @@
   height: 0;
   pointer-events: none;
 }
+
+/* ── Article body tables: bold black borders (no washed-out white lines) ── */
+.prose {
+  --tw-prose-th-borders: #000000;
+  --tw-prose-td-borders: rgba(0, 0, 0, 0.45);
+}
+
+.prose table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 2px solid #000;
+  border-radius: 12px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.prose table th {
+  background: #000;
+  color: #fff !important;
+  font-weight: 700;
+  padding: 0.65em 0.9em;
+  border-bottom: none;
+  text-align: left;
+}
+
+.prose table th strong,
+.prose table th p {
+  color: #fff;
+  margin: 0;
+}
+
+.prose table td {
+  padding: 0.65em 0.9em;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.45);
+}
+
+.prose table td p {
+  margin: 0;
+}
+
+.prose table tr:last-child td {
+  border-bottom: none;
+}
+
+.prose table tr:nth-child(odd) td {
+  background: rgba(0, 0, 0, 0.05);
+}
