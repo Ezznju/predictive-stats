@@ -5,8 +5,8 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
-    fetch: (url: RequestInfo | URL, options: RequestInit = {}) => {
-      return fetch(url, { ...options, cache: 'no-store' });
+    fetch: (input, init) => {
+      return fetch(input, { ...init, cache: 'no-store' as RequestCache });
     },
   },
 });
