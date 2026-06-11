@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createHash } from 'crypto';
 
-function getExpectedToken(): string {
+async function getExpectedToken(): Promise<string> {
   const password = process.env.ADMIN_PASSWORD || '';
   const secret = process.env.AUTH_SECRET || 'fallback';
-  return createHash('sha256').update(password + secret).digest('hex');
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + secret);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = new Uint8Array(hashBuffer);
+  let hex = '';
+  for (let i = 0; i < hashArray.length; i++) {
+    hex += hashArray[i].toString(16).padStart(2, '0');
+  }
+  return hex;
 }
 
 // Public GET-only API routes (read-only access for frontend)
@@ -15,7 +22,7 @@ const PUBLIC_API_PREFIXES = [
   '/api/settings',
 ];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow the login page and login API
@@ -36,7 +43,7 @@ export function middleware(request: NextRequest) {
   // Protect admin pages and write API routes
   if (pathname.startsWith('/admin') || pathname.startsWith('/api/')) {
     const sessionCookie = request.cookies.get('pv_admin_session');
-    const expected = getExpectedToken();
+    const expected = await getExpectedToken();
 
     if (!sessionCookie || sessionCookie.value !== expected) {
       // For API routes, return 401
