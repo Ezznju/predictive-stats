@@ -1,11 +1,43 @@
 'use client';
 
 import { useState } from 'react';
-import { Metadata } from 'next';
-import { Mail, Send, Check } from 'lucide-react';
+import { Mail, Send, Check, Loader2 } from 'lucide-react';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('general');
+  const [message, setMessage] = useState('');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSending(true);
+    setError('');
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, subject, message }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to send message.');
+      }
+
+      setSubmitted(true);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Something went wrong. Please try again.';
+      setError(msg);
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
@@ -19,20 +51,43 @@ export default function ContactPage() {
           <p className="text-ink-secondary mt-2">We&apos;ll get back to you soon.</p>
         </div>
       ) : (
-        <form onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+              {error}
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-ink mb-2">Name</label>
-              <input type="text" required className="w-full bg-white border border-white/20 rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:border-black focus:ring-1 focus:ring-black/15 transition-colors" placeholder="Your name" />
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full bg-white border border-white/20 rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:border-black focus:ring-1 focus:ring-black/15 transition-colors"
+                placeholder="Your name"
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-ink mb-2">Email</label>
-              <input type="email" required className="w-full bg-white border border-white/20 rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:border-black focus:ring-1 focus:ring-black/15 transition-colors" placeholder="your@email.com" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-white border border-white/20 rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:border-black focus:ring-1 focus:ring-black/15 transition-colors"
+                placeholder="your@email.com"
+              />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-ink mb-2">Subject</label>
-            <select className="w-full bg-white border border-white/20 rounded-xl px-4 py-3 text-ink focus:outline-none focus:border-black focus:ring-1 focus:ring-black/15 transition-colors">
+            <select
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              className="w-full bg-white border border-white/20 rounded-xl px-4 py-3 text-ink focus:outline-none focus:border-black focus:ring-1 focus:ring-black/15 transition-colors"
+            >
               <option value="general">General Inquiry</option>
               <option value="pitch">Article Pitch</option>
               <option value="correction">Correction</option>
@@ -42,10 +97,25 @@ export default function ContactPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-ink mb-2">Message</label>
-            <textarea required rows={6} className="w-full bg-white border border-white/20 rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:border-black focus:ring-1 focus:ring-black/15 transition-colors resize-none" placeholder="Your message..." />
+            <textarea
+              required
+              rows={6}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="w-full bg-white border border-white/20 rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:border-black focus:ring-1 focus:ring-black/15 transition-colors resize-none"
+              placeholder="Your message..."
+            />
           </div>
-          <button type="submit" className="bg-black hover:bg-black/90 text-white px-6 py-3 rounded-xl font-display font-semibold transition-colors flex items-center gap-2 shadow-sm">
-            <Send className="w-4 h-4" /> Send Message
+          <button
+            type="submit"
+            disabled={sending}
+            className="bg-black hover:bg-black/90 disabled:bg-black/50 text-white px-6 py-3 rounded-xl font-display font-semibold transition-colors flex items-center gap-2 shadow-sm"
+          >
+            {sending ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</>
+            ) : (
+              <><Send className="w-4 h-4" /> Send Message</>
+            )}
           </button>
         </form>
       )}
@@ -56,7 +126,7 @@ export default function ContactPage() {
           <span className="font-display font-semibold text-ink">Direct Email</span>
         </div>
         <p className="text-ink-secondary text-sm">For press inquiries, pitch submissions, and partnership proposals:</p>
-        <a href="mailto:contact@predictaview.com" className="text-black hover:text-black/80 text-sm mt-1 inline-block">contact@predictaview.com</a>
+        <a href="mailto:ezzekielnjuguna.en@gmail.com" className="text-black hover:text-black/80 text-sm mt-1 inline-block">ezzekielnjuguna.en@gmail.com</a>
       </div>
     </div>
   );
