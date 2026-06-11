@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +32,7 @@ export async function PUT(request: NextRequest) {
   if (body.socialLinkedin !== undefined) row.social_linkedin = body.socialLinkedin;
   if (body.socialGithub !== undefined) row.social_github = body.socialGithub;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('site_settings')
     .update(row)
     .eq('id', 1)

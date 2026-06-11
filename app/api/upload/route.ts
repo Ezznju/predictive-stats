@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
   const buffer = await file.arrayBuffer();
 
-  const { error } = await supabase.storage
+  const { error } = await supabaseAdmin.storage
     .from('images')
     .upload(filePath, buffer, {
       contentType: file.type,
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const { data: urlData } = supabase.storage
+  const { data: urlData } = supabaseAdmin.storage
     .from('images')
     .getPublicUrl(filePath);
 

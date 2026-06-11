@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   const body = await request.json();
@@ -10,7 +10,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   if (body.description !== undefined) row.description = body.description;
   if (body.color !== undefined) row.color = body.color;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('categories')
     .update(row)
     .eq('id', params.id)
@@ -22,7 +22,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('categories')
     .delete()
     .eq('id', params.id);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +37,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   if (body.metaDescription !== undefined) row.meta_description = body.metaDescription;
   if (body.pullQuote !== undefined) row.pull_quote = body.pullQuote;
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('articles')
     .update(row)
     .eq('id', params.id)
@@ -49,7 +49,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from('articles')
     .delete()
     .eq('id', params.id);

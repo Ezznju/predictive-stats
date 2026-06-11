@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     pull_quote: body.pullQuote || null,
   };
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('articles')
     .insert(row)
     .select()
