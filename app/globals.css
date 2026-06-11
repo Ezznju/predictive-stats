@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface text-slate-200 antialiased;
+  }
+
+  ::selection {
+    @apply bg-brand-red/30 text-white;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-surface;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-border rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-600;
+  }
+}
+
+@layer components {
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-red via-brand-yellow to-brand-green;
+  }
+
+  .gradient-border {
+    @apply border border-transparent;
+    background-clip: padding-box;
+    position: relative;
+  }
+
+  .glow-red {
+    box-shadow: 0 0 20px rgba(255, 45, 45, 0.15), 0 0 60px rgba(255, 45, 45, 0.05);
+  }
+
+  .glow-yellow {
+    box-shadow: 0 0 20px rgba(255, 214, 10, 0.15), 0 0 60px rgba(255, 214, 10, 0.05);
+  }
+
+  .glow-green {
+    box-shadow: 0 0 20px rgba(0, 230, 118, 0.15), 0 0 60px rgba(0, 230, 118, 0.05);
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-1;
+  }
+
+  .category-badge {
+    @apply inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full;
+  }
+}
+
+/* Reading progress bar */
+.reading-progress {
+  @apply fixed top-0 left-0 h-1 bg-gradient-to-r from-brand-red via-brand-yellow to-brand-green z-50;
+  transition: width 0.1s ease;
+}
+
+/* TipTap Editor Styles */
+.tiptap-editor .ProseMirror {
+  @apply min-h-[500px] px-6 py-5 text-slate-200 leading-relaxed outline-none;
+}
+
+.tiptap-editor .ProseMirror p {
+  @apply mb-4 leading-relaxed;
+}
+
+.tiptap-editor .ProseMirror h2 {
+  @apply text-2xl font-display font-bold text-white mt-8 mb-3;
+}
+
+.tiptap-editor .ProseMirror h3 {
+  @apply text-xl font-display font-semibold text-white mt-6 mb-2;
+}
+
+.tiptap-editor .ProseMirror h4 {
+  @apply text-lg font-display font-semibold text-white mt-5 mb-2;
+}
+
+.tiptap-editor .ProseMirror blockquote {
+  @apply border-l-4 border-brand-red pl-4 italic text-slate-400 my-4;
+}
+
+.tiptap-editor .ProseMirror ul {
+  @apply list-disc pl-6 mb-4 space-y-1;
+}
+
+.tiptap-editor .ProseMirror ol {
+  @apply list-decimal pl-6 mb-4 space-y-1;
+}
+
+.tiptap-editor .ProseMirror a {
+  @apply text-brand-red underline;
+}
+
+.tiptap-editor .ProseMirror img {
+  @apply max-w-full rounded-lg my-4;
+}
+
+.tiptap-editor .ProseMirror table {
+  @apply border-collapse w-full my-4;
+}
+
+.tiptap-editor .ProseMirror table td,
+.tiptap-editor .ProseMirror table th {
+  @apply border border-surface-border px-3 py-2 text-left;
+}
+
+.tiptap-editor .ProseMirror table th {
+  @apply bg-surface-overlay font-semibold;
+}
+
+.tiptap-editor .ProseMirror hr {
+  @apply border-surface-border my-6;
+}
+
+.tiptap-editor .ProseMirror code {
+  @apply bg-surface-overlay text-brand-yellow px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.tiptap-editor .ProseMirror pre {
+  @apply bg-surface-overlay rounded-lg p-4 my-4 overflow-x-auto;
+}
+
+.tiptap-editor .ProseMirror pre code {
+  @apply bg-transparent px-0 py-0;
+}
+
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  @apply text-slate-600 italic;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
