@@ -3,9 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X, Search, TrendingUp } from 'lucide-react';
-import { siteSettings, categories } from '@/lib/data';
+import { Category } from '@/types';
 
-export function Navbar() {
+interface NavbarProps {
+  siteName: string;
+  categories: Category[];
+}
+
+export function Navbar({ siteName, categories }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -19,7 +24,7 @@ export function Navbar() {
               <TrendingUp className="w-4.5 h-4.5 text-white" />
             </div>
             <span className="font-display font-bold text-xl text-black group-hover:text-white transition-colors">
-              {siteSettings.siteName}
+              {siteName}
             </span>
           </Link>
 

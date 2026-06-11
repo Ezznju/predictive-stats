@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { ArticleCard } from '@/components/ArticleCard';
-import { articles, categories } from '@/lib/data';
+import { getPublishedArticles, getCategories, getAuthors } from '@/lib/db';
 import Link from 'next/link';
 import {
   DottedSquare,
@@ -10,14 +10,22 @@ import {
   ArrowShape,
 } from '@/components/GeometricShapes';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Articles',
   description: 'All articles on prediction markets, forecasting, data analysis, and probabilistic thinking.',
 };
 
-export default function ArticlesPage() {
-  const published = articles.filter(a => a.status === 'published')
-    .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
+export default async function ArticlesPage() {
+  const [articles, categories, authors] = await Promise.all([
+    getPublishedArticles(),
+    getCategories(),
+    getAuthors(),
+  ]);
+
+  const authorMap = new Map(authors.map(a => [a.id, a]));
+  const categoryMap = new Map(categories.map(c => [c.slug, c]));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 relative overflow-hidden">
@@ -52,8 +60,13 @@ export default function ArticlesPage() {
 
       {/* Articles grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative z-10">
-        {published.map((article) => (
-          <ArticleCard key={article.id} article={article} />
+        {articles.map((article) => (
+          <ArticleCard
+            key={article.id}
+            article={article}
+            author={authorMap.get(article.authorId)}
+            category={categoryMap.get(article.categorySlug)}
+          />
         ))}
       </div>
     </div>

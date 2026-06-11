@@ -1,21 +1,77 @@
 'use client';
 
-import { useState } from 'react';
-import { Save, Check } from 'lucide-react';
-import { siteSettings } from '@/lib/data';
+import { useEffect, useState } from 'react';
+import { Save, Check, Loader2 } from 'lucide-react';
 
 export default function AdminSettingsPage() {
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [settings, setSettings] = useState({ ...siteSettings });
+  const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState({
+    siteName: '',
+    siteTagline: '',
+    siteDescription: '',
+    siteUrl: '',
+    newsletterHeading: '',
+    newsletterBody: '',
+    missionHeading: '',
+    missionBody: '',
+    socialTwitter: '',
+    socialLinkedin: '',
+    socialGithub: '',
+  });
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  useEffect(() => {
+    async function load() {
+      const res = await fetch('/api/settings');
+      if (res.ok) {
+        const data = await res.json();
+        setSettings({
+          siteName: data.site_name || '',
+          siteTagline: data.site_tagline || '',
+          siteDescription: data.site_description || '',
+          siteUrl: data.site_url || '',
+          newsletterHeading: data.newsletter_heading || '',
+          newsletterBody: data.newsletter_body || '',
+          missionHeading: data.mission_heading || '',
+          missionBody: data.mission_body || '',
+          socialTwitter: data.social_twitter || '',
+          socialLinkedin: data.social_linkedin || '',
+          socialGithub: data.social_github || '',
+        });
+      }
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    const res = await fetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    });
+    if (res.ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } else {
+      alert('Failed to save settings');
+    }
+    setSaving(false);
   };
 
   const updateField = (key: keyof typeof settings, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
+      </div>
+    );
+  }
 
   const inputClass = "w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-orange-300 focus:ring-1 focus:ring-orange-200 transition-colors";
 
@@ -26,18 +82,16 @@ export default function AdminSettingsPage() {
           <h1 className="font-display font-bold text-2xl text-gray-900">Site Settings</h1>
           <p className="text-sm text-gray-500 mt-1">Configure your publication.</p>
         </div>
-        <button onClick={handleSave} className="bg-orange-600 hover:bg-orange-600/90 text-white px-4 py-2.5 rounded-xl font-display font-semibold text-sm transition-colors flex items-center gap-2 shadow-sm">
-          {saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-          {saved ? 'Saved!' : 'Save Settings'}
+        <button onClick={handleSave} disabled={saving} className="bg-orange-600 hover:bg-orange-600/90 disabled:opacity-50 text-white px-4 py-2.5 rounded-xl font-display font-semibold text-sm transition-colors flex items-center gap-2 shadow-sm">
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+          {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Settings'}
         </button>
       </div>
 
       <div className="space-y-6">
-        {/* General */}
         <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4 shadow-sm">
           <h2 className="font-display font-semibold text-gray-900 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-orange-600" />
-            General
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-600" /> General
           </h2>
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Site Name</label>
@@ -57,11 +111,9 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        {/* Newsletter */}
         <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4 shadow-sm">
           <h2 className="font-display font-semibold text-gray-900 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-amber" />
-            Newsletter
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Newsletter
           </h2>
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Heading</label>
@@ -73,11 +125,9 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        {/* Mission */}
         <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4 shadow-sm">
           <h2 className="font-display font-semibold text-gray-900 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-green" />
-            Mission Section
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> Mission Section
           </h2>
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Heading</label>
@@ -89,11 +139,9 @@ export default function AdminSettingsPage() {
           </div>
         </div>
 
-        {/* Social */}
         <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4 shadow-sm">
           <h2 className="font-display font-semibold text-gray-900 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-blue" />
-            Social Links
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Social Links
           </h2>
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Twitter / X</label>

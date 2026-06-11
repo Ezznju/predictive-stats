@@ -3,30 +3,34 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Twitter, Linkedin, ChevronRight } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
-import { authors, getAuthorBySlug, getArticlesByAuthor } from '@/lib/data';
+import { getAuthorBySlug, getArticlesByAuthor, getAuthors, getCategories } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 interface Props { params: { slug: string } }
 
-export async function generateStaticParams() {
-  return authors.map((a) => ({ slug: a.slug }));
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const author = getAuthorBySlug(params.slug);
+  const author = await getAuthorBySlug(params.slug);
   if (!author) return { title: 'Author Not Found' };
   return {
     title: author.name,
     description: author.bio,
-    openGraph: { title: `${author.name} | PredictaView`, description: author.bio, images: [{ url: author.avatar }] },
+    openGraph: { title: `${author.name} | PredictaView`, description: author.bio, images: author.avatar ? [{ url: author.avatar }] : undefined },
   };
 }
 
-export default function AuthorPage({ params }: Props) {
-  const author = getAuthorBySlug(params.slug);
+export default async function AuthorPage({ params }: Props) {
+  const author = await getAuthorBySlug(params.slug);
   if (!author) notFound();
 
-  const authorArticles = getArticlesByAuthor(author.id)
-    .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
+  const [authorArticles, allAuthors, categories] = await Promise.all([
+    getArticlesByAuthor(author.id),
+    getAuthors(),
+    getCategories(),
+  ]);
+
+  const authorMap = new Map(allAuthors.map(a => [a.id, a]));
+  const categoryMap = new Map(categories.map(c => [c.slug, c]));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
@@ -69,7 +73,12 @@ export default function AuthorPage({ params }: Props) {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {authorArticles.map((article) => (
-          <ArticleCard key={article.id} article={article} />
+          <ArticleCard
+            key={article.id}
+            article={article}
+            author={authorMap.get(article.authorId)}
+            category={categoryMap.get(article.categorySlug)}
+          />
         ))}
       </div>
     </div>

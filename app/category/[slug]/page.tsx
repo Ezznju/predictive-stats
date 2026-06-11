@@ -3,16 +3,14 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
-import { categories, getArticlesByCategory, getCategoryBySlug } from '@/lib/data';
+import { getCategoryBySlug, getArticlesByCategory, getAuthors, getCategories } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 interface Props { params: { slug: string } }
 
-export async function generateStaticParams() {
-  return categories.map((c) => ({ slug: c.slug }));
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const cat = getCategoryBySlug(params.slug);
+  const cat = await getCategoryBySlug(params.slug);
   if (!cat) return { title: 'Category Not Found' };
   return {
     title: cat.name,
@@ -21,12 +19,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function CategoryPage({ params }: Props) {
-  const category = getCategoryBySlug(params.slug);
+export default async function CategoryPage({ params }: Props) {
+  const category = await getCategoryBySlug(params.slug);
   if (!category) notFound();
 
-  const categoryArticles = getArticlesByCategory(category.slug)
-    .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
+  const [categoryArticles, authors, categories] = await Promise.all([
+    getArticlesByCategory(category.slug),
+    getAuthors(),
+    getCategories(),
+  ]);
+
+  const authorMap = new Map(authors.map(a => [a.id, a]));
+  const categoryMap = new Map(categories.map(c => [c.slug, c]));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
@@ -53,7 +57,12 @@ export default function CategoryPage({ params }: Props) {
       {categoryArticles.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {categoryArticles.map((article) => (
-            <ArticleCard key={article.id} article={article} />
+            <ArticleCard
+              key={article.id}
+              article={article}
+              author={authorMap.get(article.authorId)}
+              category={categoryMap.get(article.categorySlug)}
+            />
           ))}
         </div>
       ) : (

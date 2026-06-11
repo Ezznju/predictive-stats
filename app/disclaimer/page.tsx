@@ -1,10 +1,12 @@
 import { Metadata } from 'next';
 import { AlertTriangle } from 'lucide-react';
-import { siteSettings } from '@/lib/data';
+import { getSiteSettings } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Disclaimer' };
 
-export default function DisclaimerPage() {
+export default async function DisclaimerPage() {
+  const settings = await getSiteSettings();
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
       <div className="flex items-center gap-3 mb-8">
@@ -17,7 +19,7 @@ export default function DisclaimerPage() {
           <p className="text-ink-secondary text-sm mt-2">All content is for informational and educational purposes only.</p>
         </div>
         <h2>General Disclaimer</h2>
-        <p>{siteSettings.siteName} provides analysis, commentary, and educational content about prediction markets, forecasting, and related topics. This content should not be construed as financial advice, investment recommendations, or trading guidance.</p>
+        <p>{settings.siteName} provides analysis, commentary, and educational content about prediction markets, forecasting, and related topics. This content should not be construed as financial advice, investment recommendations, or trading guidance.</p>
         <h2>Risk Warning</h2>
         <p>Prediction market participation involves substantial risk of loss. Past performance of any strategy, market, or indicator discussed on this site does not guarantee future results. You should never invest money you cannot afford to lose.</p>
         <h2>Data Accuracy</h2>

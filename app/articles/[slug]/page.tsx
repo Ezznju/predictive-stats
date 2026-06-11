@@ -2,33 +2,31 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Clock, Calendar, Share2, Twitter, Linkedin, ChevronRight } from 'lucide-react';
+import { Clock, Calendar, Twitter, Linkedin, ChevronRight } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
 import {
-  articles,
   getArticleBySlug,
+  getPublishedArticles,
   getAuthorById,
   getCategoryBySlug,
   getRelatedArticles,
+  getSiteSettings,
+  getAuthors,
+  getCategories,
   formatDate,
-  siteSettings,
-} from '@/lib/data';
+} from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 
 interface Props {
   params: { slug: string };
 }
 
-export async function generateStaticParams() {
-  return articles
-    .filter((a) => a.status === 'published')
-    .map((a) => ({ slug: a.slug }));
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const article = getArticleBySlug(params.slug);
+  const article = await getArticleBySlug(params.slug);
   if (!article) return { title: 'Article Not Found' };
-  const author = getAuthorById(article.authorId);
+  const author = await getAuthorById(article.authorId);
 
   return {
     title: article.seoTitle || article.title,
@@ -38,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'article',
       title: article.seoTitle || article.title,
       description: article.metaDescription || article.excerpt,
-      images: [{ url: article.featuredImage, width: 1200, height: 630 }],
+      images: article.featuredImage ? [{ url: article.featuredImage, width: 1200, height: 630 }] : undefined,
       publishedTime: article.publishDate,
       modifiedTime: article.updatedDate,
       authors: author ? [author.name] : undefined,
@@ -48,19 +46,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title: article.seoTitle || article.title,
       description: article.metaDescription || article.excerpt,
-      images: [article.featuredImage],
+      images: article.featuredImage ? [article.featuredImage] : undefined,
     },
   };
 }
 
-export default function ArticlePage({ params }: Props) {
-  const article = getArticleBySlug(params.slug);
+export default async function ArticlePage({ params }: Props) {
+  const article = await getArticleBySlug(params.slug);
   if (!article) notFound();
 
-  const author = getAuthorById(article.authorId);
-  const category = getCategoryBySlug(article.categorySlug);
-  const related = getRelatedArticles(article, 3);
-  const articleUrl = `${siteSettings.siteUrl}/articles/${article.slug}`;
+  const [author, category, related, settings, allAuthors, allCategories] = await Promise.all([
+    getAuthorById(article.authorId),
+    getCategoryBySlug(article.categorySlug),
+    getRelatedArticles(article, 3),
+    getSiteSettings(),
+    getAuthors(),
+    getCategories(),
+  ]);
+
+  const authorMap = new Map(allAuthors.map(a => [a.id, a]));
+  const categoryMap = new Map(allCategories.map(c => [c.slug, c]));
+
+  const articleUrl = `${settings.siteUrl || 'https://predictive-stats.vercel.app'}/articles/${article.slug}`;
 
   // JSON-LD structured data
   const jsonLd = {
@@ -72,12 +79,12 @@ export default function ArticlePage({ params }: Props) {
     datePublished: article.publishDate,
     dateModified: article.updatedDate || article.publishDate,
     author: author
-      ? { '@type': 'Person', name: author.name, url: `${siteSettings.siteUrl}/author/${author.slug}` }
+      ? { '@type': 'Person', name: author.name, url: `${settings.siteUrl || 'https://predictive-stats.vercel.app'}/author/${author.slug}` }
       : undefined,
     publisher: {
       '@type': 'Organization',
-      name: siteSettings.siteName,
-      url: siteSettings.siteUrl,
+      name: settings.siteName,
+      url: settings.siteUrl,
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
     wordCount: article.content.split(/\s+/).length,
@@ -139,16 +146,18 @@ export default function ArticlePage({ params }: Props) {
         </header>
 
         {/* Featured Image */}
-        <div className="relative aspect-[16/9] rounded-2xl overflow-hidden mb-10 shadow-md">
-          <Image
-            src={article.featuredImage}
-            alt={article.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 896px) 100vw, 896px"
-            priority
-          />
-        </div>
+        {article.featuredImage && (
+          <div className="relative aspect-[16/9] rounded-2xl overflow-hidden mb-10 shadow-md">
+            <Image
+              src={article.featuredImage}
+              alt={article.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 896px) 100vw, 896px"
+              priority
+            />
+          </div>
+        )}
 
         {/* Pull Quote */}
         {article.pullQuote && (
@@ -222,7 +231,11 @@ export default function ArticlePage({ params }: Props) {
 
         {/* Inline Newsletter */}
         <div className="mt-10">
-          <NewsletterBlock variant="inline" />
+          <NewsletterBlock
+            variant="inline"
+            heading={settings.newsletterHeading}
+            body={settings.newsletterBody}
+          />
         </div>
 
         {/* Disclaimer */}
@@ -242,7 +255,12 @@ export default function ArticlePage({ params }: Props) {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {related.map((a) => (
-              <ArticleCard key={a.id} article={a} />
+              <ArticleCard
+                key={a.id}
+                article={a}
+                author={authorMap.get(a.authorId)}
+                category={categoryMap.get(a.categorySlug)}
+              />
             ))}
           </div>
         </section>

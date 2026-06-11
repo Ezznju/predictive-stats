@@ -1,19 +1,18 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Article, Category, Author } from '@/types';
-import { getAuthorById, getCategoryBySlug, formatDate } from '@/lib/data';
+import { formatDate } from '@/lib/db';
 
 type Variant = 'default' | 'featured' | 'compact' | 'horizontal';
 
 interface ArticleCardProps {
   article: Article;
   variant?: Variant;
+  author?: Author | null;
+  category?: Category | null;
 }
 
-export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) {
-  const author = getAuthorById(article.authorId);
-  const category = getCategoryBySlug(article.categorySlug);
-
+export function ArticleCard({ article, variant = 'default', author, category }: ArticleCardProps) {
   if (variant === 'featured') {
     return (
       <Link href={`/articles/${article.slug}`} className="group block">

@@ -1,7 +1,8 @@
 import { MetadataRoute } from 'next';
-import { siteSettings } from '@/lib/data';
+import { getSiteSettings } from '@/lib/db';
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const settings = await getSiteSettings();
   return {
     rules: [
       {
@@ -10,6 +11,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/admin/', '/api/'],
       },
     ],
-    sitemap: `${siteSettings.siteUrl}/sitemap.xml`,
+    sitemap: `${settings.siteUrl || 'https://predictive-stats.vercel.app'}/sitemap.xml`,
   };
 }

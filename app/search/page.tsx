@@ -1,25 +1,62 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Search as SearchIcon } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Search as SearchIcon, Loader2 } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
-import { articles } from '@/lib/data';
+import { Article, Author, Category } from '@/types';
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [authors, setAuthors] = useState<Author[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [aRes, auRes, cRes] = await Promise.all([
+          fetch('/api/articles'),
+          fetch('/api/authors'),
+          fetch('/api/categories'),
+        ]);
+        const allArticles = await aRes.json();
+        setArticles(allArticles.filter((a: any) => a.status === 'published'));
+        setAuthors(await auRes.json());
+        setCategories(await cRes.json());
+      } catch {
+        console.error('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const authorMap = useMemo(() => new Map(authors.map(a => [a.id, a])), [authors]);
+  const categoryMap = useMemo(() => new Map(categories.map(c => [c.slug, c])), [categories]);
 
   const results = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    return articles.filter((a) =>
-      a.status === 'published' && (
-        a.title.toLowerCase().includes(q) ||
-        a.excerpt.toLowerCase().includes(q) ||
-        a.tags.some((t) => t.toLowerCase().includes(q)) ||
-        a.categorySlug.replace(/-/g, ' ').includes(q)
-      )
+    return articles.filter((a: any) =>
+      a.title?.toLowerCase().includes(q) ||
+      a.excerpt?.toLowerCase().includes(q) ||
+      (a.tags || []).some((t: string) => t.toLowerCase().includes(q)) ||
+      (a.category_slug || a.categorySlug || '').replace(/-/g, ' ').includes(q)
     );
-  }, [query]);
+  }, [query, articles]);
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+        <h1 className="font-display font-bold text-4xl text-ink mb-6">Search</h1>
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
@@ -42,8 +79,13 @@ export default function SearchPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {results.map((article) => (
-          <ArticleCard key={article.id} article={article} />
+        {results.map((article: any) => (
+          <ArticleCard
+            key={article.id}
+            article={article}
+            author={authorMap.get(article.authorId || article.author_id)}
+            category={categoryMap.get(article.categorySlug || article.category_slug)}
+          />
         ))}
       </div>
 

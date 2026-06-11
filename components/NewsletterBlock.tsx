@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Mail, ArrowRight, Check } from 'lucide-react';
-import { siteSettings } from '@/lib/data';
 import {
   FlowerShape,
   DaisyShape,
@@ -14,9 +13,15 @@ import {
 
 interface NewsletterBlockProps {
   variant?: 'banner' | 'inline' | 'full';
+  heading?: string;
+  body?: string;
 }
 
-export function NewsletterBlock({ variant = 'banner' }: NewsletterBlockProps) {
+export function NewsletterBlock({
+  variant = 'banner',
+  heading = 'Stay Ahead of the Markets',
+  body = 'Get weekly prediction market analysis, forecasting insights, and data-driven commentary delivered to your inbox.',
+}: NewsletterBlockProps) {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
@@ -34,8 +39,8 @@ export function NewsletterBlock({ variant = 'banner' }: NewsletterBlockProps) {
             <Mail className="w-4 h-4 text-black" />
             <span className="text-xs font-bold uppercase tracking-wider text-black">Newsletter</span>
           </div>
-          <h3 className="font-display font-bold text-black text-lg">{siteSettings.newsletterHeading}</h3>
-          <p className="text-sm text-black/70 mt-1">{siteSettings.newsletterBody}</p>
+          <h3 className="font-display font-bold text-black text-lg">{heading}</h3>
+          <p className="text-sm text-black/70 mt-1">{body}</p>
           {submitted ? (
             <div className="flex items-center gap-2 mt-4 text-black text-sm">
               <Check className="w-4 h-4" />
@@ -78,8 +83,8 @@ export function NewsletterBlock({ variant = 'banner' }: NewsletterBlockProps) {
           <Mail className="w-3.5 h-3.5 text-black" />
           <span className="text-xs font-bold uppercase tracking-wider text-black">Free Weekly Briefing</span>
         </div>
-        <h2 className="font-display font-bold text-3xl md:text-4xl text-black">{siteSettings.newsletterHeading}</h2>
-        <p className="text-black/70 mt-3 max-w-xl mx-auto">{siteSettings.newsletterBody}</p>
+        <h2 className="font-display font-bold text-3xl md:text-4xl text-black">{heading}</h2>
+        <p className="text-black/70 mt-3 max-w-xl mx-auto">{body}</p>
         {submitted ? (
           <div className="flex items-center justify-center gap-2 mt-6 text-black text-lg">
             <Check className="w-5 h-5" />

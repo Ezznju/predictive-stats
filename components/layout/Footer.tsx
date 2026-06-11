@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { TrendingUp } from 'lucide-react';
-import { siteSettings, categories } from '@/lib/data';
+import { Category, SiteSettings } from '@/types';
 import {
   FlowerShape,
   UShape,
@@ -10,7 +10,12 @@ import {
   HalfCircle,
 } from '@/components/GeometricShapes';
 
-export function Footer() {
+interface FooterProps {
+  settings: SiteSettings;
+  categories: Category[];
+}
+
+export function Footer({ settings, categories }: FooterProps) {
   return (
     <footer className="bg-surface-overlay border-t border-surface-border mt-16 relative overflow-hidden">
       {/* Geometric shape decorations */}
@@ -29,9 +34,9 @@ export function Footer() {
               <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-white" />
               </div>
-              <span className="font-display font-bold text-lg text-black">{siteSettings.siteName}</span>
+              <span className="font-display font-bold text-lg text-black">{settings.siteName}</span>
             </Link>
-            <p className="text-sm text-black/60 leading-relaxed">{siteSettings.siteTagline}</p>
+            <p className="text-sm text-black/60 leading-relaxed">{settings.siteTagline}</p>
           </div>
 
           {/* Topics */}
@@ -73,7 +78,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-6 border-t border-surface-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-black/50">
-            © {new Date().getFullYear()} {siteSettings.siteName}. All rights reserved. Content is for informational purposes only and does not constitute financial advice.
+            © {new Date().getFullYear()} {settings.siteName}. All rights reserved. Content is for informational purposes only and does not constitute financial advice.
           </p>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">

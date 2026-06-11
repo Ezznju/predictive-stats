@@ -16,24 +16,37 @@ import {
   BlobShape,
 } from '@/components/GeometricShapes';
 import {
-  articles,
-  categories,
-  authors,
   getFeaturedArticles,
   getLatestArticles,
-  siteSettings,
-  formatDate,
+  getPublishedArticles,
+  getCategories,
+  getAuthors,
+  getSiteSettings,
   getAuthorById,
   getCategoryBySlug,
-} from '@/lib/data';
+  formatDate,
+} from '@/lib/db';
 
-export default function Home() {
-  const featured = getFeaturedArticles();
+export const dynamic = 'force-dynamic';
+
+export default async function Home() {
+  const [featured, allArticles, categories, authors, settings] = await Promise.all([
+    getFeaturedArticles(),
+    getPublishedArticles(),
+    getCategories(),
+    getAuthors(),
+    getSiteSettings(),
+  ]);
+
   const heroArticle = featured[0];
   const subFeatured = featured.slice(1, 3);
-  const latest = getLatestArticles(8).filter((a) => a.id !== heroArticle?.id);
-  const trending = articles.slice(0, 5);
-  const popularReads = articles.slice(3, 7);
+  const latest = allArticles.filter((a) => a.id !== heroArticle?.id).slice(0, 8);
+  const trending = allArticles.slice(0, 5);
+  const popularReads = allArticles.slice(3, 7);
+
+  // Build lookup maps
+  const authorMap = new Map(authors.map(a => [a.id, a]));
+  const categoryMap = new Map(categories.map(c => [c.slug, c]));
 
   return (
     <div>
@@ -53,7 +66,12 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Main featured */}
               <div className="lg:col-span-2">
-                <ArticleCard article={heroArticle} variant="featured" />
+                <ArticleCard
+                  article={heroArticle}
+                  variant="featured"
+                  author={authorMap.get(heroArticle.authorId)}
+                  category={categoryMap.get(heroArticle.categorySlug)}
+                />
               </div>
 
               {/* Sidebar */}
@@ -66,7 +84,13 @@ export default function Home() {
                   </div>
                   <div className="space-y-5">
                     {subFeatured.map((article) => (
-                      <ArticleCard key={article.id} article={article} variant="horizontal" />
+                      <ArticleCard
+                        key={article.id}
+                        article={article}
+                        variant="horizontal"
+                        author={authorMap.get(article.authorId)}
+                        category={categoryMap.get(article.categorySlug)}
+                      />
                     ))}
                   </div>
                 </div>
@@ -79,7 +103,7 @@ export default function Home() {
                   </div>
                   <div className="space-y-4">
                     {trending.slice(0, 4).map((article, i) => {
-                      const cat = getCategoryBySlug(article.categorySlug);
+                      const cat = categoryMap.get(article.categorySlug);
                       return (
                         <Link key={article.id} href={`/articles/${article.slug}`} className="flex items-start gap-3 group">
                           <span className="text-2xl font-display font-bold text-black/30 leading-none mt-0.5">
@@ -134,7 +158,12 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {latest.slice(0, 6).map((article) => (
-              <ArticleCard key={article.id} article={article} />
+              <ArticleCard
+                key={article.id}
+                article={article}
+                author={authorMap.get(article.authorId)}
+                category={categoryMap.get(article.categorySlug)}
+              />
             ))}
           </div>
         </div>
@@ -152,7 +181,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {categories.map((cat) => {
-              const count = articles.filter((a) => a.categorySlug === cat.slug).length;
+              const count = allArticles.filter((a) => a.categorySlug === cat.slug).length;
               return (
                 <Link
                   key={cat.id}
@@ -170,7 +199,11 @@ export default function Home() {
       </section>
 
       {/* Newsletter */}
-      <NewsletterBlock variant="banner" />
+      <NewsletterBlock
+        variant="banner"
+        heading={settings.newsletterHeading}
+        body={settings.newsletterBody}
+      />
 
       {/* Popular Reads + Writers */}
       <section className="py-12 border-b border-surface-border relative overflow-hidden">
@@ -188,7 +221,12 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {popularReads.map((article) => (
-                  <ArticleCard key={article.id} article={article} />
+                  <ArticleCard
+                    key={article.id}
+                    article={article}
+                    author={authorMap.get(article.authorId)}
+                    category={categoryMap.get(article.categorySlug)}
+                  />
                 ))}
               </div>
             </div>
@@ -236,8 +274,8 @@ export default function Home() {
               <BarChart3 className="w-3.5 h-3.5 text-black" />
               <span className="text-xs font-bold uppercase tracking-wider text-black">Our Mission</span>
             </div>
-            <h2 className="font-display font-bold text-3xl md:text-4xl text-black">{siteSettings.missionHeading}</h2>
-            <p className="text-black/80 mt-4 leading-relaxed">{siteSettings.missionBody}</p>
+            <h2 className="font-display font-bold text-3xl md:text-4xl text-black">{settings.missionHeading}</h2>
+            <p className="text-black/80 mt-4 leading-relaxed">{settings.missionBody}</p>
             <Link href="/about" className="inline-flex items-center gap-2 mt-6 text-black hover:text-white font-medium transition-colors">
               Read our story <ArrowRight className="w-4 h-4" />
             </Link>

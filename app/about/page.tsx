@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { BarChart3, Target, Eye, Shield } from 'lucide-react';
-import { authors, siteSettings } from '@/lib/data';
+import { getAuthors, getSiteSettings } from '@/lib/db';
 import Link from 'next/link';
 import {
   FlowerShape,
@@ -13,12 +13,19 @@ import {
   ConcentricRings,
 } from '@/components/GeometricShapes';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'About',
   description: 'PredictaView is an editorial publication covering prediction markets, forecasting, and data-driven analysis.',
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const [authors, settings] = await Promise.all([
+    getAuthors(),
+    getSiteSettings(),
+  ]);
+
   const values = [
     { icon: Target, title: 'Calibration Over Confidence', desc: 'We track our accuracy. When we get something wrong, we say so and explain what we missed.', color: '#FF7900' },
     { icon: Eye, title: 'Show the Math', desc: 'Every claim is backed by data. We pull live API data, run calculations, and show our work.', color: '#FFBF00' },
@@ -38,8 +45,8 @@ export default function AboutPage() {
         <HalfCircle size={80} color="#FF7900" direction="left" className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-40" />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
-          <h1 className="font-display font-bold text-4xl md:text-5xl text-ink mb-4">About {siteSettings.siteName}</h1>
-          <p className="text-xl text-ink-secondary leading-relaxed">{siteSettings.siteDescription}</p>
+          <h1 className="font-display font-bold text-4xl md:text-5xl text-ink mb-4">About {settings.siteName}</h1>
+          <p className="text-xl text-ink-secondary leading-relaxed">{settings.siteDescription}</p>
         </div>
       </div>
 
