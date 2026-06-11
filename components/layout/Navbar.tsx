@@ -14,14 +14,14 @@ export function Navbar({ siteName, categories }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur-md border-b border-surface-border">
+    <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur-md border-b-2 border-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Top bar */}
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-black flex items-center justify-center shadow-sm">
-              <TrendingUp className="w-4.5 h-4.5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-neon-lime border-2 border-black shadow-pop-sm flex items-center justify-center group-hover:-translate-y-0.5 transition-transform">
+              <TrendingUp className="w-4.5 h-4.5 text-black" />
             </div>
             <span className="font-display font-bold text-xl text-black group-hover:text-white transition-colors">
               {siteName}
@@ -54,14 +54,14 @@ export function Navbar({ siteName, categories }: NavbarProps) {
             <Link
               key={cat.id}
               href={`/category/${cat.slug}`}
-              className="px-3 py-1 text-xs font-medium text-black/60 hover:text-black rounded-full hover:bg-white/20 transition-all whitespace-nowrap"
+              className="px-3 py-1 text-xs font-semibold text-black/70 hover:text-black rounded-full border border-transparent hover:border-black hover:bg-neon-lime transition-all whitespace-nowrap"
             >
               {cat.name}
             </Link>
           ))}
           <Link
             href="/articles"
-            className="px-3 py-1 text-xs font-medium text-black hover:text-white rounded-full transition-all whitespace-nowrap"
+            className="px-3 py-1 text-xs font-bold text-black bg-neon-cyan border border-black rounded-full hover:bg-neon-magenta hover:text-white transition-all whitespace-nowrap"
           >
             All Topics →
           </Link>

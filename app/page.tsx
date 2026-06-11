@@ -6,14 +6,15 @@ import {
   FlowerShape,
   DaisyShape,
   UShape,
-  DottedSquare,
-  ArrowShape,
   BoldCircle,
   HalfCircle,
-  ConcentricRings,
   DiamondShape,
   ZigzagLine,
-  BlobShape,
+  ConcentricArches,
+  PinwheelTile,
+  QuatrefoilFlower,
+  CornerDotSquare,
+  ArrowBanner,
 } from '@/components/GeometricShapes';
 import {
   getFeaturedArticles,
@@ -53,14 +54,29 @@ export default async function Home() {
       {/* Hero Section */}
       {heroArticle && (
         <section className="border-b border-surface-border relative overflow-hidden">
-          {/* Bold geometric shapes — bright & vivid */}
-          <DottedSquare size={90} className="absolute top-6 left-6 opacity-60" />
-          <BoldCircle size={180} color="#0055FF" className="absolute -top-12 right-[30%] opacity-40" />
-          <DaisyShape size={70} className="absolute top-4 right-[35%] opacity-55" />
-          <HalfCircle size={140} color="#FF0066" direction="left" className="absolute -right-10 top-1/4 opacity-45" />
-          <ArrowShape width={120} height={45} className="absolute bottom-16 right-[20%] opacity-40" />
-          <FlowerShape size={80} color="#E01FFF" className="absolute bottom-8 left-[15%] opacity-50" />
-          <DiamondShape size={50} color="#FFE642" className="absolute top-1/3 left-[8%] opacity-60" />
+          {/* Shape marquee — solid, layered, super-bright (reference style) */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 relative z-10" aria-hidden="true">
+            <div className="flex items-center justify-between gap-4 overflow-hidden h-[88px] sm:h-[104px]">
+              <div className="relative flex-shrink-0 w-[120px] h-full">
+                <CornerDotSquare size={88} color="#2BD96E" dotColor="#9D5CFF" className="absolute top-1 left-0 -rotate-3" />
+                <DiamondShape size={36} color="#D9F24B" className="absolute bottom-0 right-0" />
+              </div>
+              <div className="relative flex-shrink-0 w-[150px] h-full hidden sm:block">
+                <UShape size={96} color="#4845F0" strokeWidth={24} className="absolute top-1 left-2" />
+                <QuatrefoilFlower size={64} petalColor="#C9B8F5" holeColor="#FF8C00" className="absolute top-6 right-0" />
+              </div>
+              <div className="relative flex-shrink-0 w-[130px] h-full hidden md:block">
+                <PinwheelTile size={86} bladeColor="#9D5CFF" className="absolute top-2 left-0 rotate-6" />
+                <DaisyShape size={48} petalColor="#29C5F6" centerColor="#FFE642" className="absolute bottom-0 right-0" />
+              </div>
+              <div className="relative flex-shrink-0 w-[160px] h-full hidden lg:block">
+                <ArrowBanner width={150} height={58} barColor="#29C5F6" className="absolute top-1/2 -translate-y-1/2 left-0" />
+              </div>
+              <div className="relative flex-shrink-0 w-[200px] h-full hidden lg:block">
+                <ConcentricArches size={150} colors={['#FF00B8', '#FF6B00', '#FF00B8']} className="absolute top-1/2 -translate-y-1/2 right-0" />
+              </div>
+            </div>
+          </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -131,25 +147,28 @@ export default async function Home() {
       )}
 
       {/* Geometric Divider */}
-      <div className="relative h-16 overflow-hidden">
-        <ZigzagLine width={2000} height={40} color="#FFE642" className="absolute top-4 left-0 opacity-50" />
+      <div className="relative h-16 overflow-hidden" aria-hidden="true">
+        <ZigzagLine width={2000} height={40} color="#D9F24B" className="absolute top-4 left-0" />
         <div className="absolute left-1/4 top-2">
-          <DottedSquare size={40} color="#00E676" dotColor="#E01FFF" className="opacity-60" />
+          <CornerDotSquare size={44} color="#29C5F6" dotColor="#FF00B8" className="rotate-6" />
         </div>
         <div className="absolute right-1/3 top-1">
-          <DaisyShape size={40} petalColor="#00E5FF" className="opacity-55" />
+          <DaisyShape size={44} petalColor="#9D5CFF" centerColor="#FFE642" />
+        </div>
+        <div className="absolute right-[12%] top-3 hidden md:block">
+          <QuatrefoilFlower size={40} petalColor="#C9B8F5" holeColor="#FF8C00" />
         </div>
       </div>
 
       {/* Latest Articles */}
       <section className="py-12 border-b border-surface-border relative overflow-hidden">
-        <ConcentricRings size={100} className="absolute -right-8 top-8 opacity-40" />
-        <BlobShape size={120} color="#FFE642" className="absolute -left-10 bottom-10 opacity-35" />
+        <ConcentricArches size={120} colors={['#4845F0', '#29C5F6', '#4845F0']} className="absolute -right-6 top-8 opacity-80 hidden md:block" />
+        <QuatrefoilFlower size={110} petalColor="#C9B8F5" holeColor="#FF8C00" className="absolute -left-8 bottom-10 opacity-90 hidden md:block" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-6 bg-black rounded-full" />
+              <div className="heading-chip bg-neon-lime" />
               <h2 className="font-display font-bold text-2xl text-black">Latest Analysis</h2>
             </div>
             <Link href="/articles" className="text-sm text-black hover:text-white font-medium flex items-center gap-1 transition-colors">
@@ -171,26 +190,30 @@ export default async function Home() {
 
       {/* Categories */}
       <section className="py-12 border-b border-surface-border relative overflow-hidden">
-        <FlowerShape size={100} color="#FF0066" className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-35" />
-        <UShape size={80} color="#0055FF" className="absolute right-10 top-6 opacity-40" />
+        <FlowerShape size={100} color="#FF00B8" className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-80 hidden md:block" />
+        <UShape size={80} color="#4845F0" strokeWidth={20} className="absolute right-6 top-6 opacity-80 hidden md:block" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-1 h-6 bg-black rounded-full" />
+            <div className="heading-chip bg-neon-magenta" />
             <h2 className="font-display font-bold text-2xl text-black">Browse Topics</h2>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {categories.map((cat) => {
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {categories.map((cat, i) => {
               const count = allArticles.filter((a) => a.categorySlug === cat.slug).length;
+              const brights = ['#D9F24B', '#2BD96E', '#29C5F6', '#C9B8F5', '#FF00B8', '#FFE642', '#9D5CFF', '#FF6B00'];
+              const bg = brights[i % brights.length];
+              const lightBg = ['#D9F24B', '#2BD96E', '#29C5F6', '#C9B8F5', '#FFE642'].includes(bg);
               return (
                 <Link
                   key={cat.id}
                   href={`/category/${cat.slug}`}
-                  className="group bg-white border border-white/30 rounded-2xl p-4 hover:border-black/30 hover:shadow-md transition-all card-hover"
+                  className="group rounded-2xl p-4 card-pop card-pop-hover"
+                  style={{ backgroundColor: bg }}
                 >
-                  <div className="w-3 h-3 rounded-full mb-3" style={{ backgroundColor: cat.color }} />
-                  <h3 className="font-display font-semibold text-black text-sm group-hover:text-ink-secondary transition-colors">{cat.name}</h3>
-                  <p className="text-xs text-ink-muted mt-1">{count} article{count !== 1 ? 's' : ''}</p>
+                  <div className="w-3.5 h-3.5 rounded-full mb-3 border-2 border-black" style={{ backgroundColor: cat.color }} />
+                  <h3 className={`font-display font-bold text-sm ${lightBg ? 'text-black' : 'text-white'}`}>{cat.name}</h3>
+                  <p className={`text-xs mt-1 font-medium ${lightBg ? 'text-black/60' : 'text-white/80'}`}>{count} article{count !== 1 ? 's' : ''}</p>
                 </Link>
               );
             })}
@@ -207,16 +230,16 @@ export default async function Home() {
 
       {/* Popular Reads + Writers */}
       <section className="py-12 border-b border-surface-border relative overflow-hidden">
-        <HalfCircle size={100} color="#00E676" direction="up" className="absolute -bottom-12 left-20 opacity-40" />
-        <DiamondShape size={60} color="#FFE642" className="absolute top-10 right-16 opacity-55" />
-        <DaisyShape size={55} petalColor="#00E5FF" centerColor="#FFE642" className="absolute bottom-6 right-1/3 opacity-45" />
+        <HalfCircle size={100} color="#2BD96E" direction="up" className="absolute -bottom-12 left-20 opacity-80 hidden md:block" />
+        <DiamondShape size={60} color="#D9F24B" className="absolute top-10 right-10 opacity-90 hidden md:block" />
+        <PinwheelTile size={60} bladeColor="#9D5CFF" className="absolute bottom-4 right-[8%] opacity-90 hidden lg:block rotate-12" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Popular */}
             <div className="lg:col-span-2">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-6 bg-black rounded-full" />
+                <div className="heading-chip bg-neon-cyan" />
                 <h2 className="font-display font-bold text-2xl text-black">Popular Reads</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -234,7 +257,7 @@ export default async function Home() {
             {/* Writers */}
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-6 bg-black rounded-full" />
+                <div className="heading-chip bg-neon-green" />
                 <h2 className="font-display font-bold text-xl text-black">Our Writers</h2>
               </div>
               <div className="space-y-4">
@@ -242,9 +265,9 @@ export default async function Home() {
                   <Link
                     key={author.id}
                     href={`/author/${author.slug}`}
-                    className="flex items-center gap-3 p-3 bg-white rounded-xl border border-white/30 hover:border-black/20 hover:shadow-sm transition-all group"
+                    className="flex items-center gap-3 p-3 bg-white rounded-xl card-pop card-pop-hover group"
                   >
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-surface-overlay flex-shrink-0">
+                    <div className="w-12 h-12 rounded-full overflow-hidden bg-surface-overlay flex-shrink-0 border-2 border-black">
                       <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
                     </div>
                     <div>
@@ -262,11 +285,11 @@ export default async function Home() {
       {/* Mission */}
       <section className="py-16 relative overflow-hidden">
         {/* Bold decorative shapes */}
-        <BoldCircle size={160} color="#0055FF" className="absolute -top-16 -left-16 opacity-30" />
-        <FlowerShape size={110} color="#E01FFF" className="absolute -bottom-8 -right-8 opacity-40" />
-        <ArrowShape width={100} height={38} className="absolute top-1/3 right-8 opacity-35" />
-        <DottedSquare size={65} color="#00E676" dotColor="#FF0066" className="absolute bottom-12 left-[10%] opacity-50" />
-        <UShape size={70} color="#FFE642" strokeWidth={14} className="absolute top-8 left-1/2 -translate-x-1/2 opacity-35" />
+        <BoldCircle size={160} color="#4845F0" className="absolute -top-16 -left-16 opacity-60" />
+        <FlowerShape size={110} color="#FF00B8" className="absolute -bottom-8 -right-8 opacity-80" />
+        <ArrowBanner width={110} height={44} barColor="#29C5F6" className="absolute top-1/3 right-6 hidden md:block" />
+        <CornerDotSquare size={64} color="#2BD96E" dotColor="#9D5CFF" className="absolute bottom-12 left-[10%] -rotate-6 hidden md:block" />
+        <QuatrefoilFlower size={64} petalColor="#C9B8F5" holeColor="#FF8C00" className="absolute top-6 left-[28%] hidden lg:block" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="max-w-3xl mx-auto text-center">

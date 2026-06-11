@@ -369,3 +369,161 @@ export function DiamondShape({
     </svg>
   );
 }
+
+// ─── 13. Concentric Arches (nested rounded "C" shapes) ──────────────
+export function ConcentricArches({
+  size = 160,
+  colors = ['#FF00B8', '#FF6B00', '#FF00B8'],
+  className = '',
+}: {
+  size?: number;
+  colors?: string[];
+  className?: string;
+}) {
+  // Nested rounded-square arcs opening to the left, like stacked race tracks
+  const strokes = [22, 22, 22];
+  const radii = [70, 46, 22];
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 160 160"
+      className={className}
+      aria-hidden="true"
+    >
+      {radii.map((r, i) => (
+        <path
+          key={i}
+          d={`M 160 ${80 - r} H ${80 - r * 0.2} A ${r} ${r} 0 0 0 ${80 - r * 0.2} ${80 + r} H 160`}
+          fill="none"
+          stroke={colors[i % colors.length]}
+          strokeWidth={strokes[i]}
+          strokeLinecap="round"
+        />
+      ))}
+    </svg>
+  );
+}
+
+// ─── 14. Pinwheel on rounded tile ────────────────────────────────────
+export function PinwheelTile({
+  size = 120,
+  bladeColor = '#9D5CFF',
+  tileColor = '#0A0A0A',
+  className = '',
+}: {
+  size?: number;
+  bladeColor?: string;
+  tileColor?: string;
+  className?: string;
+}) {
+  const blades = 8;
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 120 120"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="2" y="2" width="116" height="116" rx="24" fill={tileColor} />
+      {Array.from({ length: blades }).map((_, i) => (
+        <path
+          key={i}
+          d="M 60 60 Q 58 28 78 18 Q 70 44 64 58 Z"
+          fill={bladeColor}
+          transform={`rotate(${(i * 360) / blades} 60 60)`}
+        />
+      ))}
+      <circle cx="60" cy="60" r="7" fill={bladeColor} />
+    </svg>
+  );
+}
+
+// ─── 15. Quatrefoil flower (4 petals + diamond hole center) ─────────
+export function QuatrefoilFlower({
+  size = 110,
+  petalColor = '#C9B8F5',
+  holeColor = '#F2F7E0',
+  className = '',
+}: {
+  size?: number;
+  petalColor?: string;
+  holeColor?: string;
+  className?: string;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 110 110"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="55" cy="26" r="25" fill={petalColor} />
+      <circle cx="55" cy="84" r="25" fill={petalColor} />
+      <circle cx="26" cy="55" r="25" fill={petalColor} />
+      <circle cx="84" cy="55" r="25" fill={petalColor} />
+      <circle cx="55" cy="55" r="20" fill={petalColor} />
+      <path d="M 55 41 Q 60 50 69 55 Q 60 60 55 69 Q 50 60 41 55 Q 50 50 55 41 Z" fill={holeColor} />
+    </svg>
+  );
+}
+
+// ─── 16. Square with corner dots ────────────────────────────────────
+export function CornerDotSquare({
+  size = 110,
+  color = '#2BD96E',
+  dotColor = '#9D5CFF',
+  className = '',
+}: {
+  size?: number;
+  color?: string;
+  dotColor?: string;
+  className?: string;
+}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 110 110"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="4" y="4" width="102" height="102" rx="14" fill={color} />
+      <circle cx="16" cy="16" r="9" fill={dotColor} />
+      <circle cx="94" cy="16" r="9" fill={dotColor} />
+      <circle cx="16" cy="94" r="9" fill={dotColor} />
+      <circle cx="94" cy="94" r="9" fill={dotColor} />
+    </svg>
+  );
+}
+
+// ─── 17. Arrow banner (black arrow on bright bar) ───────────────────
+export function ArrowBanner({
+  width = 180,
+  height = 70,
+  barColor = '#29C5F6',
+  arrowColor = '#0A0A0A',
+  className = '',
+}: {
+  width?: number;
+  height?: number;
+  barColor?: string;
+  arrowColor?: string;
+  className?: string;
+}) {
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox="0 0 180 70"
+      className={className}
+      aria-hidden="true"
+    >
+      <rect x="0" y="0" width="180" height="70" fill={barColor} />
+      <rect x="14" y="28" width="110" height="14" fill={arrowColor} />
+      <path d="M 118 10 L 164 35 L 118 60 Z" fill={arrowColor} />
+    </svg>
+  );
+}
