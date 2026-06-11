@@ -2,9 +2,13 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { Clock, Calendar, Twitter, Linkedin, ChevronRight } from 'lucide-react';
+import { Clock, Calendar, ChevronRight } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
+import { ReadingProgressBar } from '@/components/ReadingProgressBar';
+import { TableOfContents } from '@/components/TableOfContents';
+import { GiscusComments } from '@/components/GiscusComments';
+import { ShareButtons } from '@/components/ShareButtons';
 import {
   getArticleBySlug,
   getPublishedArticles,
@@ -95,6 +99,7 @@ export default async function ArticlePage({ params }: Props) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <ReadingProgressBar />
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumbs */}
@@ -159,6 +164,9 @@ export default async function ArticlePage({ params }: Props) {
           </div>
         )}
 
+        {/* Table of Contents */}
+        <TableOfContents />
+
         {/* Pull Quote */}
         {article.pullQuote && (
           <blockquote className="border-l-4 border-black pl-6 py-2 my-8 text-xl font-display text-ink/80 italic">
@@ -193,25 +201,7 @@ export default async function ArticlePage({ params }: Props) {
         </div>
 
         {/* Share */}
-        <div className="flex items-center gap-3 mt-6 pb-8 border-b border-white/20">
-          <span className="text-sm text-ink-muted font-medium">Share:</span>
-          <a
-            href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(articleUrl)}&text=${encodeURIComponent(article.title)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2 bg-white/15 rounded-lg text-ink-secondary hover:text-black hover:bg-surface-border transition-all"
-          >
-            <Twitter className="w-4 h-4" />
-          </a>
-          <a
-            href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(articleUrl)}&title=${encodeURIComponent(article.title)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-2 bg-white/15 rounded-lg text-ink-secondary hover:text-black hover:bg-surface-border transition-all"
-          >
-            <Linkedin className="w-4 h-4" />
-          </a>
-        </div>
+        <ShareButtons url={articleUrl} title={article.title} />
 
         {/* Author Bio */}
         {author && (
@@ -244,6 +234,9 @@ export default async function ArticlePage({ params }: Props) {
             <strong className="text-ink-secondary">Disclaimer:</strong> This content is for informational and educational purposes only. It does not constitute financial advice, investment recommendations, or trading guidance. Prediction market participation involves risk of loss. Always conduct your own research before making any financial decisions.
           </p>
         </div>
+
+        {/* Comments */}
+        <GiscusComments slug={article.slug} />
       </article>
 
       {/* Related Articles */}

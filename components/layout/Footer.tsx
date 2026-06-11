@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp, Twitter, Linkedin } from 'lucide-react';
 import { Category, SiteSettings } from '@/types';
 import {
   FlowerShape,
@@ -81,7 +81,29 @@ export function Footer({ settings, categories }: FooterProps) {
             © {new Date().getFullYear()} {settings.siteName}. All rights reserved. Content is for informational purposes only and does not constitute financial advice.
           </p>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
+            {settings.socialTwitter && (
+              <a
+                href={settings.socialTwitter.startsWith('http') ? settings.socialTwitter : `https://twitter.com/${settings.socialTwitter.replace('@', '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-black/50 hover:text-black transition-colors"
+                aria-label="Twitter"
+              >
+                <Twitter className="w-4 h-4" />
+              </a>
+            )}
+            {settings.socialLinkedin && (
+              <a
+                href={settings.socialLinkedin.startsWith('http') ? settings.socialLinkedin : `https://linkedin.com/in/${settings.socialLinkedin}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-black/50 hover:text-black transition-colors"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="w-4 h-4" />
+              </a>
+            )}
+            <div className="flex items-center gap-1 ml-2">
               <div className="w-1.5 h-1.5 rounded-full bg-[#FFE642]" />
               <div className="w-1.5 h-1.5 rounded-full bg-[#00E676]" />
               <div className="w-1.5 h-1.5 rounded-full bg-[#0055FF]" />

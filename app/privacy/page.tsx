@@ -20,7 +20,7 @@ export default async function PrivacyPage() {
         <h2>Third-Party Services</h2>
         <p>Our site may contain links to prediction market platforms, research tools, and other third-party websites. We are not responsible for the privacy practices of these external sites.</p>
         <h2>Contact</h2>
-        <p>Questions about this policy can be directed to contact@predictaview.com.</p>
+        <p>Questions about this policy can be directed to ezzekielnjuguna.en@gmail.com.</p>
       </div>
     </div>
   );

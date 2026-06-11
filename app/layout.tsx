@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter, Space_Grotesk } from 'next/font/google';
 import './globals.css';
+import { Analytics } from '@vercel/analytics/react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { getSiteSettings, getCategories } from '@/lib/db';
@@ -75,6 +76,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Navbar siteName={settings.siteName} categories={categories} />
         <main className="flex-1">{children}</main>
         <Footer settings={settings} categories={categories} />
+        <Analytics />
       </body>
     </html>
   );

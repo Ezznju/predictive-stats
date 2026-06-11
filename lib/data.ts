@@ -1,17 +1,17 @@
 import { Author, Category, Article, SiteSettings } from '@/types';
 
 export const siteSettings: SiteSettings = {
-  siteName: 'PredictaView',
+  siteName: 'Predictive Stats',
   siteTagline: 'Sharp analysis for uncertain markets',
-  siteDescription: 'PredictaView is an editorial publication covering prediction markets, forecasting, probabilistic analysis, and data-driven commentary.',
-  siteUrl: 'https://predictaview.vercel.app',
+  siteDescription: 'Predictive Stats is an editorial publication covering prediction markets, forecasting, probabilistic analysis, and data-driven commentary.',
+  siteUrl: 'https://predictive-stats.vercel.app',
   newsletterHeading: 'The Weekly Signal',
   newsletterBody: 'Every Friday — the week\'s sharpest prediction market analysis, forecasting insights, and data-driven commentary. No noise.',
   missionHeading: 'Clarity in a world of uncertainty',
-  missionBody: 'PredictaView exists to make probabilistic thinking accessible and rigorous. We cover prediction markets, forecasting methodology, and data-driven analysis with editorial independence and intellectual honesty.',
-  socialTwitter: 'https://twitter.com/predictaview',
-  socialLinkedin: 'https://linkedin.com/company/predictaview',
-  socialGithub: 'https://github.com/predictaview',
+  missionBody: 'Predictive Stats exists to make probabilistic thinking accessible and rigorous. We cover prediction markets, forecasting methodology, and data-driven analysis with editorial independence and intellectual honesty.',
+  socialTwitter: '@predictivestats',
+  socialLinkedin: 'https://www.linkedin.com/in/ezekiel-chiri-9705a2108/',
+  socialGithub: '',
 };
 
 export const authors: Author[] = [
