@@ -105,38 +105,38 @@ export const articles: Article[] = [
   },
   {
     id: 'article-2',
-    title: '5 Cross-Platform Arbitrage Strategies for the 2026 FIFA World Cup',
-    slug: '5-cross-platform-arbitrage-strategies-fifa-world-cup-2026',
-    excerpt: 'Polymarket and Kalshi are pricing World Cup outcomes differently right now. Here are five concrete arbitrage strategies with real numbers, expected returns, and execution steps.',
-    content: `<h2>Why World Cup Markets Create Arbitrage Windows</h2>
-<p>The 2026 FIFA World Cup will be the first hosted across three countries — the United States, Mexico, and Canada. This creates pricing complexity that prediction market platforms handle differently. Polymarket users skew American and crypto-native. Kalshi users skew institutional and regulatory-aware. These different user bases produce different price opinions on the same outcomes.</p>
+    title: '5 Cross-Platform Sports Arbitrage Strategies Between Polymarket and Kalshi',
+    slug: '5-cross-platform-sports-arbitrage-strategies-polymarket-kalshi',
+    excerpt: 'Polymarket and Kalshi price the same sporting events differently. Here are five concrete arbitrage strategies with real numbers, expected returns, and execution mechanics that work across NBA, NFL, MLB, soccer, and MMA markets.',
+    content: `<h2>Why Sports Markets Create Arbitrage Windows</h2>
+<p>Prediction market platforms attract different user bases. Polymarket skews American and crypto-native. Kalshi skews institutional and regulatory-aware. When both platforms list the same sporting event, these different trader populations produce different price opinions on identical outcomes. NBA playoff series, NFL regular season games, MLB pennant races, Premier League matches, UFC title fights — the pricing gaps show up everywhere.</p>
 <p>Arbitrage in prediction markets works the same way it does in traditional finance: buy low on one platform, sell high on another, and pocket the difference minus fees. The challenge is execution speed, capital lockup duration, and fee structures that eat into margins.</p>
 
-<h2>Strategy 1: Outright Winner Spread Trading</h2>
-<p>The simplest arbitrage targets the outright tournament winner market. As of June 2025, Brazil YES trades at 0.18 on Polymarket and 0.21 on Kalshi. That 3-cent spread represents a risk-free profit if you can buy YES on Polymarket at 0.18 and effectively sell YES on Kalshi at 0.21.</p>
-<p>The mechanics require buying YES on Polymarket and buying NO on Kalshi (since Kalshi doesn't have a direct "sell YES" function for most markets). If Brazil wins, you collect 1.00 from Polymarket and lose 0.79 on Kalshi, netting 0.03 per share. If Brazil doesn't win, you collect nothing from Polymarket but gain 0.21 from Kalshi NO, against your 0.18 Polymarket loss — again netting 0.03.</p>
+<h2>Strategy 1: Championship and Tournament Winner Spreads</h2>
+<p>The simplest arbitrage targets outright winner markets across major leagues. When Polymarket prices a team to win the NBA Finals at 0.18 and Kalshi lists the same team at 0.21, that 3-cent spread represents a risk-free profit if you can buy YES on one platform and effectively sell YES on the other.</p>
+<p>The mechanics require buying YES on Polymarket and buying NO on Kalshi (since Kalshi doesn't have a direct "sell YES" function for most markets). If the team wins, you collect 1.00 from Polymarket and lose 0.79 on Kalshi, netting 0.03 per share. If the team doesn't win, you collect nothing from Polymarket but gain 0.21 from Kalshi NO, against your 0.18 Polymarket loss — again netting 0.03. This pattern repeats across NFL Super Bowl markets, MLB World Series futures, and international soccer tournaments.</p>
 
-<h2>Strategy 2: Group Stage Over/Under Mismatches</h2>
-<p>Group stage total goals markets show wider disagreements between platforms. Polymarket might price "Over 2.5 goals in Brazil vs. Germany" at 0.72 while Kalshi prices the same threshold at 0.68. These mismatches appear because the platforms use different liquidity provision models and attract different trader populations.</p>
+<h2>Strategy 2: Game Totals and Over/Under Mismatches</h2>
+<p>Game total markets show wider disagreements between platforms. Polymarket might price "Over 215.5 total points" in a Lakers-Celtics game at 0.72 while Kalshi prices the same threshold at 0.68. These mismatches appear because the platforms use different liquidity provision models and attract different trader populations. NFL game totals, MLB run lines, and Premier League goal markets all exhibit the same pattern.</p>
 
-<h2>Strategy 3: Advancement Probability Stacking</h2>
-<p>This strategy targets the "will X team advance from group stage" markets across both platforms. By mapping all group outcomes and comparing advancement probabilities, you can identify cases where the combined cost of a complete hedged position is below 1.00, guaranteeing profit regardless of the outcome.</p>
+<h2>Strategy 3: Series and Playoff Advancement Stacking</h2>
+<p>This strategy targets "will X team advance" markets across both platforms during playoff series. By mapping all series outcomes and comparing advancement probabilities, you can identify cases where the combined cost of a complete hedged position is below 1.00, guaranteeing profit regardless of the outcome. NBA seven-game series are ideal because both platforms list them, and the probabilities shift meaningfully after each game.</p>
 
-<h2>Strategy 4: Top Scorer Correlation Trades</h2>
-<p>Top scorer markets are notoriously illiquid on both platforms, which creates wider spreads and more arbitrage opportunities. The key is identifying players whose goal probability is priced inconsistently across platforms and constructing positions that profit from the discrepancy.</p>
+<h2>Strategy 4: Player Prop Correlation Trades</h2>
+<p>Player prop markets — MVP awards, scoring titles, individual game performance — are notoriously illiquid on both platforms, which creates wider spreads and more arbitrage opportunities. The key is identifying players whose award probability or stat line is priced inconsistently across platforms and constructing positions that profit from the discrepancy. NFL MVP, NBA scoring leader, and UFC fight outcome props all qualify.</p>
 
 <h2>Strategy 5: Conditional Market Chains</h2>
-<p>The most sophisticated strategy chains conditional markets together. If Polymarket prices "Brazil wins Group A" at 0.55 and Kalshi prices "Brazil reaches semifinals" at 0.35, you can calculate whether the implied conditional probability of reaching the semis given group victory is consistent across platforms. When it isn't, you have an edge.</p>`,
+<p>The most sophisticated strategy chains conditional markets together. If Polymarket prices "Lakers win Western Conference" at 0.55 and Kalshi prices "Lakers win NBA Championship" at 0.35, you can calculate whether the implied conditional probability of winning the title given conference victory is consistent across platforms. When it isn't, you have an edge. This approach works with any sport that has sequential elimination rounds — tennis Grand Slams, March Madness brackets, international soccer tournaments.</p>`,
     featuredImage: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=1200&h=630&fit=crop',
     authorId: 'author-1',
     categorySlug: 'strategy',
-    tags: ['arbitrage', 'FIFA', 'world-cup', 'polymarket', 'kalshi', 'cross-platform'],
+    tags: ['arbitrage', 'sports', 'NBA', 'NFL', 'polymarket', 'kalshi', 'cross-platform'],
     publishDate: '2025-06-08',
     readTime: 15,
     featured: true,
     status: 'published',
-    seoTitle: '5 Cross-Platform Arbitrage Strategies for FIFA World Cup 2026 | PredictaView',
-    metaDescription: 'Concrete arbitrage strategies between Polymarket and Kalshi for 2026 FIFA World Cup markets, with real pricing data and expected return calculations.',
+    seoTitle: '5 Cross-Platform Sports Arbitrage Strategies: Polymarket vs Kalshi | PredictaView',
+    metaDescription: 'Concrete sports arbitrage strategies between Polymarket and Kalshi across NBA, NFL, MLB, soccer, and MMA markets, with real pricing data and expected return calculations.',
   },
   {
     id: 'article-3',
