@@ -38,8 +38,8 @@ export default function NewArticlePage() {
   useEffect(() => {
     async function load() {
       const [cRes, aRes] = await Promise.all([
-        fetch('/api/categories'),
-        fetch('/api/authors'),
+        fetch('/api/categories', { cache: 'no-store' }),
+        fetch('/api/authors', { cache: 'no-store' }),
       ]);
       const cats = await cRes.json();
       const auths = await aRes.json();

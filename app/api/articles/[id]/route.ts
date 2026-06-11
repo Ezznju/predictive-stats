@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const { data, error } = await supabase
     .from('articles')
@@ -9,7 +11,9 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     .single();
 
   if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(data);
+  return NextResponse.json(data, {
+    headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+  });
 }
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {

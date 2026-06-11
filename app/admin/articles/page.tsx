@@ -13,9 +13,9 @@ export default function AdminArticlesPage() {
   useEffect(() => {
     async function load() {
       const [aRes, cRes, uRes] = await Promise.all([
-        fetch('/api/articles'),
-        fetch('/api/categories'),
-        fetch('/api/authors'),
+        fetch('/api/articles', { cache: 'no-store' }),
+        fetch('/api/categories', { cache: 'no-store' }),
+        fetch('/api/authors', { cache: 'no-store' }),
       ]);
       setArticles(await aRes.json());
       setCategories(await cRes.json());

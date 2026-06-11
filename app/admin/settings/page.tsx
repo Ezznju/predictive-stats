@@ -23,7 +23,7 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     async function load() {
-      const res = await fetch('/api/settings');
+      const res = await fetch('/api/settings', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setSettings({

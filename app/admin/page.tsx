@@ -20,9 +20,9 @@ export default function AdminDashboard() {
     async function load() {
       try {
         const [articlesRes, categoriesRes, authorsRes] = await Promise.all([
-          fetch('/api/articles'),
-          fetch('/api/categories'),
-          fetch('/api/authors'),
+          fetch('/api/articles', { cache: 'no-store' }),
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/authors', { cache: 'no-store' }),
         ]);
         const articles = await articlesRes.json();
         const categories = await categoriesRes.json();

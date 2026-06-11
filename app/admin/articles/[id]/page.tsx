@@ -40,9 +40,9 @@ export default function EditArticlePage({ params }: { params: { id: string } }) 
     async function load() {
       try {
         const [artRes, cRes, aRes] = await Promise.all([
-          fetch(`/api/articles/${params.id}`),
-          fetch('/api/categories'),
-          fetch('/api/authors'),
+          fetch(`/api/articles/${params.id}`, { cache: 'no-store' }),
+          fetch('/api/categories', { cache: 'no-store' }),
+          fetch('/api/authors', { cache: 'no-store' }),
         ]);
 
         if (!artRes.ok) { setNotFound(true); setLoading(false); return; }

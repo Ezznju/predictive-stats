@@ -28,8 +28,8 @@ export default function AdminCategoriesPage() {
   useEffect(() => {
     async function load() {
       const [cRes, aRes] = await Promise.all([
-        fetch('/api/categories'),
-        fetch('/api/articles'),
+        fetch('/api/categories', { cache: 'no-store' }),
+        fetch('/api/articles', { cache: 'no-store' }),
       ]);
       setCategories(await cRes.json());
       setArticles(await aRes.json());
