@@ -42,6 +42,23 @@
     @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
   }
 
+  /* Neo-brutalist "pop" card: thick black border + hard offset shadow */
+  .card-pop {
+    @apply border-2 border-black shadow-pop transition-all duration-200;
+  }
+  .card-pop-hover {
+    @apply hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-pop-lg;
+  }
+
+  .btn-pop {
+    @apply border-2 border-black shadow-pop-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-pop active:translate-x-0 active:translate-y-0 active:shadow-pop-sm;
+  }
+
+  /* Bright heading chip used next to section titles */
+  .heading-chip {
+    @apply inline-block w-4 h-7 border-2 border-black shadow-pop-sm rounded-md;
+  }
+
   .category-badge {
     @apply inline-block px-3 py-1 text-xs font-bold uppercase tracking-wider rounded-full;
   }

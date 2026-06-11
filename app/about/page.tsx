@@ -4,11 +4,11 @@ import { getAuthors, getSiteSettings } from '@/lib/db';
 import Link from 'next/link';
 import {
   FlowerShape,
-  DottedSquare,
-  UShape,
+    UShape,
   BoldCircle,
   DaisyShape,
-  ArrowShape,
+  ArrowBanner,
+  CornerDotSquare,
   HalfCircle,
   ConcentricRings,
 } from '@/components/GeometricShapes';
@@ -37,12 +37,12 @@ export default async function AboutPage() {
     <div className="relative">
       {/* Top decorative band */}
       <div className="relative overflow-hidden bg-black/5 py-16">
-        <DottedSquare size={80} color="#2ECC71" dotColor="#E01FFF" className="absolute top-4 left-8 opacity-55" />
-        <BoldCircle size={140} color="#0055FF" className="absolute -top-10 right-[20%] opacity-35" />
-        <FlowerShape size={90} color="#FF0066" className="absolute bottom-2 right-12 opacity-40" />
-        <UShape size={70} color="#FFBF00" strokeWidth={12} className="absolute top-6 left-[35%] opacity-40" />
-        <ArrowShape width={100} height={38} className="absolute bottom-6 left-[15%] opacity-35" />
-        <HalfCircle size={80} color="#FF7900" direction="left" className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-40" />
+        <CornerDotSquare size={80} color="#2BD96E" dotColor="#9D5CFF" className="absolute top-4 left-8 -rotate-3 hidden md:block" />
+        <BoldCircle size={140} color="#4845F0" className="absolute -top-10 right-[20%] opacity-70 hidden md:block" />
+        <FlowerShape size={90} color="#FF00B8" className="absolute bottom-2 right-12 opacity-80 hidden md:block" />
+        <UShape size={70} color="#4845F0" strokeWidth={16} className="absolute top-6 left-[35%] opacity-80 hidden lg:block" />
+        <ArrowBanner width={100} height={40} barColor="#29C5F6" className="absolute bottom-6 left-[15%] hidden lg:block" />
+        <HalfCircle size={80} color="#D9F24B" direction="left" className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-80 hidden md:block" />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
           <h1 className="font-display font-bold text-4xl md:text-5xl text-ink mb-4">About {settings.siteName}</h1>

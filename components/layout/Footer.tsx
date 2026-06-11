@@ -4,10 +4,10 @@ import { Category, SiteSettings } from '@/types';
 import {
   FlowerShape,
   UShape,
-  DottedSquare,
   BoldCircle,
-  DaisyShape,
   HalfCircle,
+  CornerDotSquare,
+  QuatrefoilFlower,
 } from '@/components/GeometricShapes';
 
 interface FooterProps {
@@ -17,22 +17,22 @@ interface FooterProps {
 
 export function Footer({ settings, categories }: FooterProps) {
   return (
-    <footer className="bg-surface-overlay border-t border-surface-border mt-16 relative overflow-hidden">
+    <footer className="bg-surface-overlay border-t-2 border-black mt-16 relative overflow-hidden">
       {/* Geometric shape decorations */}
-      <FlowerShape size={90} color="#FF0066" className="absolute -top-8 right-[15%] opacity-30" />
-      <UShape size={70} color="#0055FF" strokeWidth={12} className="absolute bottom-8 left-[8%] opacity-30" />
-      <DottedSquare size={50} color="#00E676" dotColor="#E01FFF" className="absolute top-1/3 -right-4 opacity-40" />
-      <BoldCircle size={80} color="#FFE642" className="absolute -bottom-10 right-[40%] opacity-25" />
-      <HalfCircle size={60} color="#FF0066" direction="down" className="absolute -top-6 left-[30%] opacity-30" />
-      <DaisyShape size={45} petalColor="#00E5FF" className="absolute bottom-16 right-[25%] opacity-35" />
+      <FlowerShape size={90} color="#FF00B8" className="absolute -top-8 right-[15%] opacity-70" />
+      <UShape size={70} color="#4845F0" strokeWidth={16} className="absolute bottom-8 left-[8%] opacity-60 hidden md:block" />
+      <CornerDotSquare size={54} color="#2BD96E" dotColor="#9D5CFF" className="absolute top-1/3 -right-4 opacity-80" />
+      <BoldCircle size={80} color="#D9F24B" className="absolute -bottom-10 right-[40%] opacity-60" />
+      <HalfCircle size={60} color="#29C5F6" direction="down" className="absolute -top-6 left-[30%] opacity-70" />
+      <QuatrefoilFlower size={48} petalColor="#C9B8F5" holeColor="#FF9F2E" className="absolute bottom-16 right-[25%] opacity-80 hidden md:block" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-black flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-lg bg-neon-lime border-2 border-black flex items-center justify-center">
+                <TrendingUp className="w-4 h-4 text-black" />
               </div>
               <span className="font-display font-bold text-lg text-black">{settings.siteName}</span>
             </Link>

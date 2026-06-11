@@ -19,6 +19,16 @@ const config: Config = {
           purple: '#7C3AED',
           pink: '#EC4899',
         },
+        neon: {
+          lime: '#D9F24B',
+          green: '#2BD96E',
+          cyan: '#29C5F6',
+          blue: '#4845F0',
+          magenta: '#FF00B8',
+          purple: '#9D5CFF',
+          lavender: '#C9B8F5',
+          orange: '#FF6B00',
+        },
         surface: {
           DEFAULT: '#FF8C00',
           raised: '#FFFFFF',
@@ -32,6 +42,11 @@ const config: Config = {
           muted: '#333333',
           faint: '#666666',
         },
+      },
+      boxShadow: {
+        'pop-sm': '3px 3px 0 0 #000',
+        pop: '4px 4px 0 0 #000',
+        'pop-lg': '6px 6px 0 0 #000',
       },
       fontFamily: {
         display: ['var(--font-space-grotesk)', 'system-ui', 'sans-serif'],

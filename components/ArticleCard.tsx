@@ -34,13 +34,13 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
   if (variant === 'featured') {
     return (
       <Link href={`/articles/${article.slug}`} className="group block">
-        <div className="relative overflow-hidden rounded-2xl aspect-[16/9] mb-4 shadow-md">
+        <div className="relative overflow-hidden rounded-2xl aspect-[16/9] mb-4 card-pop card-pop-hover">
           <CardImage src={article.featuredImage} alt={article.title} sizes="(max-width: 768px) 100vw, 66vw" priority />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-6">
             {category && (
               <span
-                className="category-badge mb-3"
+                className="category-badge mb-3 border-2 border-black shadow-pop-sm"
                 style={{ backgroundColor: category.color, color: '#fff' }}
               >
                 {category.name}
@@ -66,7 +66,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
   if (variant === 'horizontal') {
     return (
       <Link href={`/articles/${article.slug}`} className="group flex gap-4 items-start">
-        <div className="relative w-24 h-24 md:w-28 md:h-20 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
+        <div className="relative w-24 h-24 md:w-28 md:h-20 rounded-xl overflow-hidden flex-shrink-0 border-2 border-black shadow-pop-sm">
           <CardImage src={article.featuredImage} alt={article.title} sizes="120px" />
         </div>
         <div className="flex-1 min-w-0">
@@ -101,13 +101,13 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
 
   // Default card
   return (
-    <Link href={`/articles/${article.slug}`} className="group block card-hover">
-      <div className="bg-white rounded-2xl overflow-hidden border border-white/30 hover:border-black/20 transition-all shadow-sm hover:shadow-md">
+    <Link href={`/articles/${article.slug}`} className="group block">
+      <div className="bg-white rounded-2xl overflow-hidden card-pop card-pop-hover">
         <div className="relative aspect-[16/9] overflow-hidden">
           <CardImage src={article.featuredImage} alt={article.title} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
           {category && (
             <span
-              className="absolute top-3 left-3 category-badge"
+              className="absolute top-3 left-3 category-badge border-2 border-black shadow-pop-sm"
               style={{ backgroundColor: category.color, color: '#fff' }}
             >
               {category.name}

@@ -3,11 +3,11 @@ import { ArticleCard } from '@/components/ArticleCard';
 import { getPublishedArticles, getCategories, getAuthors } from '@/lib/db';
 import Link from 'next/link';
 import {
-  DottedSquare,
-  BoldCircle,
+  CornerDotSquare,
   FlowerShape,
   DaisyShape,
-  ArrowShape,
+  ArrowBanner,
+  ConcentricArches,
 } from '@/components/GeometricShapes';
 
 export const dynamic = 'force-dynamic';
@@ -30,11 +30,11 @@ export default async function ArticlesPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 relative overflow-hidden">
       {/* Geometric decorations */}
-      <DottedSquare size={70} color="#2ECC71" dotColor="#EC4899" className="absolute top-4 right-8 opacity-50" />
-      <BoldCircle size={100} color="#0055FF" className="absolute -top-8 left-[15%] opacity-30" />
-      <FlowerShape size={80} color="#E01FFF" className="absolute top-[30%] -right-6 opacity-30" />
-      <DaisyShape size={50} className="absolute bottom-[20%] -left-4 opacity-40" />
-      <ArrowShape width={80} height={30} className="absolute bottom-16 right-[10%] opacity-30" />
+      <CornerDotSquare size={72} color="#2BD96E" dotColor="#9D5CFF" className="absolute top-4 right-8 -rotate-3 hidden md:block" />
+      <ConcentricArches size={110} colors={['#FF00B8', '#FF6B00', '#FF00B8']} className="absolute -top-4 left-[40%] hidden lg:block" />
+      <FlowerShape size={80} color="#FF00B8" className="absolute top-[30%] -right-6 opacity-70 hidden md:block" />
+      <DaisyShape size={50} petalColor="#9D5CFF" centerColor="#FFE642" className="absolute bottom-[20%] -left-4 opacity-80 hidden md:block" />
+      <ArrowBanner width={90} height={36} barColor="#29C5F6" className="absolute bottom-16 right-[6%] hidden lg:block" />
 
       {/* Header */}
       <div className="mb-10 relative z-10">
