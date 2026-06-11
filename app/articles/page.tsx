@@ -22,11 +22,11 @@ export default function ArticlesPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 relative overflow-hidden">
       {/* Geometric decorations */}
-      <DottedSquare size={70} color="#2ECC71" dotColor="#EC4899" className="absolute top-4 right-8 opacity-20" />
-      <BoldCircle size={100} color="#4A6CF7" className="absolute -top-8 left-[15%] opacity-10" />
-      <FlowerShape size={80} color="#7C3AED" className="absolute top-[30%] -right-6 opacity-10" />
-      <DaisyShape size={50} className="absolute bottom-[20%] -left-4 opacity-15" />
-      <ArrowShape width={80} height={30} className="absolute bottom-16 right-[10%] opacity-10" />
+      <DottedSquare size={70} color="#2ECC71" dotColor="#EC4899" className="absolute top-4 right-8 opacity-50" />
+      <BoldCircle size={100} color="#0055FF" className="absolute -top-8 left-[15%] opacity-30" />
+      <FlowerShape size={80} color="#E01FFF" className="absolute top-[30%] -right-6 opacity-30" />
+      <DaisyShape size={50} className="absolute bottom-[20%] -left-4 opacity-40" />
+      <ArrowShape width={80} height={30} className="absolute bottom-16 right-[10%] opacity-30" />
 
       {/* Header */}
       <div className="mb-10 relative z-10">
@@ -36,14 +36,14 @@ export default function ArticlesPage() {
 
       {/* Category filters */}
       <div className="flex flex-wrap gap-2 mb-8 relative z-10">
-        <Link href="/articles" className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-full bg-brand-orange text-white transition-all shadow-sm">
+        <Link href="/articles" className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-full bg-black text-white transition-all shadow-sm">
           All
         </Link>
         {categories.map((cat) => (
           <Link
             key={cat.id}
             href={`/category/${cat.slug}`}
-            className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-full border border-surface-border text-ink-secondary hover:text-ink hover:border-brand-amber/50 hover:bg-surface-overlay transition-all"
+            className="px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-full border border-white/20 text-ink-secondary hover:text-ink hover:border-brand-amber/50 hover:bg-white/15 transition-all"
           >
             {cat.name}
           </Link>

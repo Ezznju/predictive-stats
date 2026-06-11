@@ -67,14 +67,14 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
         </div>
         <div className="flex-1 min-w-0">
           {category && (
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: category.color }}>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-black">
               {category.name}
             </span>
           )}
-          <h3 className="font-display font-semibold text-sm text-ink leading-snug group-hover:text-brand-orange transition-colors line-clamp-2 mt-0.5">
+          <h3 className="font-display font-semibold text-sm text-black leading-snug group-hover:text-white transition-colors line-clamp-2 mt-0.5">
             {article.title}
           </h3>
-          <span className="text-[11px] text-ink-muted mt-1 block">{article.readTime} min read</span>
+          <span className="text-[11px] text-black/60 mt-1 block">{article.readTime} min read</span>
         </div>
       </Link>
     );
@@ -83,11 +83,11 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
   if (variant === 'compact') {
     return (
       <Link href={`/articles/${article.slug}`} className="group block">
-        <h3 className="font-display font-semibold text-sm text-ink leading-snug group-hover:text-brand-orange transition-colors line-clamp-2">
+        <h3 className="font-display font-semibold text-sm text-black leading-snug group-hover:text-white transition-colors line-clamp-2">
           {article.title}
         </h3>
-        <div className="flex items-center gap-2 mt-1 text-[11px] text-ink-muted">
-          {category && <span style={{ color: category.color }}>{category.name}</span>}
+        <div className="flex items-center gap-2 mt-1 text-[11px] text-black/60">
+          {category && <span>{category.name}</span>}
           <span>·</span>
           <span>{article.readTime} min</span>
         </div>
@@ -98,7 +98,7 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
   // Default card
   return (
     <Link href={`/articles/${article.slug}`} className="group block card-hover">
-      <div className="bg-surface-raised rounded-2xl overflow-hidden border border-surface-border hover:border-brand-amber/40 transition-all shadow-sm hover:shadow-md">
+      <div className="bg-white rounded-2xl overflow-hidden border border-white/30 hover:border-black/20 transition-all shadow-sm hover:shadow-md">
         <div className="relative aspect-[16/9] overflow-hidden">
           <Image
             src={article.featuredImage}
@@ -117,7 +117,7 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
           )}
         </div>
         <div className="p-5">
-          <h3 className="font-display font-bold text-lg text-ink leading-snug group-hover:text-brand-orange transition-colors line-clamp-2">
+          <h3 className="font-display font-bold text-lg text-black leading-snug group-hover:text-brand-orange transition-colors line-clamp-2">
             {article.title}
           </h3>
           <p className="text-sm text-ink-secondary mt-2 line-clamp-2 leading-relaxed">{article.excerpt}</p>
@@ -127,7 +127,7 @@ export function ArticleCard({ article, variant = 'default' }: ArticleCardProps) 
               <span>·</span>
               <span>{formatDate(article.publishDate)}</span>
             </div>
-            <span className="text-brand-orange font-medium">{article.readTime} min</span>
+            <span className="text-black font-medium">{article.readTime} min</span>
           </div>
         </div>
       </div>

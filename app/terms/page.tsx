@@ -7,7 +7,7 @@ export default function TermsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
       <h1 className="font-display font-bold text-4xl text-ink mb-8">Terms of Use</h1>
-      <div className="prose max-w-none prose-headings:font-display prose-p:text-ink-secondary prose-li:text-ink-secondary prose-h2:text-xl prose-h2:text-ink prose-a:text-brand-orange">
+      <div className="prose max-w-none prose-headings:font-display prose-p:text-ink-secondary prose-li:text-ink-secondary prose-h2:text-xl prose-h2:text-ink prose-a:text-black">
         <p>Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
         <h2>Acceptance of Terms</h2>
         <p>By accessing {siteSettings.siteName}, you agree to these terms. If you do not agree, please do not use the site.</p>

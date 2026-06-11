@@ -38,22 +38,22 @@ export default function AuthorPage({ params }: Props) {
       </nav>
 
       {/* Author header */}
-      <div className="flex flex-col md:flex-row items-start gap-6 mb-10 p-6 bg-surface-raised rounded-2xl border border-surface-border shadow-sm">
+      <div className="flex flex-col md:flex-row items-start gap-6 mb-10 p-6 bg-white rounded-2xl border border-white/20 shadow-sm">
         <div className="w-24 h-24 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-brand-amber/30">
           <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
         </div>
         <div>
           <h1 className="font-display font-bold text-3xl text-ink">{author.name}</h1>
-          <p className="text-brand-amber text-sm mt-1">{author.title}</p>
+          <p className="text-black text-sm mt-1">{author.title}</p>
           <p className="text-ink-secondary mt-3 leading-relaxed max-w-2xl">{author.bio}</p>
           <div className="flex items-center gap-3 mt-4">
             {author.twitter && (
-              <a href={`https://twitter.com/${author.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-surface-overlay rounded-lg text-ink-secondary hover:text-brand-orange transition-colors">
+              <a href={`https://twitter.com/${author.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-white/15 rounded-lg text-ink-secondary hover:text-black transition-colors">
                 <Twitter className="w-4 h-4" />
               </a>
             )}
             {author.linkedin && (
-              <a href={`https://linkedin.com/in/${author.linkedin}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-surface-overlay rounded-lg text-ink-secondary hover:text-brand-orange transition-colors">
+              <a href={`https://linkedin.com/in/${author.linkedin}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-white/15 rounded-lg text-ink-secondary hover:text-black transition-colors">
                 <Linkedin className="w-4 h-4" />
               </a>
             )}
@@ -63,7 +63,7 @@ export default function AuthorPage({ params }: Props) {
 
       {/* Articles */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-1 h-6 bg-brand-orange rounded-full" />
+        <div className="w-1 h-6 bg-black rounded-full" />
         <h2 className="font-display font-bold text-xl text-ink">Articles by {author.name}</h2>
         <span className="text-sm text-ink-muted">({authorArticles.length})</span>
       </div>

@@ -1,12 +1,12 @@
 /**
- * Bold, colorful geometric shape components inspired by the reference design.
- * Used as decorative elements throughout the site.
+ * Bold, colorful geometric shape components.
+ * 12 SVG shapes in bright vivid colors for a high-energy visual style.
  */
 
-// ─── Flower/Petal Burst ─────────────────────────────────────────────
+// ─── 1. Flower/Petal Burst ──────────────────────────────────────────
 export function FlowerShape({
   size = 120,
-  color = '#7C3AED',
+  color = '#E01FFF',
   className = '',
 }: {
   size?: number;
@@ -29,7 +29,7 @@ export function FlowerShape({
           rx="18"
           ry="35"
           fill={color}
-          opacity="0.85"
+          opacity="0.9"
           transform={`rotate(${angle} 60 60)`}
         />
       ))}
@@ -38,10 +38,10 @@ export function FlowerShape({
   );
 }
 
-// ─── Daisy Flower (circles around center) ───────────────────────────
+// ─── 2. Daisy Flower (circles around center) ────────────────────────
 export function DaisyShape({
   size = 100,
-  petalColor = '#B4A0E5',
+  petalColor = '#00E5FF',
   centerColor = '#FFE642',
   className = '',
 }: {
@@ -79,10 +79,10 @@ export function DaisyShape({
   );
 }
 
-// ─── U-Shape / Arch ─────────────────────────────────────────────────
+// ─── 3. U-Shape / Arch ──────────────────────────────────────────────
 export function UShape({
   size = 160,
-  color = '#4A6CF7',
+  color = '#0055FF',
   strokeWidth = 24,
   className = '',
 }: {
@@ -110,11 +110,11 @@ export function UShape({
   );
 }
 
-// ─── Rounded Square with Corner Dots ────────────────────────────────
+// ─── 4. Rounded Square with Corner Dots ─────────────────────────────
 export function DottedSquare({
   size = 100,
-  color = '#2ECC71',
-  dotColor = '#7C3AED',
+  color = '#00E676',
+  dotColor = '#E01FFF',
   className = '',
 }: {
   size?: number;
@@ -139,12 +139,12 @@ export function DottedSquare({
   );
 }
 
-// ─── Bold Arrow ─────────────────────────────────────────────────────
+// ─── 5. Bold Arrow ──────────────────────────────────────────────────
 export function ArrowShape({
   width = 160,
   height = 60,
-  bodyColor = '#00D4FF',
-  headColor = '#1A1207',
+  bodyColor = '#00E5FF',
+  headColor = '#000000',
   className = '',
 }: {
   width?: number;
@@ -167,7 +167,7 @@ export function ArrowShape({
   );
 }
 
-// ─── Rainbow Arc (concentric U-shapes) ──────────────────────────────
+// ─── 6. Rainbow Arc (concentric U-shapes) ───────────────────────────
 export function RainbowArc({
   size = 200,
   className = '',
@@ -175,7 +175,7 @@ export function RainbowArc({
   size?: number;
   className?: string;
 }) {
-  const colors = ['#EC4899', '#FF7900', '#EC4899', '#FF7900', '#EC4899'];
+  const colors = ['#FF0066', '#FFE642', '#00E5FF', '#00E676', '#E01FFF'];
   const baseWidth = 20;
   return (
     <svg
@@ -200,10 +200,10 @@ export function RainbowArc({
   );
 }
 
-// ─── Large Circle ───────────────────────────────────────────────────
+// ─── 7. Large Circle ────────────────────────────────────────────────
 export function BoldCircle({
   size = 120,
-  color = '#4A6CF7',
+  color = '#0055FF',
   className = '',
 }: {
   size?: number;
@@ -223,7 +223,7 @@ export function BoldCircle({
   );
 }
 
-// ─── Wavy Blob ──────────────────────────────────────────────────────
+// ─── 8. Wavy Blob ───────────────────────────────────────────────────
 export function BlobShape({
   size = 140,
   color = '#FFE642',
@@ -245,16 +245,16 @@ export function BlobShape({
         d="M44.7,-76.4C58.8,-69.2,71.8,-58.1,79.6,-44.2C87.4,-30.3,90,-13.7,88.2,2.1C86.4,18,80.3,33.1,70.6,44.8C60.9,56.5,47.7,64.8,33.6,70.7C19.5,76.6,4.5,80.1,-10.5,79.4C-25.5,78.7,-40.5,73.8,-53.2,65C-65.9,56.2,-76.3,43.5,-82.2,28.6C-88.1,13.7,-89.5,-3.4,-85.3,-18.8C-81.1,-34.2,-71.3,-47.9,-58.4,-55.7C-45.5,-63.5,-29.5,-65.4,-14.7,-68.3C0.1,-71.2,30.6,-83.6,44.7,-76.4Z"
         transform="translate(100 100)"
         fill={color}
-        opacity="0.6"
+        opacity="0.8"
       />
     </svg>
   );
 }
 
-// ─── Half-Circle ────────────────────────────────────────────────────
+// ─── 9. Half-Circle ─────────────────────────────────────────────────
 export function HalfCircle({
   size = 100,
-  color = '#FF7900',
+  color = '#FF0066',
   direction = 'right',
   className = '',
 }: {
@@ -278,10 +278,10 @@ export function HalfCircle({
   );
 }
 
-// ─── Concentric Rings ───────────────────────────────────────────────
+// ─── 10. Concentric Rings ───────────────────────────────────────────
 export function ConcentricRings({
   size = 120,
-  colors = ['#EC4899', '#FF7900', '#FFE642'],
+  colors = ['#FF0066', '#FFE642', '#00E5FF'],
   className = '',
 }: {
   size?: number;
@@ -311,11 +311,11 @@ export function ConcentricRings({
   );
 }
 
-// ─── Zigzag Line ────────────────────────────────────────────────────
+// ─── 11. Zigzag Line ────────────────────────────────────────────────
 export function ZigzagLine({
   width = 200,
   height = 40,
-  color = '#FFBF00',
+  color = '#FFE642',
   className = '',
 }: {
   width?: number;
@@ -343,7 +343,7 @@ export function ZigzagLine({
   );
 }
 
-// ─── Diamond ────────────────────────────────────────────────────────
+// ─── 12. Diamond ────────────────────────────────────────────────────
 export function DiamondShape({
   size = 80,
   color = '#FFE642',

@@ -119,14 +119,14 @@ export default function ArticlePage({ params }: Props) {
           <p className="text-lg text-ink-secondary mt-4 leading-relaxed">{article.excerpt}</p>
 
           {/* Meta */}
-          <div className="flex flex-wrap items-center gap-4 mt-6 pb-6 border-b border-surface-border">
+          <div className="flex flex-wrap items-center gap-4 mt-6 pb-6 border-b border-white/20">
             {author && (
               <Link href={`/author/${author.slug}`} className="flex items-center gap-3 group">
                 <div className="w-10 h-10 rounded-full overflow-hidden">
                   <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-ink group-hover:text-brand-orange transition-colors">{author.name}</span>
+                  <span className="text-sm font-medium text-ink group-hover:text-black transition-colors">{author.name}</span>
                   <span className="text-xs text-ink-muted block">{author.title}</span>
                 </div>
               </Link>
@@ -152,7 +152,7 @@ export default function ArticlePage({ params }: Props) {
 
         {/* Pull Quote */}
         {article.pullQuote && (
-          <blockquote className="border-l-4 border-brand-amber pl-6 py-2 my-8 text-xl font-display text-ink/80 italic">
+          <blockquote className="border-l-4 border-black pl-6 py-2 my-8 text-xl font-display text-ink/80 italic">
             {article.pullQuote}
           </blockquote>
         )}
@@ -164,19 +164,19 @@ export default function ArticlePage({ params }: Props) {
             prose-h2:text-2xl prose-h2:font-bold prose-h2:text-ink prose-h2:mt-10 prose-h2:mb-4
             prose-h3:text-xl prose-h3:font-semibold prose-h3:text-ink prose-h3:mt-8 prose-h3:mb-3
             prose-p:text-ink-secondary prose-p:leading-relaxed
-            prose-a:text-brand-orange prose-a:no-underline hover:prose-a:underline
+            prose-a:text-black prose-a:no-underline hover:prose-a:underline
             prose-strong:text-ink
-            prose-blockquote:border-l-brand-amber prose-blockquote:text-ink-secondary
-            prose-code:text-brand-orange prose-code:bg-surface-overlay prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+            prose-blockquote:border-l-black prose-blockquote:text-ink-secondary
+            prose-code:text-black prose-code:bg-white/15 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
             prose-li:text-ink-secondary"
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
 
         {/* Tags */}
-        <div className="mt-10 pt-6 border-t border-surface-border">
+        <div className="mt-10 pt-6 border-t border-white/20">
           <div className="flex flex-wrap gap-2">
             {article.tags.map((tag) => (
-              <span key={tag} className="px-3 py-1 text-xs bg-surface-overlay text-ink-secondary rounded-full border border-surface-border">
+              <span key={tag} className="px-3 py-1 text-xs bg-white/15 text-ink-secondary rounded-full border border-white/20">
                 #{tag}
               </span>
             ))}
@@ -184,13 +184,13 @@ export default function ArticlePage({ params }: Props) {
         </div>
 
         {/* Share */}
-        <div className="flex items-center gap-3 mt-6 pb-8 border-b border-surface-border">
+        <div className="flex items-center gap-3 mt-6 pb-8 border-b border-white/20">
           <span className="text-sm text-ink-muted font-medium">Share:</span>
           <a
             href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(articleUrl)}&text=${encodeURIComponent(article.title)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2 bg-surface-overlay rounded-lg text-ink-secondary hover:text-brand-orange hover:bg-surface-border transition-all"
+            className="p-2 bg-white/15 rounded-lg text-ink-secondary hover:text-black hover:bg-surface-border transition-all"
           >
             <Twitter className="w-4 h-4" />
           </a>
@@ -198,7 +198,7 @@ export default function ArticlePage({ params }: Props) {
             href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(articleUrl)}&title=${encodeURIComponent(article.title)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2 bg-surface-overlay rounded-lg text-ink-secondary hover:text-brand-orange hover:bg-surface-border transition-all"
+            className="p-2 bg-white/15 rounded-lg text-ink-secondary hover:text-black hover:bg-surface-border transition-all"
           >
             <Linkedin className="w-4 h-4" />
           </a>
@@ -206,14 +206,14 @@ export default function ArticlePage({ params }: Props) {
 
         {/* Author Bio */}
         {author && (
-          <div className="mt-8 p-6 bg-surface-raised rounded-2xl border border-surface-border shadow-sm">
+          <div className="mt-8 p-6 bg-white rounded-2xl border border-white/20 shadow-sm">
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
                 <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
               </div>
               <div>
-                <Link href={`/author/${author.slug}`} className="font-display font-bold text-ink hover:text-brand-orange transition-colors">{author.name}</Link>
-                <p className="text-xs text-brand-amber mt-0.5">{author.title}</p>
+                <Link href={`/author/${author.slug}`} className="font-display font-bold text-ink hover:text-black transition-colors">{author.name}</Link>
+                <p className="text-xs text-black mt-0.5">{author.title}</p>
                 <p className="text-sm text-ink-secondary mt-2 leading-relaxed">{author.bio}</p>
               </div>
             </div>
@@ -226,7 +226,7 @@ export default function ArticlePage({ params }: Props) {
         </div>
 
         {/* Disclaimer */}
-        <div className="mt-8 p-4 bg-surface-overlay rounded-xl border border-surface-border">
+        <div className="mt-8 p-4 bg-white/15 rounded-xl border border-white/20">
           <p className="text-xs text-ink-muted leading-relaxed">
             <strong className="text-ink-secondary">Disclaimer:</strong> This content is for informational and educational purposes only. It does not constitute financial advice, investment recommendations, or trading guidance. Prediction market participation involves risk of loss. Always conduct your own research before making any financial decisions.
           </p>
@@ -235,7 +235,7 @@ export default function ArticlePage({ params }: Props) {
 
       {/* Related Articles */}
       {related.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 border-t border-surface-border">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 border-t border-white/20">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-1 h-6 bg-brand-green rounded-full" />
             <h2 className="font-display font-bold text-2xl text-ink">Related Articles</h2>

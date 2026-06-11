@@ -25,7 +25,7 @@ export default function NewsletterPage() {
             { title: 'Strategy Insights', desc: 'Trading patterns, arbitrage windows, and risk management updates.' },
             { title: 'Platform Updates', desc: 'New features, regulatory changes, and market launches.' },
           ].map((item) => (
-            <div key={item.title} className="p-4 bg-surface-raised rounded-xl border border-surface-border shadow-sm">
+            <div key={item.title} className="p-4 bg-white rounded-xl border border-white/20 shadow-sm">
               <h3 className="font-display font-semibold text-ink text-sm">{item.title}</h3>
               <p className="text-xs text-ink-secondary mt-1">{item.desc}</p>
             </div>

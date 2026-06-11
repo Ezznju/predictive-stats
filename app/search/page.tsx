@@ -32,7 +32,7 @@ export default function SearchPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search articles, topics, tags..."
-          className="w-full bg-surface-raised border border-surface-border rounded-2xl pl-12 pr-4 py-4 text-ink placeholder:text-ink-faint focus:outline-none focus:border-brand-amber focus:ring-2 focus:ring-brand-amber/20 transition-colors text-lg shadow-sm"
+          className="w-full bg-white border border-white/20 rounded-2xl pl-12 pr-4 py-4 text-ink placeholder:text-ink-faint focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 transition-colors text-lg shadow-sm"
           autoFocus
         />
       </div>

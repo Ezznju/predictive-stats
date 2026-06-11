@@ -29,13 +29,13 @@ export default function AboutPage() {
   return (
     <div className="relative">
       {/* Top decorative band */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-brand-amber/5 via-brand-yellow/5 to-brand-orange/5 py-16">
-        <DottedSquare size={80} color="#2ECC71" dotColor="#7C3AED" className="absolute top-4 left-8 opacity-25" />
-        <BoldCircle size={140} color="#4A6CF7" className="absolute -top-10 right-[20%] opacity-12" />
-        <FlowerShape size={90} color="#EC4899" className="absolute bottom-2 right-12 opacity-15" />
-        <UShape size={70} color="#FFBF00" strokeWidth={12} className="absolute top-6 left-[35%] opacity-15" />
-        <ArrowShape width={100} height={38} className="absolute bottom-6 left-[15%] opacity-12" />
-        <HalfCircle size={80} color="#FF7900" direction="left" className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-15" />
+      <div className="relative overflow-hidden bg-black/5 py-16">
+        <DottedSquare size={80} color="#2ECC71" dotColor="#E01FFF" className="absolute top-4 left-8 opacity-55" />
+        <BoldCircle size={140} color="#0055FF" className="absolute -top-10 right-[20%] opacity-35" />
+        <FlowerShape size={90} color="#FF0066" className="absolute bottom-2 right-12 opacity-40" />
+        <UShape size={70} color="#FFBF00" strokeWidth={12} className="absolute top-6 left-[35%] opacity-40" />
+        <ArrowShape width={100} height={38} className="absolute bottom-6 left-[15%] opacity-35" />
+        <HalfCircle size={80} color="#FF7900" direction="left" className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-40" />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
           <h1 className="font-display font-bold text-4xl md:text-5xl text-ink mb-4">About {siteSettings.siteName}</h1>
@@ -44,7 +44,7 @@ export default function AboutPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
-        <div className="prose prose-lg max-w-none mb-16 prose-headings:font-display prose-headings:text-ink prose-p:text-ink-secondary prose-a:text-brand-orange">
+        <div className="prose prose-lg max-w-none mb-16 prose-headings:font-display prose-headings:text-ink prose-p:text-ink-secondary prose-a:text-black">
           <h2>What We Cover</h2>
           <p>PredictaView covers prediction markets, probabilistic forecasting, market sentiment analysis, and data-driven commentary across politics, economics, crypto, sports, and technology. We explain how markets price uncertainty, identify mispricings, and break down the mathematics behind prediction platforms.</p>
 
@@ -55,11 +55,11 @@ export default function AboutPage() {
 
         {/* Values */}
         <div className="relative overflow-hidden mb-16">
-          <DaisyShape size={50} className="absolute -top-2 -right-2 opacity-20" />
-          <ConcentricRings size={60} className="absolute bottom-4 -left-4 opacity-12" />
+          <DaisyShape size={50} className="absolute -top-2 -right-2 opacity-50" />
+          <ConcentricRings size={60} className="absolute bottom-4 -left-4 opacity-35" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
             {values.map((v) => (
-              <div key={v.title} className="p-6 bg-surface-raised rounded-2xl border border-surface-border shadow-sm">
+              <div key={v.title} className="p-6 bg-white rounded-2xl border border-white/20 shadow-sm">
                 <v.icon className="w-6 h-6 mb-3" style={{ color: v.color }} />
                 <h3 className="font-display font-bold text-lg text-ink">{v.title}</h3>
                 <p className="text-sm text-ink-secondary mt-2">{v.desc}</p>
@@ -70,16 +70,16 @@ export default function AboutPage() {
 
         {/* Team */}
         <div className="mb-10 relative overflow-hidden">
-          <FlowerShape size={70} color="#7C3AED" className="absolute -bottom-6 -right-6 opacity-15" />
+          <FlowerShape size={70} color="#E01FFF" className="absolute -bottom-6 -right-6 opacity-40" />
           <h2 className="font-display font-bold text-2xl text-ink mb-6">The Team</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
             {authors.map((author) => (
-              <Link key={author.id} href={`/author/${author.slug}`} className="p-6 bg-surface-raised rounded-2xl border border-surface-border hover:border-brand-amber/40 hover:shadow-md transition-all group">
+              <Link key={author.id} href={`/author/${author.slug}`} className="p-6 bg-white rounded-2xl border border-white/20 hover:border-black/20 hover:shadow-md transition-all group">
                 <div className="w-16 h-16 rounded-full overflow-hidden mb-4">
                   <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
                 </div>
-                <h3 className="font-display font-bold text-ink group-hover:text-brand-orange transition-colors">{author.name}</h3>
-                <p className="text-xs text-brand-amber mt-1">{author.title}</p>
+                <h3 className="font-display font-bold text-ink group-hover:text-black transition-colors">{author.name}</h3>
+                <p className="text-xs text-black mt-1">{author.title}</p>
                 <p className="text-sm text-ink-secondary mt-3 line-clamp-3">{author.bio}</p>
               </Link>
             ))}

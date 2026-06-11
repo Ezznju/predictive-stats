@@ -8,7 +8,7 @@
   }
 
   ::selection {
-    @apply bg-brand-amber/30 text-ink;
+    @apply bg-black/20 text-ink;
   }
 
   ::-webkit-scrollbar {
@@ -27,15 +27,15 @@
 
 @layer components {
   .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-amber via-brand-orange to-brand-yellow;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-amber via-brand-yellow to-white;
   }
 
   .glow-amber {
-    box-shadow: 0 0 20px rgba(255, 191, 0, 0.12), 0 0 60px rgba(255, 191, 0, 0.04);
+    box-shadow: 0 0 20px rgba(255, 191, 0, 0.2), 0 0 60px rgba(255, 191, 0, 0.08);
   }
 
   .glow-orange {
-    box-shadow: 0 0 20px rgba(255, 121, 0, 0.12), 0 0 60px rgba(255, 121, 0, 0.04);
+    box-shadow: 0 0 20px rgba(255, 121, 0, 0.2), 0 0 60px rgba(255, 121, 0, 0.08);
   }
 
   .card-hover {
@@ -48,16 +48,16 @@
 
   /* Decorative geometric shapes */
   .geo-circle {
-    @apply absolute rounded-full opacity-[0.07];
+    @apply absolute rounded-full opacity-40;
   }
   .geo-square {
-    @apply absolute rounded-2xl opacity-[0.06] rotate-12;
+    @apply absolute rounded-2xl opacity-35 rotate-12;
   }
 }
 
 /* Reading progress bar */
 .reading-progress {
-  @apply fixed top-0 left-0 h-1 bg-gradient-to-r from-brand-amber via-brand-orange to-brand-yellow z-50;
+  @apply fixed top-0 left-0 h-1 bg-gradient-to-r from-brand-amber via-brand-yellow to-white z-50;
   transition: width 0.1s ease;
 }
 
@@ -95,7 +95,7 @@
 }
 
 .tiptap-editor .ProseMirror a {
-  @apply text-brand-orange underline;
+  @apply text-ink underline font-semibold;
 }
 
 .tiptap-editor .ProseMirror img {
@@ -120,11 +120,11 @@
 }
 
 .tiptap-editor .ProseMirror code {
-  @apply bg-surface-overlay text-brand-orange px-1.5 py-0.5 rounded text-sm font-mono;
+  @apply bg-white/20 text-ink px-1.5 py-0.5 rounded text-sm font-mono;
 }
 
 .tiptap-editor .ProseMirror pre {
-  @apply bg-surface-overlay rounded-lg p-4 my-4 overflow-x-auto;
+  @apply bg-white/10 rounded-lg p-4 my-4 overflow-x-auto;
 }
 
 .tiptap-editor .ProseMirror pre code {

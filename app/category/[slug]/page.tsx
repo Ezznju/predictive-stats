@@ -59,7 +59,7 @@ export default function CategoryPage({ params }: Props) {
       ) : (
         <div className="text-center py-20">
           <p className="text-ink-secondary text-lg">No articles in this category yet.</p>
-          <Link href="/articles" className="text-brand-orange hover:text-brand-orange/80 mt-2 inline-block">Browse all articles →</Link>
+          <Link href="/articles" className="text-black hover:text-black/80 mt-2 inline-block">Browse all articles →</Link>
         </div>
       )}
     </div>
