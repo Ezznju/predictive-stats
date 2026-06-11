@@ -1,11 +1,27 @@
 import Link from 'next/link';
 import { TrendingUp } from 'lucide-react';
 import { siteSettings, categories } from '@/lib/data';
+import {
+  FlowerShape,
+  UShape,
+  DottedSquare,
+  BoldCircle,
+  DaisyShape,
+  HalfCircle,
+} from '@/components/GeometricShapes';
 
 export function Footer() {
   return (
-    <footer className="bg-surface-overlay border-t border-surface-border mt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+    <footer className="bg-surface-overlay border-t border-surface-border mt-16 relative overflow-hidden">
+      {/* Geometric shape decorations */}
+      <FlowerShape size={90} color="#EC4899" className="absolute -top-8 right-[15%] opacity-10" />
+      <UShape size={70} color="#4A6CF7" strokeWidth={12} className="absolute bottom-8 left-[8%] opacity-10" />
+      <DottedSquare size={50} color="#2ECC71" dotColor="#7C3AED" className="absolute top-1/3 -right-4 opacity-15" />
+      <BoldCircle size={80} color="#FFBF00" className="absolute -bottom-10 right-[40%] opacity-8" />
+      <HalfCircle size={60} color="#FF7900" direction="down" className="absolute -top-6 left-[30%] opacity-10" />
+      <DaisyShape size={45} petalColor="#B4A0E5" className="absolute bottom-16 right-[25%] opacity-12" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-1">
@@ -64,6 +80,9 @@ export function Footer() {
               <div className="w-1.5 h-1.5 rounded-full bg-brand-amber" />
               <div className="w-1.5 h-1.5 rounded-full bg-brand-orange" />
               <div className="w-1.5 h-1.5 rounded-full bg-brand-yellow" />
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-green" />
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-blue" />
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-purple" />
             </div>
           </div>
         </div>

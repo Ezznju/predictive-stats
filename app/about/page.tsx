@@ -2,6 +2,16 @@ import { Metadata } from 'next';
 import { BarChart3, Target, Eye, Shield } from 'lucide-react';
 import { authors, siteSettings } from '@/lib/data';
 import Link from 'next/link';
+import {
+  FlowerShape,
+  DottedSquare,
+  UShape,
+  BoldCircle,
+  DaisyShape,
+  ArrowShape,
+  HalfCircle,
+  ConcentricRings,
+} from '@/components/GeometricShapes';
 
 export const metadata: Metadata = {
   title: 'About',
@@ -17,44 +27,63 @@ export default function AboutPage() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
-      <h1 className="font-display font-bold text-4xl md:text-5xl text-ink mb-4">About {siteSettings.siteName}</h1>
-      <p className="text-xl text-ink-secondary leading-relaxed mb-10">{siteSettings.siteDescription}</p>
+    <div className="relative">
+      {/* Top decorative band */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-brand-amber/5 via-brand-yellow/5 to-brand-orange/5 py-16">
+        <DottedSquare size={80} color="#2ECC71" dotColor="#7C3AED" className="absolute top-4 left-8 opacity-25" />
+        <BoldCircle size={140} color="#4A6CF7" className="absolute -top-10 right-[20%] opacity-12" />
+        <FlowerShape size={90} color="#EC4899" className="absolute bottom-2 right-12 opacity-15" />
+        <UShape size={70} color="#FFBF00" strokeWidth={12} className="absolute top-6 left-[35%] opacity-15" />
+        <ArrowShape width={100} height={38} className="absolute bottom-6 left-[15%] opacity-12" />
+        <HalfCircle size={80} color="#FF7900" direction="left" className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-15" />
 
-      <div className="prose prose-lg max-w-none mb-16 prose-headings:font-display prose-headings:text-ink prose-p:text-ink-secondary prose-a:text-brand-orange">
-        <h2>What We Cover</h2>
-        <p>PredictaView covers prediction markets, probabilistic forecasting, market sentiment analysis, and data-driven commentary across politics, economics, crypto, sports, and technology. We explain how markets price uncertainty, identify mispricings, and break down the mathematics behind prediction platforms.</p>
-
-        <h2>Our Approach</h2>
-        <p>Every article starts with data. We pull live information from Polymarket, Kalshi, Metaculus, and other platforms. We run the calculations ourselves and verify the numbers before publishing. If a strategy claims a 12% return, we show the backtest. If a market price implies a probability, we explain the conversion math.</p>
-        <p>We stress-test workflows rather than summarizing press releases. When we review a platform, we use it. When we write about a trading strategy, we model it. When we compare forecasting methods, we pull the calibration data.</p>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
+          <h1 className="font-display font-bold text-4xl md:text-5xl text-ink mb-4">About {siteSettings.siteName}</h1>
+          <p className="text-xl text-ink-secondary leading-relaxed">{siteSettings.siteDescription}</p>
+        </div>
       </div>
 
-      {/* Values */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
-        {values.map((v) => (
-          <div key={v.title} className="p-6 bg-surface-raised rounded-2xl border border-surface-border shadow-sm">
-            <v.icon className="w-6 h-6 mb-3" style={{ color: v.color }} />
-            <h3 className="font-display font-bold text-lg text-ink">{v.title}</h3>
-            <p className="text-sm text-ink-secondary mt-2">{v.desc}</p>
-          </div>
-        ))}
-      </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+        <div className="prose prose-lg max-w-none mb-16 prose-headings:font-display prose-headings:text-ink prose-p:text-ink-secondary prose-a:text-brand-orange">
+          <h2>What We Cover</h2>
+          <p>PredictaView covers prediction markets, probabilistic forecasting, market sentiment analysis, and data-driven commentary across politics, economics, crypto, sports, and technology. We explain how markets price uncertainty, identify mispricings, and break down the mathematics behind prediction platforms.</p>
 
-      {/* Team */}
-      <div className="mb-10">
-        <h2 className="font-display font-bold text-2xl text-ink mb-6">The Team</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {authors.map((author) => (
-            <Link key={author.id} href={`/author/${author.slug}`} className="p-6 bg-surface-raised rounded-2xl border border-surface-border hover:border-brand-amber/40 hover:shadow-md transition-all group">
-              <div className="w-16 h-16 rounded-full overflow-hidden mb-4">
-                <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
+          <h2>Our Approach</h2>
+          <p>Every article starts with data. We pull live information from Polymarket, Kalshi, Metaculus, and other platforms. We run the calculations ourselves and verify the numbers before publishing. If a strategy claims a 12% return, we show the backtest. If a market price implies a probability, we explain the conversion math.</p>
+          <p>We stress-test workflows rather than summarizing press releases. When we review a platform, we use it. When we write about a trading strategy, we model it. When we compare forecasting methods, we pull the calibration data.</p>
+        </div>
+
+        {/* Values */}
+        <div className="relative overflow-hidden mb-16">
+          <DaisyShape size={50} className="absolute -top-2 -right-2 opacity-20" />
+          <ConcentricRings size={60} className="absolute bottom-4 -left-4 opacity-12" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+            {values.map((v) => (
+              <div key={v.title} className="p-6 bg-surface-raised rounded-2xl border border-surface-border shadow-sm">
+                <v.icon className="w-6 h-6 mb-3" style={{ color: v.color }} />
+                <h3 className="font-display font-bold text-lg text-ink">{v.title}</h3>
+                <p className="text-sm text-ink-secondary mt-2">{v.desc}</p>
               </div>
-              <h3 className="font-display font-bold text-ink group-hover:text-brand-orange transition-colors">{author.name}</h3>
-              <p className="text-xs text-brand-amber mt-1">{author.title}</p>
-              <p className="text-sm text-ink-secondary mt-3 line-clamp-3">{author.bio}</p>
-            </Link>
-          ))}
+            ))}
+          </div>
+        </div>
+
+        {/* Team */}
+        <div className="mb-10 relative overflow-hidden">
+          <FlowerShape size={70} color="#7C3AED" className="absolute -bottom-6 -right-6 opacity-15" />
+          <h2 className="font-display font-bold text-2xl text-ink mb-6">The Team</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+            {authors.map((author) => (
+              <Link key={author.id} href={`/author/${author.slug}`} className="p-6 bg-surface-raised rounded-2xl border border-surface-border hover:border-brand-amber/40 hover:shadow-md transition-all group">
+                <div className="w-16 h-16 rounded-full overflow-hidden mb-4">
+                  <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
+                </div>
+                <h3 className="font-display font-bold text-ink group-hover:text-brand-orange transition-colors">{author.name}</h3>
+                <p className="text-xs text-brand-amber mt-1">{author.title}</p>
+                <p className="text-sm text-ink-secondary mt-3 line-clamp-3">{author.bio}</p>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </div>
