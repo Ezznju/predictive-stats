@@ -8,6 +8,7 @@ import { NewsletterBlock } from '@/components/NewsletterBlock';
 import { ReadingProgressBar } from '@/components/ReadingProgressBar';
 import { TableOfContents } from '@/components/TableOfContents';
 import { GiscusComments } from '@/components/GiscusComments';
+import { PolymarketEmbeds } from '@/components/PolymarketEmbeds';
 import { ShareButtons } from '@/components/ShareButtons';
 import {
   getArticleBySlug,
@@ -63,6 +64,22 @@ function wrapTables(html: string): string {
   return html
     .replace(/<table(?![^>]*data-wrapped)/g, '<div class="table-scroll"><table')
     .replace(/<\/table>/g, '</table></div>');
+}
+
+/**
+ * Converts Polymarket shortcodes written in the editor into placeholder divs
+ * that <PolymarketEmbeds /> hydrates into live odds widgets on the client.
+ *
+ * Supported (each on its own line/paragraph):
+ *   [polymarket:market-slug]        -> single market (Yes/No card)
+ *   [polymarket-event:event-slug]   -> multi-outcome event (top 5 outcomes)
+ */
+function embedPolymarket(html: string): string {
+  return html.replace(
+    /(?:<p[^>]*>\s*)?\[polymarket(-event)?:\s*([a-z0-9][a-z0-9-]*)\s*\](?:\s*<\/p>)?/gi,
+    (_match, isEvent, slug) =>
+      `<div data-polymarket-${isEvent ? 'event' : 'market'}="${slug.toLowerCase()}"></div>`
+  );
 }
 
 export default async function ArticlePage({ params }: Props) {
@@ -196,7 +213,7 @@ export default async function ArticlePage({ params }: Props) {
             prose-blockquote:border-l-black prose-blockquote:text-ink-secondary
             prose-code:text-black prose-code:bg-white/15 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
             prose-li:text-ink-secondary"
-          dangerouslySetInnerHTML={{ __html: wrapTables(article.content) }}
+          dangerouslySetInnerHTML={{ __html: embedPolymarket(wrapTables(article.content)) }}
         />
 
         {/* Tags */}
@@ -212,6 +229,9 @@ export default async function ArticlePage({ params }: Props) {
 
         {/* Share */}
         <ShareButtons url={articleUrl} title={article.title} />
+
+        {/* Hydrate live Polymarket odds embeds */}
+        <PolymarketEmbeds />
 
         {/* Author Bio */}
         {author && (

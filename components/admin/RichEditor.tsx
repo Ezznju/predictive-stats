@@ -32,6 +32,7 @@ import {
   Table as TableIcon,
   Pilcrow,
   RemoveFormatting,
+  TrendingUp,
 } from 'lucide-react';
 
 interface RichEditorProps {
@@ -146,6 +147,21 @@ export function RichEditor({ content = '', onChange, placeholder = 'Start writin
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   };
 
+  const addPolymarketWidget = () => {
+    const input = window.prompt(
+      'Polymarket slug (from the polymarket.com URL), e.g. "world-cup-winner".\n\n' +
+        'Multi-outcome events: just paste the slug.\n' +
+        'Single Yes/No market: prefix with "market:", e.g. "market:will-czechia-win-the-2026-fifa-world-cup".'
+    );
+    if (!input) return;
+    const trimmed = input.trim().toLowerCase();
+    const isMarket = trimmed.startsWith('market:');
+    const slug = (isMarket ? trimmed.slice(7) : trimmed).replace(/^\/+|\/+$/g, '').trim();
+    if (!slug) return;
+    const shortcode = isMarket ? `[polymarket:${slug}]` : `[polymarket-event:${slug}]`;
+    editor.chain().focus().insertContent(`<p>${shortcode}</p>`).run();
+  };
+
   const words = editor.storage.characterCount.words();
   const chars = editor.storage.characterCount.characters();
   const readTime = Math.max(1, Math.ceil(words / 250));
@@ -232,6 +248,9 @@ export function RichEditor({ content = '', onChange, placeholder = 'Start writin
         </ToolbarButton>
         <ToolbarButton onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal rule">
           <Minus className="w-4 h-4" />
+        </ToolbarButton>
+        <ToolbarButton onClick={addPolymarketWidget} title="Insert live Polymarket odds widget">
+          <TrendingUp className="w-4 h-4" />
         </ToolbarButton>
 
         <Divider />

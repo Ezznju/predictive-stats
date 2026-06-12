@@ -20,6 +20,7 @@ const PUBLIC_API_PREFIXES = [
   '/api/categories',
   '/api/authors',
   '/api/settings',
+  '/api/polymarket',
 ];
 
 // Public POST routes (visitor-facing forms)
