@@ -11,6 +11,6 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         disallow: ['/admin/', '/api/'],
       },
     ],
-    sitemap: `${settings.siteUrl || 'https://predictive-stats.vercel.app'}/sitemap.xml`,
+    sitemap: `${settings.siteUrl || 'https://predictionsmarketfans.com'}/sitemap.xml`,
   };
 }

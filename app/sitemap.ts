@@ -11,7 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getSiteSettings(),
   ]);
 
-  const baseUrl = settings.siteUrl || 'https://predictive-stats.vercel.app';
+  const baseUrl = settings.siteUrl || 'https://predictionsmarketfans.com';
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },

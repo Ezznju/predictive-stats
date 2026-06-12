@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
             Authorization: `Bearer ${resendKey}`,
           },
           body: JSON.stringify({
-            from: 'Predictive Stats <onboarding@resend.dev>',
+            from: 'Predictions Market Fans <onboarding@resend.dev>',
             to: ['ezzekielnjuguna.en@gmail.com'],
             subject: `[Contact Form] ${subject || 'General Inquiry'} — from ${name}`,
             html: `
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
               <hr />
               <p>${message.replace(/\n/g, '<br />')}</p>
               <hr />
-              <p style="color:#888;font-size:12px;">Sent from the Predictive Stats contact form</p>
+              <p style="color:#888;font-size:12px;">Sent from the Predictions Market Fans contact form</p>
             `,
             reply_to: email,
           }),

@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: author.name,
     description: author.bio,
-    openGraph: { title: `${author.name} | PredictaView`, description: author.bio, images: author.avatar ? [{ url: author.avatar }] : undefined },
+    openGraph: { title: `${author.name} | Predictions Market Fans`, description: author.bio, images: author.avatar ? [{ url: author.avatar }] : undefined },
   };
 }
 

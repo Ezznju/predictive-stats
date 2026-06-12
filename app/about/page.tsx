@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'About',
-  description: 'PredictaView is an editorial publication covering prediction markets, forecasting, and data-driven analysis.',
+  description: 'Predictions Market Fans is an editorial publication covering prediction markets, forecasting, and data-driven analysis.',
 };
 
 export default async function AboutPage() {
@@ -53,7 +53,7 @@ export default async function AboutPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <div className="prose prose-lg max-w-none mb-16 prose-headings:font-display prose-headings:text-ink prose-p:text-ink-secondary prose-a:text-black">
           <h2>What We Cover</h2>
-          <p>PredictaView covers prediction markets, probabilistic forecasting, market sentiment analysis, and data-driven commentary across politics, economics, crypto, sports, and technology. We explain how markets price uncertainty, identify mispricings, and break down the mathematics behind prediction platforms.</p>
+          <p>Predictions Market Fans covers prediction markets, probabilistic forecasting, market sentiment analysis, and data-driven commentary across politics, economics, crypto, sports, and technology. We explain how markets price uncertainty, identify mispricings, and break down the mathematics behind prediction platforms.</p>
 
           <h2>Our Approach</h2>
           <p>Every article starts with data. We pull live information from Polymarket, Kalshi, Metaculus, and other platforms. We run the calculations ourselves and verify the numbers before publishing. If a strategy claims a 12% return, we show the backtest. If a market price implies a probability, we explain the conversion math.</p>

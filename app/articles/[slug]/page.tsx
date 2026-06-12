@@ -81,7 +81,7 @@ export default async function ArticlePage({ params }: Props) {
   const authorMap = new Map(allAuthors.map(a => [a.id, a]));
   const categoryMap = new Map(allCategories.map(c => [c.slug, c]));
 
-  const articleUrl = `${settings.siteUrl || 'https://predictive-stats.vercel.app'}/articles/${article.slug}`;
+  const articleUrl = `${settings.siteUrl || 'https://predictionsmarketfans.com'}/articles/${article.slug}`;
 
   // JSON-LD structured data
   const jsonLd = {
@@ -93,7 +93,7 @@ export default async function ArticlePage({ params }: Props) {
     datePublished: article.publishDate,
     dateModified: article.updatedDate || article.publishDate,
     author: author
-      ? { '@type': 'Person', name: author.name, url: `${settings.siteUrl || 'https://predictive-stats.vercel.app'}/author/${author.slug}` }
+      ? { '@type': 'Person', name: author.name, url: `${settings.siteUrl || 'https://predictionsmarketfans.com'}/author/${author.slug}` }
       : undefined,
     publisher: {
       '@type': 'Organization',

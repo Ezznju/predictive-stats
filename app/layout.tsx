@@ -23,7 +23,7 @@ const spaceGrotesk = Space_Grotesk({
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
   return {
-    metadataBase: new URL(settings.siteUrl || 'https://predictive-stats.vercel.app'),
+    metadataBase: new URL(settings.siteUrl || 'https://predictionsmarketfans.com'),
     title: {
       default: `${settings.siteName} — ${settings.siteTagline}`,
       template: `%s | ${settings.siteName}`,
