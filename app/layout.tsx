@@ -45,6 +45,10 @@ export async function generateMetadata(): Promise<Metadata> {
       follow: true,
       googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
     },
+    // Set GOOGLE_SITE_VERIFICATION in Vercel to verify the site in Google Search Console
+    verification: process.env.GOOGLE_SITE_VERIFICATION
+      ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+      : undefined,
   };
 }
 
@@ -68,6 +72,25 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               url: settings.siteUrl,
               description: settings.siteDescription,
               sameAs: [settings.socialTwitter, settings.socialLinkedin].filter(Boolean),
+            }),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: settings.siteName,
+              url: settings.siteUrl || 'https://predictionsmarketfans.com',
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: {
+                  '@type': 'EntryPoint',
+                  urlTemplate: `${settings.siteUrl || 'https://predictionsmarketfans.com'}/search?q={search_term_string}`,
+                },
+                'query-input': 'required name=search_term_string',
+              },
             }),
           }}
         />

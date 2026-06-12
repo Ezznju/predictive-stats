@@ -30,6 +30,10 @@ import {
 
 export const dynamic = 'force-dynamic';
 
+export const metadata = {
+  alternates: { canonical: '/' },
+};
+
 export default async function Home() {
   const [featured, allArticles, categories, authors, settings] = await Promise.all([
     getFeaturedArticles(),

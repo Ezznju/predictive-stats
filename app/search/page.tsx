@@ -34,6 +34,12 @@ export default function SearchPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const requestId = useRef(0);
 
+  // Support /search?q=... deep links (Google sitelinks searchbox, shared URLs)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('q');
+    if (q) setQuery(q);
+  }, []);
+
   // Load authors + categories once (needed for the result cards)
   useEffect(() => {
     async function load() {
