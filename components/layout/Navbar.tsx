@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, Search, TrendingUp } from 'lucide-react';
+import { Menu, X, Search } from 'lucide-react';
 import { Category } from '@/types';
 
 interface NavbarProps {
@@ -20,9 +20,12 @@ export function Navbar({ siteName, categories }: NavbarProps) {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-neon-lime border-2 border-black shadow-pop-sm flex items-center justify-center group-hover:-translate-y-0.5 transition-transform">
-              <TrendingUp className="w-4.5 h-4.5 text-black" />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-mark.svg"
+              alt=""
+              className="w-9 h-9 rounded-xl shadow-pop-sm group-hover:-translate-y-0.5 transition-transform"
+            />
             <span className="font-display font-bold text-xl text-black group-hover:text-white transition-colors">
               {siteName}
             </span>
