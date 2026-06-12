@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   title: 'Best Prediction Market Platforms Compared (Polymarket vs Kalshi & More)',
   description:
     'Independent reviews and side-by-side comparison of the top prediction market platforms — Polymarket, Kalshi, PredictIt, Manifold, and Metaculus. Fees, liquidity, regulation, and who each one is best for.',
+  alternates: { canonical: 'https://predictionsmarketfans.com/platforms' },
 };
 
 export default async function PlatformsPage() {

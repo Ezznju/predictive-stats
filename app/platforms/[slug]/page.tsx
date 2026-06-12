@@ -21,6 +21,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: `${platform.name} Review ${new Date().getFullYear()}: Fees, Liquidity & Verdict`,
     description: `${platform.name} review — ${platform.tagline} Rated ${platform.overallRating}/5 after hands-on testing. Fees, deposits, regulation, pros and cons.`,
+    alternates: { canonical: `https://predictionsmarketfans.com/platforms/${platform.slug}` },
   };
 }
 
