@@ -1,14 +1,14 @@
 import { Author, Category, Article, SiteSettings } from '@/types';
 
 export const siteSettings: SiteSettings = {
-  siteName: 'Predictive Stats',
+  siteName: 'Predictions Market Fans',
   siteTagline: 'Sharp analysis for uncertain markets',
-  siteDescription: 'Predictive Stats is an editorial publication covering prediction markets, forecasting, probabilistic analysis, and data-driven commentary.',
-  siteUrl: 'https://predictive-stats.vercel.app',
+  siteDescription: 'Predictions Market Fans is an editorial publication covering prediction markets, forecasting, probabilistic analysis, and data-driven commentary.',
+  siteUrl: 'https://predictionsmarketfans.com',
   newsletterHeading: 'The Weekly Signal',
   newsletterBody: 'Every Friday — the week\'s sharpest prediction market analysis, forecasting insights, and data-driven commentary. No noise.',
   missionHeading: 'Clarity in a world of uncertainty',
-  missionBody: 'Predictive Stats exists to make probabilistic thinking accessible and rigorous. We cover prediction markets, forecasting methodology, and data-driven analysis with editorial independence and intellectual honesty.',
+  missionBody: 'Predictions Market Fans exists to make probabilistic thinking accessible and rigorous. We cover prediction markets, forecasting methodology, and data-driven analysis with editorial independence and intellectual honesty.',
   socialTwitter: '@predictivestats',
   socialLinkedin: 'https://www.linkedin.com/in/ezekiel-chiri-9705a2108/',
   socialGithub: '',
@@ -99,7 +99,7 @@ export const articles: Article[] = [
     readTime: 12,
     featured: true,
     status: 'published',
-    seoTitle: 'How Polymarket CLOB Pricing Works: Mathematical Breakdown | PredictaView',
+    seoTitle: 'How Polymarket CLOB Pricing Works: Mathematical Breakdown | Predictions Market Fans',
     metaDescription: 'A mathematical breakdown of how Polymarket\'s Central Limit Order Book determines prices, with real order book data and implied probability calculations.',
     pullQuote: 'The price you see on the homepage is the midpoint between the best bid and best ask. The actual execution price depends on how deep the book is.',
   },
@@ -135,7 +135,7 @@ export const articles: Article[] = [
     readTime: 15,
     featured: true,
     status: 'published',
-    seoTitle: '5 Cross-Platform Sports Arbitrage Strategies: Polymarket vs Kalshi | PredictaView',
+    seoTitle: '5 Cross-Platform Sports Arbitrage Strategies: Polymarket vs Kalshi | Predictions Market Fans',
     metaDescription: 'Concrete sports arbitrage strategies between Polymarket and Kalshi across NBA, NFL, MLB, soccer, and MMA markets, with real pricing data and expected return calculations.',
   },
   {
@@ -166,7 +166,7 @@ export const articles: Article[] = [
     readTime: 10,
     featured: true,
     status: 'published',
-    seoTitle: 'Superforecasters vs. Prediction Markets: 2025 Calibration Comparison | PredictaView',
+    seoTitle: 'Superforecasters vs. Prediction Markets: 2025 Calibration Comparison | Predictions Market Fans',
     metaDescription: 'Calibration comparison of superforecasters vs Polymarket prices across 200+ resolved questions, with Brier score analysis at multiple time horizons.',
   },
   {
@@ -194,7 +194,7 @@ export const articles: Article[] = [
     readTime: 9,
     featured: false,
     status: 'published',
-    seoTitle: 'Crypto Fear Index Is Broken: 3 Indicators That Actually Predict Drawdowns | PredictaView',
+    seoTitle: 'Crypto Fear Index Is Broken: 3 Indicators That Actually Predict Drawdowns | Predictions Market Fans',
     metaDescription: 'The Crypto Fear & Greed Index has a 0.12 correlation with forward returns. Three alternative indicators — SSR, exchange flows, and options skew — perform significantly better.',
   },
   {
@@ -228,7 +228,7 @@ export const articles: Article[] = [
     readTime: 18,
     featured: false,
     status: 'published',
-    seoTitle: 'Building a Kalshi Trading Bot in Python: Complete API Guide | PredictaView',
+    seoTitle: 'Building a Kalshi Trading Bot in Python: Complete API Guide | Predictions Market Fans',
     metaDescription: 'Step-by-step Python tutorial for building an automated Kalshi trading bot with live API integration. Every code snippet tested and verified.',
   },
   {
@@ -259,7 +259,7 @@ export const articles: Article[] = [
     readTime: 14,
     featured: false,
     status: 'published',
-    seoTitle: 'Polymarket vs Kalshi vs Metaculus: 2025 Platform Comparison | PredictaView',
+    seoTitle: 'Polymarket vs Kalshi vs Metaculus: 2025 Platform Comparison | Predictions Market Fans',
     metaDescription: 'Data-driven comparison of Polymarket, Kalshi, and Metaculus covering liquidity, fees, calibration scores, and market coverage for serious forecasters.',
   },
   {
@@ -286,7 +286,7 @@ export const articles: Article[] = [
     readTime: 11,
     featured: false,
     status: 'published',
-    seoTitle: 'Why Political Prediction Markets Got 2024 Wrong | PredictaView',
+    seoTitle: 'Why Political Prediction Markets Got 2024 Wrong | Predictions Market Fans',
     metaDescription: 'Post-mortem analysis of prediction market accuracy in the 2024 U.S. election, examining structural biases, whale effects, and what changed for 2025-2026.',
   },
   {
@@ -313,7 +313,7 @@ export const articles: Article[] = [
     readTime: 8,
     featured: false,
     status: 'published',
-    seoTitle: 'Behavioral Economics of Overconfidence in Prediction Markets | PredictaView',
+    seoTitle: 'Behavioral Economics of Overconfidence in Prediction Markets | Predictions Market Fans',
     metaDescription: 'Analysis of the favorite-longshot bias in prediction markets, with data from 4,200 resolved Polymarket contracts showing persistent mispricing patterns.',
   },
   {
@@ -573,7 +573,7 @@ The arbitrage here is structural, not just about price differences. These market
     readTime: 24,
     featured: true,
     status: 'published',
-    seoTitle: '5 Cross-Platform Arbitrage Strategies for the 2026 World Cup (Polymarket × Kalshi) | PredictaView',
+    seoTitle: '5 Cross-Platform Arbitrage Strategies for the 2026 World Cup (Polymarket × Kalshi) | Predictions Market Fans',
     metaDescription: 'Five concrete cross-platform arbitrage strategies for the 2026 FIFA World Cup using live Polymarket CLOB API and Kalshi pricing data. Real fee calculations, order book depths, and expected returns.',
   },
 ];

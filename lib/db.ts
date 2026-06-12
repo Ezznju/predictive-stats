@@ -50,7 +50,7 @@ function toCategory(row: any): Category {
 
 function toSettings(row: any): SiteSettings {
   return {
-    siteName: row.site_name ?? 'PredictaView',
+    siteName: row.site_name ?? 'Predictions Market Fans',
     siteTagline: row.site_tagline ?? '',
     siteDescription: row.site_description ?? '',
     siteUrl: row.site_url ?? '',
@@ -224,7 +224,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     .single();
   if (error) {
     return {
-      siteName: 'PredictaView',
+      siteName: 'Predictions Market Fans',
       siteTagline: 'Sharp analysis for uncertain markets',
       siteDescription: '',
       siteUrl: '',
