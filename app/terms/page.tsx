@@ -2,7 +2,11 @@ import { Metadata } from 'next';
 import { getSiteSettings } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Terms of Use' };
+export const metadata: Metadata = {
+  title: 'Terms of Use',
+  description: 'Terms and conditions for using Predictions Market Fans.',
+  alternates: { canonical: '/terms' },
+};
 
 export default async function TermsPage() {
   const settings = await getSiteSettings();

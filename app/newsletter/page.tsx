@@ -4,6 +4,7 @@ import { NewsletterBlock } from '@/components/NewsletterBlock';
 export const metadata: Metadata = {
   title: 'Newsletter',
   description: 'Subscribe to The Weekly Signal — prediction market analysis, forecasting insights, and data-driven commentary delivered every Friday.',
+  alternates: { canonical: '/newsletter' },
 };
 
 export default function NewsletterPage() {

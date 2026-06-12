@@ -36,6 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: article.seoTitle || article.title,
     description: article.metaDescription || article.excerpt,
+    alternates: { canonical: `/articles/${article.slug}` },
     authors: author ? [{ name: author.name }] : undefined,
     openGraph: {
       type: 'article',
@@ -122,9 +123,24 @@ export default async function ArticlePage({ params }: Props) {
     keywords: article.tags.join(', '),
   };
 
+  // BreadcrumbList structured data (Home > Category > Article)
+  const siteUrl = settings.siteUrl || 'https://predictionsmarketfans.com';
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+      ...(category
+        ? [{ '@type': 'ListItem', position: 2, name: category.name, item: `${siteUrl}/category/${category.slug}` }]
+        : [{ '@type': 'ListItem', position: 2, name: 'Articles', item: `${siteUrl}/articles` }]),
+      { '@type': 'ListItem', position: 3, name: article.title, item: articleUrl },
+    ],
+  };
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <ReadingProgressBar />
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 py-8">

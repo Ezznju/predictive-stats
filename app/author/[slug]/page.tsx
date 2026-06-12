@@ -15,6 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: author.name,
     description: author.bio,
+    alternates: { canonical: `/author/${author.slug}` },
     openGraph: { title: `${author.name} | Predictions Market Fans`, description: author.bio, images: author.avatar ? [{ url: author.avatar }] : undefined },
   };
 }
@@ -32,8 +33,20 @@ export default async function AuthorPage({ params }: Props) {
   const authorMap = new Map(allAuthors.map(a => [a.id, a]));
   const categoryMap = new Map(categories.map(c => [c.slug, c]));
 
+  // Person structured data for author E-E-A-T signals
+  const personJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: author.name,
+    description: author.bio,
+    image: author.avatar || undefined,
+    url: `https://predictionsmarketfans.com/author/${author.slug}`,
+    sameAs: [author.twitter, author.linkedin].filter(Boolean),
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-2 text-xs text-ink-muted mb-6">
         <Link href="/" className="hover:text-ink transition-colors">Home</Link>

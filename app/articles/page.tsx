@@ -15,6 +15,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Articles',
   description: 'All articles on prediction markets, forecasting, data analysis, and probabilistic thinking.',
+  alternates: { canonical: '/articles' },
 };
 
 export default async function ArticlesPage() {

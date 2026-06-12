@@ -3,7 +3,11 @@ import { AlertTriangle } from 'lucide-react';
 import { getSiteSettings } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'Disclaimer' };
+export const metadata: Metadata = {
+  title: 'Disclaimer',
+  description: 'Editorial and financial disclaimer for Predictions Market Fans content.',
+  alternates: { canonical: '/disclaimer' },
+};
 
 export default async function DisclaimerPage() {
   const settings = await getSiteSettings();
