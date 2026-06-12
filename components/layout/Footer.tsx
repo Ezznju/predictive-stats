@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { TrendingUp, Twitter, Linkedin } from 'lucide-react';
+import { Twitter, Linkedin } from 'lucide-react';
 import { Category, SiteSettings } from '@/types';
 import {
   FlowerShape,
@@ -31,9 +31,8 @@ export function Footer({ settings, categories }: FooterProps) {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-neon-lime border-2 border-black flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-black" />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-mark.svg" alt="" className="w-8 h-8 rounded-lg" />
               <span className="font-display font-bold text-lg text-black">{settings.siteName}</span>
             </Link>
             <p className="text-sm text-black/60 leading-relaxed">{settings.siteTagline}</p>
