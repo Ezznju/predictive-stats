@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   FileText,
   FolderOpen,
+  Users,
   Settings,
   PlusCircle,
   Menu,
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/admin/articles', label: 'Articles', icon: FileText },
   { href: '/admin/articles/new', label: 'New Article', icon: PlusCircle },
   { href: '/admin/categories', label: 'Categories', icon: FolderOpen },
+  { href: '/admin/authors', label: 'Authors', icon: Users },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
