@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'article',
       title: article.seoTitle || article.title,
       description: article.metaDescription || article.excerpt,
-      images: article.featuredImage ? [{ url: article.featuredImage, width: 1200, height: 630 }] : undefined,
+      // og:image comes from the auto-generated branded card (opengraph-image.tsx)
       publishedTime: article.publishDate,
       modifiedTime: article.updatedDate,
       authors: author ? [author.name] : undefined,
@@ -51,7 +51,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title: article.seoTitle || article.title,
       description: article.metaDescription || article.excerpt,
-      images: article.featuredImage ? [article.featuredImage] : undefined,
     },
   };
 }
@@ -269,12 +268,12 @@ export default async function ArticlePage({ params }: Props) {
         <GiscusComments slug={article.slug} />
       </article>
 
-      {/* Related Articles */}
+      {/* Read Next */}
       {related.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 border-t border-white/20">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-1 h-6 bg-brand-green rounded-full" />
-            <h2 className="font-display font-bold text-2xl text-ink">Related Articles</h2>
+            <h2 className="font-display font-bold text-2xl text-ink">Read Next</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {related.map((a) => (

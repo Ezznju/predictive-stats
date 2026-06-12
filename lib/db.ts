@@ -149,17 +149,40 @@ export async function getLatestArticles(count: number = 10): Promise<Article[]> 
   return (data ?? []).map(toArticle);
 }
 
+/**
+ * "Read next" recommendations: ranks all other published articles by
+ * shared tags (3 pts each) + same category (2 pts), recency as tiebreak.
+ * Falls back to most recent articles so the section is never empty.
+ */
 export async function getRelatedArticles(article: Article, count: number = 3): Promise<Article[]> {
   const { data, error } = await supabase
     .from('articles')
     .select('*')
-    .eq('category_slug', article.categorySlug)
     .eq('status', 'published')
     .neq('id', article.id)
     .order('publish_date', { ascending: false })
-    .limit(count);
+    .limit(100);
   if (error) throw error;
-  return (data ?? []).map(toArticle);
+
+  const tagSet = new Set((article.tags ?? []).map((t) => t.toLowerCase()));
+  const scored = (data ?? []).map(toArticle).map((a) => {
+    const sharedTags = (a.tags ?? []).filter((t) => tagSet.has(t.toLowerCase())).length;
+    const sameCategory = a.categorySlug === article.categorySlug ? 2 : 0;
+    return { article: a, score: sharedTags * 3 + sameCategory };
+  });
+
+  scored.sort(
+    (x, y) =>
+      y.score - x.score ||
+      String(y.article.publishDate).localeCompare(String(x.article.publishDate))
+  );
+
+  const related = scored.filter((s) => s.score > 0).map((s) => s.article);
+  for (const s of scored) {
+    if (related.length >= count) break;
+    if (s.score === 0) related.push(s.article);
+  }
+  return related.slice(0, count);
 }
 
 /* ───── authors ───── */

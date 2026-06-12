@@ -1,87 +1,99 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Search as SearchIcon, Loader2 } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { Article, Author, Category } from '@/types';
 
+/** Normalizes raw snake_case API rows to the camelCase Article shape. */
+function normalizeArticle(a: any): Article {
+  return {
+    id: a.id,
+    title: a.title,
+    slug: a.slug,
+    excerpt: a.excerpt ?? '',
+    content: '',
+    featuredImage: a.featured_image ?? a.featuredImage ?? '',
+    authorId: a.author_id ?? a.authorId ?? '',
+    categorySlug: a.category_slug ?? a.categorySlug ?? '',
+    tags: a.tags ?? [],
+    publishDate: a.publish_date ?? a.publishDate ?? '',
+    updatedDate: a.updated_date ?? a.updatedDate ?? undefined,
+    readTime: a.read_time ?? a.readTime ?? 5,
+    featured: a.featured ?? false,
+    status: a.status ?? 'published',
+  };
+}
+
 export default function SearchPage() {
   const [query, setQuery] = useState('');
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [results, setResults] = useState<Article[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
   const [authors, setAuthors] = useState<Author[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const requestId = useRef(0);
 
+  // Load authors + categories once (needed for the result cards)
   useEffect(() => {
     async function load() {
       try {
-        const [aRes, auRes, cRes] = await Promise.all([
-          fetch('/api/articles'),
+        const [auRes, cRes] = await Promise.all([
           fetch('/api/authors'),
           fetch('/api/categories'),
         ]);
-        const allArticles = await aRes.json();
-        // The API returns raw snake_case DB rows — normalize to the camelCase
-        // Article shape that ArticleCard expects.
-        const normalized: Article[] = (Array.isArray(allArticles) ? allArticles : []).map((a: any) => ({
-          id: a.id,
-          title: a.title,
-          slug: a.slug,
-          excerpt: a.excerpt ?? '',
-          content: '',
-          featuredImage: a.featured_image ?? a.featuredImage ?? '',
-          authorId: a.author_id ?? a.authorId ?? '',
-          categorySlug: a.category_slug ?? a.categorySlug ?? '',
-          tags: a.tags ?? [],
-          publishDate: a.publish_date ?? a.publishDate ?? '',
-          updatedDate: a.updated_date ?? a.updatedDate ?? undefined,
-          readTime: a.read_time ?? a.readTime ?? 5,
-          featured: a.featured ?? false,
-          status: a.status ?? 'draft',
-        }));
-        setArticles(normalized.filter((a) => a.status === 'published'));
         setAuthors(await auRes.json());
         setCategories(await cRes.json());
       } catch {
-        console.error('Failed to load data');
-      } finally {
-        setLoading(false);
+        console.error('Failed to load metadata');
       }
     }
     load();
   }, []);
 
-  const authorMap = useMemo(() => new Map(authors.map(a => [a.id, a])), [authors]);
-  const categoryMap = useMemo(() => new Map(categories.map(c => [c.slug, c])), [categories]);
+  // Debounced server-side full-text search
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) {
+      setResults([]);
+      setSearched(false);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    const id = ++requestId.current;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        const rows = await res.json();
+        if (id !== requestId.current) return; // stale response
+        setResults(Array.isArray(rows) ? rows.map(normalizeArticle) : []);
+        setSearched(true);
+      } catch {
+        if (id === requestId.current) {
+          setResults([]);
+          setSearched(true);
+        }
+      } finally {
+        if (id === requestId.current) setSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
-  const results = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
-    return articles.filter((a: any) =>
-      a.title?.toLowerCase().includes(q) ||
-      a.excerpt?.toLowerCase().includes(q) ||
-      (a.tags || []).some((t: string) => t.toLowerCase().includes(q)) ||
-      (a.category_slug || a.categorySlug || '').replace(/-/g, ' ').includes(q)
-    );
-  }, [query, articles]);
-
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-        <h1 className="font-display font-bold text-4xl text-ink mb-6">Search</h1>
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
-        </div>
-      </div>
-    );
-  }
+  const authorMap = useMemo(() => new Map(authors.map((a) => [a.id, a])), [authors]);
+  const categoryMap = useMemo(() => new Map(categories.map((c) => [c.slug, c])), [categories]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
       <h1 className="font-display font-bold text-4xl text-ink mb-6">Search</h1>
 
       <div className="relative max-w-2xl mb-10">
-        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-muted" />
+        {searching ? (
+          <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-ink-muted" />
+        ) : (
+          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-muted" />
+        )}
         <input
           type="text"
           value={query}
@@ -92,22 +104,24 @@ export default function SearchPage() {
         />
       </div>
 
-      {query.trim() && (
-        <p className="text-sm text-ink-muted mb-6">{results.length} result{results.length !== 1 ? 's' : ''} for &ldquo;{query}&rdquo;</p>
+      {searched && !searching && (
+        <p className="text-sm text-ink-muted mb-6">
+          {results.length} result{results.length !== 1 ? 's' : ''} for &ldquo;{query.trim()}&rdquo;
+        </p>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {results.map((article: any) => (
+        {results.map((article) => (
           <ArticleCard
             key={article.id}
             article={article}
-            author={authorMap.get(article.authorId || article.author_id)}
-            category={categoryMap.get(article.categorySlug || article.category_slug)}
+            author={authorMap.get(article.authorId)}
+            category={categoryMap.get(article.categorySlug)}
           />
         ))}
       </div>
 
-      {query.trim() && results.length === 0 && (
+      {searched && !searching && results.length === 0 && (
         <div className="text-center py-20">
           <p className="text-ink-secondary text-lg">No articles match your search.</p>
           <p className="text-ink-muted text-sm mt-1">Try different keywords or browse all articles.</p>
