@@ -55,6 +55,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+/**
+ * Wraps article tables in a horizontally scrollable container so wide
+ * comparison tables don't force the whole page to overflow on phones.
+ */
+function wrapTables(html: string): string {
+  return html
+    .replace(/<table(?![^>]*data-wrapped)/g, '<div class="table-scroll"><table')
+    .replace(/<\/table>/g, '</table></div>');
+}
+
 export default async function ArticlePage({ params }: Props) {
   const article = await getArticleBySlug(params.slug);
   if (!article) notFound();
@@ -186,7 +196,7 @@ export default async function ArticlePage({ params }: Props) {
             prose-blockquote:border-l-black prose-blockquote:text-ink-secondary
             prose-code:text-black prose-code:bg-white/15 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
             prose-li:text-ink-secondary"
-          dangerouslySetInnerHTML={{ __html: article.content }}
+          dangerouslySetInnerHTML={{ __html: wrapTables(article.content) }}
         />
 
         {/* Tags */}
