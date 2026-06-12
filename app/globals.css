@@ -202,3 +202,37 @@
 .prose table tr:nth-child(odd) td {
   background: rgba(0, 0, 0, 0.05);
 }
+
+/* ── Mobile: wide article tables scroll inside their own container ── */
+.prose .table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.5em 0;
+  border-radius: 12px;
+}
+
+.prose .table-scroll table {
+  margin: 0;
+  min-width: 100%;
+}
+
+@media (max-width: 640px) {
+  /* Tiptap saves fixed pixel col widths from the desktop editor —
+     let columns size naturally on small screens so text can wrap */
+  .prose table col {
+    width: auto !important;
+    min-width: 0 !important;
+  }
+
+  .prose table th,
+  .prose table td {
+    padding: 0.5em 0.6em;
+    font-size: 0.875rem;
+  }
+}
+
+/* Safety net: decorative shapes / stray wide elements never cause sideways scroll */
+html,
+body {
+  overflow-x: clip;
+}
