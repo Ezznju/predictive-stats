@@ -173,7 +173,7 @@ export function findArbitragePairs(
         continue;
 
       const polyYesPrice = parseFloat(polyMarket.outcomePrices[0]);
-      if (isNaN(polyYesPrice) || polyYesPrice <= 0) continue;
+      if (isNaN(polyYesPrice) || polyYesPrice < 0) continue;
 
       // Build search text from polymarket market
       const polyQ = `${polyMarket.question} ${polyMarket.groupItemTitle || ''}`;

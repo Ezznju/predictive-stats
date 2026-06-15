@@ -60,11 +60,26 @@ export async function GET() {
         }
       }
 
+      const totalKalshiMarkets = Array.from(
+        kalshiMarketsByEvent.values()
+      ).reduce((s, v) => s + v.length, 0);
+
       cachedPairs = findArbitragePairs(
         polyEvents,
         relevantKalshiEvents,
         kalshiMarketsByEvent
       );
+
+      // Store debug stats alongside cache
+      (globalThis as Record<string, unknown>).__arbDebug = {
+        polyEvents: polyEvents.length,
+        kalshiEvents: relevantKalshiEvents.length,
+        matchedTickers: matchedTickers.size,
+        kalshiEventsWithMarkets: kalshiMarketsByEvent.size,
+        totalKalshiMarkets,
+        pairsFound: cachedPairs.length,
+      };
+
       cacheTimestamp = now;
     } catch (err) {
       console.error('Arbitrage Scanner fetch error:', err);
@@ -89,6 +104,8 @@ export async function GET() {
       pairs: cachedPairs,
       cached: now - cacheTimestamp > 0,
       updatedAt: new Date(cacheTimestamp).toISOString(),
+      debug:
+        (globalThis as Record<string, unknown>).__arbDebug ?? null,
     },
     {
       headers: {
