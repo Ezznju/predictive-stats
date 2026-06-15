@@ -10,106 +10,82 @@ import {
   preMatchEvents,
   type ArbitragePair,
 } from '@/lib/arbitrage';
+import { withSharedCache } from '@/lib/scanner-cache';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-/* ── In-memory cache ──────────────────────────────────────────────── */
+const CACHE_KEY = 'arbitrage-scanner';
 
-let cachedPairs: ArbitragePair[] | null = null;
-let cacheTimestamp = 0;
-const CACHE_TTL_MS = 5 * 60 * 1000;
+/* ── Heavy scan: Polymarket × Kalshi cross-platform arbitrage ──────── */
+
+async function scanArbitrage(): Promise<ArbitragePair[]> {
+  // Step 1: fetch events from both platforms in parallel
+  const [polyEvents, kalshiEvents] = await Promise.all([
+    fetchPolymarketEvents(),
+    fetchKalshiEvents(),
+  ]);
+
+  // Step 2: pre-match events by title similarity so we only fetch markets
+  // for events that plausibly match (saves 150+ API calls)
+  const relevantKalshiEvents = kalshiEvents.filter(
+    (ev) => ev.category !== 'Sports'
+  );
+  const matchedTickers = preMatchEvents(polyEvents, relevantKalshiEvents);
+
+  // Step 3: fetch markets only for matched Kalshi events (batched)
+  const kalshiMarketsByEvent = new Map<string, KalshiMarket[]>();
+  const eventsToFetch = relevantKalshiEvents.filter((ev) =>
+    matchedTickers.has(ev.event_ticker)
+  );
+
+  const batchSize = 20;
+  for (let i = 0; i < eventsToFetch.length; i += batchSize) {
+    const batch = eventsToFetch.slice(i, i + batchSize);
+    const results = await Promise.all(
+      batch.map((ev) => fetchKalshiMarketsForEvent(ev.event_ticker))
+    );
+    for (let j = 0; j < batch.length; j++) {
+      if (results[j].length > 0) {
+        kalshiMarketsByEvent.set(batch[j].event_ticker, results[j]);
+      }
+    }
+  }
+
+  return findArbitragePairs(
+    polyEvents,
+    relevantKalshiEvents,
+    kalshiMarketsByEvent
+  );
+}
 
 /* ── GET /api/arbitrage-scanner ────────────────────────────────────── */
 
 export async function GET() {
-  const now = Date.now();
+  try {
+    const result = await withSharedCache<ArbitragePair[]>(
+      CACHE_KEY,
+      scanArbitrage
+    );
 
-  if (!cachedPairs || now - cacheTimestamp > CACHE_TTL_MS) {
-    try {
-      // Step 1: Fetch events from both platforms in parallel
-      const [polyEvents, kalshiEvents] = await Promise.all([
-        fetchPolymarketEvents(),
-        fetchKalshiEvents(),
-      ]);
-
-      // Step 2: Pre-match events by title similarity to avoid
-      // fetching markets for every Kalshi event (saves 150+ API calls)
-      const relevantKalshiEvents = kalshiEvents.filter(
-        (ev) => ev.category !== 'Sports'
-      );
-      const matchedTickers = preMatchEvents(polyEvents, relevantKalshiEvents);
-
-      // Step 3: Only fetch markets for matched Kalshi events
-      const kalshiMarketsByEvent = new Map<string, KalshiMarket[]>();
-      const eventsToFetch = relevantKalshiEvents.filter((ev) =>
-        matchedTickers.has(ev.event_ticker)
-      );
-
-      // Batch fetch (20 concurrent)
-      const batchSize = 20;
-      for (let i = 0; i < eventsToFetch.length; i += batchSize) {
-        const batch = eventsToFetch.slice(i, i + batchSize);
-        const results = await Promise.all(
-          batch.map((ev) => fetchKalshiMarketsForEvent(ev.event_ticker))
-        );
-        for (let j = 0; j < batch.length; j++) {
-          if (results[j].length > 0) {
-            kalshiMarketsByEvent.set(batch[j].event_ticker, results[j]);
-          }
-        }
-      }
-
-      const totalKalshiMarkets = Array.from(
-        kalshiMarketsByEvent.values()
-      ).reduce((s, v) => s + v.length, 0);
-
-      cachedPairs = findArbitragePairs(
-        polyEvents,
-        relevantKalshiEvents,
-        kalshiMarketsByEvent
-      );
-
-      // Store debug stats alongside cache
-      (globalThis as Record<string, unknown>).__arbDebug = {
-        polyEvents: polyEvents.length,
-        kalshiEvents: relevantKalshiEvents.length,
-        matchedTickers: matchedTickers.size,
-        kalshiEventsWithMarkets: kalshiMarketsByEvent.size,
-        totalKalshiMarkets,
-        pairsFound: cachedPairs.length,
-      };
-
-      cacheTimestamp = now;
-    } catch (err) {
-      console.error('Arbitrage Scanner fetch error:', err);
-
-      if (cachedPairs) {
-        return NextResponse.json({
-          pairs: cachedPairs,
-          cached: true,
-          stale: true,
-          updatedAt: new Date(cacheTimestamp).toISOString(),
-        });
-      }
-      return NextResponse.json(
-        { error: 'Failed to fetch market data' },
-        { status: 502 }
-      );
-    }
-  }
-
-  return NextResponse.json(
-    {
-      pairs: cachedPairs,
-      cached: now - cacheTimestamp > 0,
-      updatedAt: new Date(cacheTimestamp).toISOString(),
-
-    },
-    {
-      headers: {
-        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+    return NextResponse.json(
+      {
+        pairs: result.payload,
+        cached: result.source !== 'fresh',
+        stale: result.stale,
+        updatedAt: result.updatedAt,
       },
-    }
-  );
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+        },
+      }
+    );
+  } catch (err) {
+    console.error('Arbitrage Scanner fetch error:', err);
+    return NextResponse.json(
+      { error: 'Failed to fetch market data' },
+      { status: 502 }
+    );
+  }
 }
