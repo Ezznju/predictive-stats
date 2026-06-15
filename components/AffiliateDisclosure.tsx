@@ -15,7 +15,7 @@ export function AffiliateDisclosure({ variant = 'banner', className = '' }: Affi
     return (
       <p className={`text-xs text-ink-faint ${className}`}>
         Some links on this page may be referral links — see our{' '}
-        <a href="/disclaimer" className="underline hover:text-ink">
+        <a href="/disclosure" className="underline hover:text-ink">
           disclosure
         </a>
         .
@@ -34,7 +34,7 @@ export function AffiliateDisclosure({ variant = 'banner', className = '' }: Affi
         <strong className="text-ink">Affiliate disclosure:</strong> some outbound links on this page may be
         referral links. If you sign up through them, we may earn a commission at no extra cost to you. This
         never influences our ratings or reviews, which are based on independent testing.{' '}
-        <a href="/disclaimer" className="underline font-semibold hover:text-ink">
+        <a href="/disclosure" className="underline font-semibold hover:text-ink">
           Read our full disclosure
         </a>
         .

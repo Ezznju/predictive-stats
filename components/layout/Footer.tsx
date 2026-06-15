@@ -71,6 +71,7 @@ export function Footer({ settings, categories }: FooterProps) {
               <li><Link href="/privacy" className="text-sm text-black/60 hover:text-black transition-colors">Privacy Policy</Link></li>
               <li><Link href="/terms" className="text-sm text-black/60 hover:text-black transition-colors">Terms of Use</Link></li>
               <li><Link href="/disclaimer" className="text-sm text-black/60 hover:text-black transition-colors">Disclaimer</Link></li>
+              <li><Link href="/disclosure" className="text-sm text-black/60 hover:text-black transition-colors">Affiliate Disclosure</Link></li>
             </ul>
           </div>
         </div>
