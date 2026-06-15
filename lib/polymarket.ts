@@ -6,6 +6,9 @@
  *  - clob.polymarket.com/book?token_id=...      → order-book depth
  */
 
+import { z } from 'zod';
+import { safeFetchJson } from './safe-fetch';
+
 /* ── Types ─────────────────────────────────────────────────────────── */
 
 export interface RewardConfig {
@@ -90,37 +93,90 @@ export interface OrderBook {
 /* ── Constants ─────────────────────────────────────────────────────── */
 
 const CLOB_BASE = 'https://clob.polymarket.com';
+const MAX_REWARD_PAGES = 30; // safety cap; loop normally exits on empty cursor
+
+/* ── Schemas ───────────────────────────────────────────────────────── */
+
+const RewardConfigSchema = z
+  .object({ rate_per_day: z.number().optional().default(0) })
+  .passthrough();
+
+const RewardMarketSchema = z
+  .object({
+    condition_id: z.string().optional().default(''),
+    market_slug: z.string().optional().default(''),
+    event_slug: z.string().optional().default(''),
+    question: z.string().optional().default(''),
+    image: z.string().optional().default(''),
+    market_competitiveness: z.number().optional().default(0),
+    rewards_config: z.array(RewardConfigSchema).optional().default([]),
+    rewards_max_spread: z.number().optional().default(0),
+    rewards_min_size: z.number().optional().default(0),
+    spread: z.number().optional().default(0),
+    tokens: z
+      .array(
+        z
+          .object({
+            token_id: z.string().optional().default(''),
+            outcome: z.string().optional().default(''),
+            price: z.number().optional().default(0.5),
+          })
+          .passthrough()
+      )
+      .optional()
+      .default([]),
+    volume_24hr: z.number().optional().default(0),
+    end_date: z.string().optional().default(''),
+  })
+  .passthrough();
+
+const RewardMarketsResponseSchema = z.object({
+  data: z.array(RewardMarketSchema).default([]),
+  next_cursor: z.string().optional().default(''),
+});
+
+type RewardMarketRaw = z.infer<typeof RewardMarketSchema>;
+
+const OrderBookSchema = z
+  .object({
+    bids: z
+      .array(z.object({ price: z.string(), size: z.string() }).passthrough())
+      .default([]),
+    asks: z
+      .array(z.object({ price: z.string(), size: z.string() }).passthrough())
+      .default([]),
+    market: z.string().optional().default(''),
+    asset_id: z.string().optional().default(''),
+    hash: z.string().optional().default(''),
+    timestamp: z.string().optional().default(''),
+  })
+  .passthrough();
 
 /* ── Fetch all reward-eligible markets ─────────────────────────────── */
 
 export async function fetchRewardMarkets(): Promise<ScannerMarket[]> {
-  const allMarkets: RawPolymarketMarket[] = [];
+  const allMarkets: RewardMarketRaw[] = [];
   let cursor: string | undefined;
 
-  // Paginate through all pages
-  for (let page = 0; page < 20; page++) {
+  // Paginate until the API signals the end (empty / sentinel cursor).
+  for (let page = 0; page < MAX_REWARD_PAGES; page++) {
     const url = new URL(`${CLOB_BASE}/rewards/markets/multi`);
     url.searchParams.set('limit', '100');
     if (cursor && cursor !== 'LTE=') {
       url.searchParams.set('after_cursor', cursor);
     }
 
-    const res = await fetch(url.toString(), {
-      headers: { Accept: 'application/json' },
-      next: { revalidate: 0 },
-    });
+    // Throws after retries — caller (route) will serve stale cache.
+    const json = await safeFetchJson(
+      url.toString(),
+      RewardMarketsResponseSchema,
+      { next: { revalidate: 0 } } as RequestInit,
+      { label: `polymarket rewards p${page}` }
+    );
 
-    if (!res.ok) {
-      console.error(`Polymarket API error: ${res.status} ${res.statusText}`);
-      break;
-    }
-
-    const json = await res.json();
-    const data: RawPolymarketMarket[] = json.data ?? [];
-    allMarkets.push(...data);
-
-    cursor = json.next_cursor;
-    if (!cursor || cursor === 'LTE=' || data.length < 100) break;
+    allMarkets.push(...json.data);
+    cursor = json.next_cursor || undefined;
+    if (!cursor || cursor === 'LTE=' || json.data.length < 100) break;
   }
 
   // Filter to only reward-eligible markets and transform
@@ -130,7 +186,7 @@ export async function fetchRewardMarkets(): Promise<ScannerMarket[]> {
     .sort((a, b) => b.rewardScore - a.rewardScore);
 }
 
-function toScannerMarket(m: RawPolymarketMarket): ScannerMarket {
+function toScannerMarket(m: RewardMarketRaw): ScannerMarket {
   const yesToken = m.tokens.find((t) => t.outcome === 'Yes') ?? m.tokens[0];
   const noToken = m.tokens.find((t) => t.outcome === 'No') ?? m.tokens[1];
 
@@ -177,14 +233,17 @@ function toScannerMarket(m: RawPolymarketMarket): ScannerMarket {
 /* ── Fetch order book for a single token ───────────────────────────── */
 
 export async function fetchOrderBook(tokenId: string): Promise<OrderBook | null> {
+  // Best-effort: a single failed book lookup shouldn't surface as an error.
   try {
-    const res = await fetch(`${CLOB_BASE}/book?token_id=${tokenId}`, {
-      headers: { Accept: 'application/json' },
-      next: { revalidate: 0 },
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
+    const book = await safeFetchJson(
+      `${CLOB_BASE}/book?token_id=${encodeURIComponent(tokenId)}`,
+      OrderBookSchema,
+      { next: { revalidate: 0 } } as RequestInit,
+      { label: `polymarket book ${tokenId}`, retries: 2 }
+    );
+    return book as OrderBook;
+  } catch (err) {
+    console.warn(`[polymarket] order book fetch failed for ${tokenId}:`, String(err));
     return null;
   }
 }
