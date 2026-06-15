@@ -104,8 +104,7 @@ export async function GET() {
       pairs: cachedPairs,
       cached: now - cacheTimestamp > 0,
       updatedAt: new Date(cacheTimestamp).toISOString(),
-      debug:
-        (globalThis as Record<string, unknown>).__arbDebug ?? null,
+
     },
     {
       headers: {
