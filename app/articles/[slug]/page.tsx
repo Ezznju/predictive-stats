@@ -9,6 +9,7 @@ import { ReadingProgressBar } from '@/components/ReadingProgressBar';
 import { TableOfContents } from '@/components/TableOfContents';
 import { GiscusComments } from '@/components/GiscusComments';
 import { PolymarketEmbeds } from '@/components/PolymarketEmbeds';
+import { TwitterEmbeds } from '@/components/TwitterEmbeds';
 import { ShareButtons } from '@/components/ShareButtons';
 import {
   getArticleBySlug,
@@ -79,6 +80,55 @@ function embedPolymarket(html: string): string {
     /(?:<p[^>]*>\s*)?\[polymarket(-event)?:\s*([a-z0-9][a-z0-9-]*)\s*\](?:\s*<\/p>)?/gi,
     (_match, isEvent, slug) =>
       `<div data-polymarket-${isEvent ? 'event' : 'market'}="${slug.toLowerCase()}"></div>`
+  );
+}
+
+/**
+ * Converts `[youtube:VIDEO_ID_OR_URL]` shortcodes into responsive iframes.
+ * Accepts full URLs (youtube.com/watch?v=…, youtu.be/…, shorts/) or bare IDs.
+ */
+function embedYouTube(html: string): string {
+  return html.replace(
+    /(?:<p[^>]*>\s*)?\[youtube:\s*([^\]\s]+)\s*\](?:\s*<\/p>)?/gi,
+    (_match, raw: string) => {
+      let videoId = raw.trim();
+      // Full URL → extract id
+      try {
+        const url = new URL(videoId.startsWith('http') ? videoId : `https://${videoId}`);
+        if (url.hostname.includes('youtu.be')) {
+          videoId = url.pathname.slice(1).split('/')[0];
+        } else if (url.hostname.includes('youtube.com')) {
+          videoId = url.searchParams.get('v') || url.pathname.split('/').filter(Boolean).pop() || videoId;
+        }
+      } catch {
+        // Already a bare ID — keep as-is
+      }
+      // Strip anything after & or ? in the extracted id
+      videoId = videoId.split(/[?&#]/)[0];
+      if (!videoId) return _match;
+      return (
+        `<div class="yt-embed"><iframe src="https://www.youtube-nocookie.com/embed/${videoId}" ` +
+        `title="YouTube video" frameborder="0" loading="lazy" ` +
+        `allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ` +
+        `allowfullscreen></iframe></div>`
+      );
+    }
+  );
+}
+
+/**
+ * Converts `[tweet:URL]` shortcodes into placeholder divs that
+ * `<TwitterEmbeds />` hydrates on the client.
+ * Accepts: https://twitter.com/user/status/123… or https://x.com/user/status/123…
+ */
+function embedTweet(html: string): string {
+  return html.replace(
+    /(?:<p[^>]*>\s*)?\[tweet:\s*(https?:\/\/(?:twitter|x)\.com\/[^\]\s]+)\s*\](?:\s*<\/p>)?/gi,
+    (_match, url: string) => {
+      const idMatch = url.match(/status\/(\d+)/);
+      if (!idMatch) return _match;
+      return `<div data-tweet-id="${idMatch[1]}"></div>`;
+    }
   );
 }
 
@@ -228,7 +278,7 @@ export default async function ArticlePage({ params }: Props) {
             prose-blockquote:border-l-black prose-blockquote:text-ink-secondary
             prose-code:text-black prose-code:bg-white/15 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
             prose-li:text-ink-secondary"
-          dangerouslySetInnerHTML={{ __html: embedPolymarket(wrapTables(article.content)) }}
+          dangerouslySetInnerHTML={{ __html: embedTweet(embedYouTube(embedPolymarket(wrapTables(article.content)))) }}
         />
 
         {/* Tags */}
@@ -247,6 +297,9 @@ export default async function ArticlePage({ params }: Props) {
 
         {/* Hydrate live Polymarket odds embeds */}
         <PolymarketEmbeds />
+
+        {/* Hydrate embedded tweets */}
+        <TwitterEmbeds />
 
         {/* Author Bio */}
         {author && (
