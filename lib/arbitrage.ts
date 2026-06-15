@@ -1,8 +1,8 @@
 /**
  * Cross-platform event matching & arbitrage detection.
  *
- * Matches events between Polymarket (gamma API) and Kalshi using
- * text similarity on event/market titles.
+ * Strategy: match at EVENT level first (looser), then pair individual
+ * markets within matched events using tighter sub-title matching.
  */
 
 /* ── Types ─────────────────────────────────────────────────────────── */
@@ -29,14 +29,10 @@ export interface PolymarketMarket {
 }
 
 export interface ArbitragePair {
-  /** Human-readable event/question name */
   eventName: string;
-  /** Category */
   category: string;
-  /** Match quality 0-1 */
   matchScore: number;
 
-  /** Polymarket side */
   poly: {
     question: string;
     yesPrice: number;
@@ -47,7 +43,6 @@ export interface ArbitragePair {
     image: string;
   };
 
-  /** Kalshi side */
   kalshi: {
     question: string;
     yesPrice: number;
@@ -58,53 +53,40 @@ export interface ArbitragePair {
     eventTicker: string;
   };
 
-  /** Absolute price difference (in cents) */
   priceDiffCents: number;
-  /** Which side is cheaper for YES: 'polymarket' | 'kalshi' */
   cheaperYes: 'polymarket' | 'kalshi';
-  /** Potential arbitrage percentage */
   arbPercent: number;
 }
 
-/* ── Text matching ─────────────────────────────────────────────────── */
+/* ── Text matching helpers ─────────────────────────────────────────── */
 
-/** Normalize text for comparison */
-function normalize(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/['']/g, "'")
-    .replace(/[^a-z0-9\s'-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+const STOP_WORDS = new Set([
+  'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'by', 'is', 'be',
+  'will', 'would', 'could', 'should', 'may', 'might', 'can', 'has', 'have',
+  'had', 'do', 'does', 'did', 'are', 'was', 'were', 'been', 'being',
+  'this', 'that', 'these', 'those', 'it', 'its', 'or', 'and', 'but',
+  'if', 'then', 'than', 'so', 'not', 'no', 'yes', 'any', 'all',
+  'with', 'from', 'about', 'into', 'over', 'after', 'before',
+  'between', 'under', 'during', 'through', 'above', 'below',
+  'up', 'down', 'out', 'off', 'more', 'less', 'most', 'least',
+  'win', 'next', 'new', 'become', 'what', 'who', 'when', 'where',
+  'how', 'which', 'their', 'there', 'here', 'very', 'just',
+]);
 
-/** Extract meaningful keywords (skip common words) */
 function extractKeywords(text: string): Set<string> {
-  const stopWords = new Set([
-    'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'by', 'is', 'be',
-    'will', 'would', 'could', 'should', 'may', 'might', 'can', 'has', 'have',
-    'had', 'do', 'does', 'did', 'are', 'was', 'were', 'been', 'being',
-    'this', 'that', 'these', 'those', 'it', 'its', 'or', 'and', 'but',
-    'if', 'then', 'than', 'so', 'not', 'no', 'yes', 'any', 'all',
-    'with', 'from', 'about', 'into', 'over', 'after', 'before',
-    'between', 'under', 'during', 'through', 'above', 'below',
-    'up', 'down', 'out', 'off', 'more', 'less', 'most', 'least',
-    'win', 'next', 'new', 'become', 'what', 'who', 'when', 'where',
-    'how', 'which', 'their', 'there', 'here', 'very', 'just',
-  ]);
-
   return new Set(
-    normalize(text)
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s'-]/g, ' ')
       .split(/\s+/)
-      .filter((w) => w.length > 1 && !stopWords.has(w))
+      .filter((w) => w.length > 1 && !STOP_WORDS.has(w))
   );
 }
 
-/** Jaccard similarity between two sets */
 function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 && b.size === 0) return 0;
-  let intersection = 0;
   const arrA = Array.from(a);
+  let intersection = 0;
   for (let i = 0; i < arrA.length; i++) {
     if (b.has(arrA[i])) intersection++;
   }
@@ -112,150 +94,151 @@ function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
   return union > 0 ? intersection / union : 0;
 }
 
-/** Check if key entities match (names, years, specific terms) */
-function entityOverlap(a: Set<string>, b: Set<string>): number {
-  // Important entities: proper nouns, years, specific terms
-  const arrA = Array.from(a);
-  const arrB = Array.from(b);
-  const importantA = arrA.filter((w) => /^[A-Z]|^\d{4}$/.test(w) || w.length > 4);
-  const importantB = arrB.filter((w) => /^[A-Z]|^\d{4}$/.test(w) || w.length > 4);
-  const setB = new Set(importantB);
+/* ── Kalshi types for matching ─────────────────────────────────────── */
 
-  if (importantA.length === 0 || importantB.length === 0) return 0;
-
-  let matches = 0;
-  for (let i = 0; i < importantA.length; i++) {
-    if (setB.has(importantA[i])) matches++;
-  }
-
-  return matches / Math.max(importantA.length, importantB.length);
+interface KalshiEventInput {
+  event_ticker: string;
+  title: string;
+  category: string;
 }
-
-/** Calculate match score between two event/market titles */
-export function matchScore(textA: string, textB: string): number {
-  const kwA = extractKeywords(textA);
-  const kwB = extractKeywords(textB);
-
-  const jaccard = jaccardSimilarity(kwA, kwB);
-  const entity = entityOverlap(kwA, kwB);
-
-  // Weighted combination — entity matches are more important
-  return jaccard * 0.4 + entity * 0.6;
-}
-
-/* ── Matching engine ───────────────────────────────────────────────── */
 
 interface KalshiMarketInput {
   ticker: string;
   event_ticker: string;
   title: string;
   yes_sub_title: string;
-  eventTitle: string;
-  category: string;
   yes_bid_dollars: string;
   yes_ask_dollars: string;
   volume_fp: string;
 }
 
+/* ── Core matching engine ──────────────────────────────────────────── */
+
 export function findArbitragePairs(
   polyEvents: PolymarketEvent[],
-  kalshiMarkets: KalshiMarketInput[]
+  kalshiEvents: KalshiEventInput[],
+  kalshiMarketsByEvent: Map<string, KalshiMarketInput[]>
 ): ArbitragePair[] {
   const pairs: ArbitragePair[] = [];
-  const usedKalshi = new Set<string>();
+  const usedKalshiMarkets = new Set<string>();
 
-  // For each Polymarket market, find the best matching Kalshi market
+  // Step 1: Match events using title keywords
   for (const polyEvent of polyEvents) {
+    const polyKw = extractKeywords(polyEvent.title);
+    if (polyKw.size === 0) continue;
+
+    // Find best matching Kalshi event
+    let bestEvent: { event: KalshiEventInput; score: number } | null = null;
+    for (const kalshiEvent of kalshiEvents) {
+      const kalshiKw = extractKeywords(kalshiEvent.title);
+      const score = jaccardSimilarity(polyKw, kalshiKw);
+      if (score >= 0.25 && (!bestEvent || score > bestEvent.score)) {
+        bestEvent = { event: kalshiEvent, score };
+      }
+    }
+
+    if (!bestEvent) continue;
+
+    const kalshiEvent = bestEvent.event;
+    const kalshiMarkets = kalshiMarketsByEvent.get(kalshiEvent.event_ticker) ?? [];
+    if (kalshiMarkets.length === 0) continue;
+
+    // Step 2: Within matched events, pair individual markets
     for (const polyMarket of polyEvent.markets) {
-      // Skip markets without pricing
-      if (
-        !polyMarket.outcomePrices ||
-        polyMarket.outcomePrices.length < 2
-      ) continue;
+      if (!polyMarket.outcomePrices || polyMarket.outcomePrices.length < 2)
+        continue;
 
       const polyYesPrice = parseFloat(polyMarket.outcomePrices[0]);
       if (isNaN(polyYesPrice) || polyYesPrice <= 0) continue;
 
-      // Build search text from polymarket
-      const polyText = `${polyEvent.title} ${polyMarket.question} ${polyMarket.groupItemTitle || ''}`;
+      // Build search text from polymarket market
+      const polyQ = `${polyMarket.question} ${polyMarket.groupItemTitle || ''}`;
+      const polyMKw = extractKeywords(polyQ);
 
-      let bestMatch: {
-        kalshi: KalshiMarketInput;
-        score: number;
-      } | null = null;
+      let bestMarket: { market: KalshiMarketInput; score: number } | null =
+        null;
 
-      for (const kalshi of kalshiMarkets) {
-        if (usedKalshi.has(kalshi.ticker)) continue;
+      for (const km of kalshiMarkets) {
+        if (usedKalshiMarkets.has(km.ticker)) continue;
 
-        // Build search text from kalshi
-        const kalshiText = `${kalshi.eventTitle} ${kalshi.yes_sub_title || kalshi.title}`;
+        const kalshiQ = `${km.yes_sub_title || km.title}`;
+        const kalshiMKw = extractKeywords(kalshiQ);
+        const mScore = jaccardSimilarity(polyMKw, kalshiMKw);
 
-        const score = matchScore(polyText, kalshiText);
-
-        if (score > 0.3 && (!bestMatch || score > bestMatch.score)) {
-          bestMatch = { kalshi, score };
+        // Market-level threshold: lower because markets within same event
+        // should be related. Use 0.15 for market-level matching.
+        if (mScore >= 0.15 && (!bestMarket || mScore > bestMarket.score)) {
+          bestMarket = { market: km, score: mScore };
         }
       }
 
-      if (bestMatch) {
-        const kalshi = bestMatch.kalshi;
-        usedKalshi.add(kalshi.ticker);
+      if (!bestMarket) continue;
 
-        const kalshiYesBid = parseFloat(kalshi.yes_bid_dollars) || 0;
-        const kalshiYesAsk = parseFloat(kalshi.yes_ask_dollars) || 0;
-        const kalshiYesMid = kalshiYesAsk > 0 && kalshiYesBid > 0
+      const km = bestMarket.market;
+      usedKalshiMarkets.add(km.ticker);
+
+      // Combined score = event match * 0.4 + market match * 0.6
+      const combinedScore = bestEvent.score * 0.4 + bestMarket.score * 0.6;
+
+      // Calculate prices
+      const kalshiYesBid = parseFloat(km.yes_bid_dollars) || 0;
+      const kalshiYesAsk = parseFloat(km.yes_ask_dollars) || 0;
+      const kalshiYesMid =
+        kalshiYesAsk > 0 && kalshiYesBid > 0
           ? (kalshiYesBid + kalshiYesAsk) / 2
-          : kalshiYesAsk > 0 ? kalshiYesAsk : kalshiYesBid;
+          : kalshiYesAsk > 0
+            ? kalshiYesAsk
+            : kalshiYesBid;
 
-        const polyBestBid = parseFloat(polyMarket.bestBid) || 0;
-        const polyBestAsk = parseFloat(polyMarket.bestAsk) || 0;
-        const polyMid = polyBestAsk > 0 && polyBestBid > 0
+      if (kalshiYesMid <= 0) continue;
+
+      const polyBestBid = parseFloat(polyMarket.bestBid) || 0;
+      const polyBestAsk = parseFloat(polyMarket.bestAsk) || 0;
+      const polyMid =
+        polyBestAsk > 0 && polyBestBid > 0
           ? (polyBestBid + polyBestAsk) / 2
           : polyYesPrice;
 
-        const priceDiff = Math.abs(polyMid - kalshiYesMid);
-        const priceDiffCents = Math.round(priceDiff * 100);
-        const cheaperYes: 'polymarket' | 'kalshi' = polyMid < kalshiYesMid ? 'polymarket' : 'kalshi';
+      const priceDiff = Math.abs(polyMid - kalshiYesMid);
+      const priceDiffCents = Math.round(priceDiff * 100);
+      const cheaperYes: 'polymarket' | 'kalshi' =
+        polyMid < kalshiYesMid ? 'polymarket' : 'kalshi';
 
-        // Arbitrage: buy low side YES + buy high side NO
-        // Profit = price difference (simplified — ignores fees & execution risk)
-        const avgPrice = (polyMid + kalshiYesMid) / 2;
-        const arbPercent = avgPrice > 0 ? (priceDiff / avgPrice) * 100 : 0;
+      const avgPrice = (polyMid + kalshiYesMid) / 2;
+      const arbPercent = avgPrice > 0 ? (priceDiff / avgPrice) * 100 : 0;
 
-        pairs.push({
-          eventName: polyEvent.title || polyMarket.question,
-          category: kalshi.category,
-          matchScore: bestMatch.score,
+      pairs.push({
+        eventName: polyEvent.title || polyMarket.question,
+        category: kalshiEvent.category,
+        matchScore: combinedScore,
 
-          poly: {
-            question: polyMarket.question,
-            yesPrice: polyYesPrice,
-            bestBid: polyBestBid,
-            bestAsk: polyBestAsk,
-            volume24h: polyMarket.volume24hr || 0,
-            slug: polyMarket.slug || polyEvent.slug,
-            image: polyMarket.image || '',
-          },
+        poly: {
+          question: polyMarket.question,
+          yesPrice: polyYesPrice,
+          bestBid: polyBestBid,
+          bestAsk: polyBestAsk,
+          volume24h: polyMarket.volume24hr || 0,
+          slug: polyMarket.slug || polyEvent.slug,
+          image: polyMarket.image || '',
+        },
 
-          kalshi: {
-            question: kalshi.yes_sub_title || kalshi.title,
-            yesPrice: kalshiYesMid,
-            yesBid: kalshiYesBid,
-            yesAsk: kalshiYesAsk,
-            volume: parseFloat(kalshi.volume_fp) || 0,
-            ticker: kalshi.ticker,
-            eventTicker: kalshi.event_ticker,
-          },
+        kalshi: {
+          question: km.yes_sub_title || km.title,
+          yesPrice: kalshiYesMid,
+          yesBid: kalshiYesBid,
+          yesAsk: kalshiYesAsk,
+          volume: parseFloat(km.volume_fp) || 0,
+          ticker: km.ticker,
+          eventTicker: km.event_ticker,
+        },
 
-          priceDiffCents,
-          cheaperYes,
-          arbPercent,
-        });
-      }
+        priceDiffCents,
+        cheaperYes,
+        arbPercent,
+      });
     }
   }
 
-  // Sort by arbitrage percentage descending
   return pairs.sort((a, b) => b.arbPercent - a.arbPercent);
 }
 
@@ -266,7 +249,6 @@ const GAMMA_BASE = 'https://gamma-api.polymarket.com';
 export async function fetchPolymarketEvents(): Promise<PolymarketEvent[]> {
   const allEvents: PolymarketEvent[] = [];
 
-  // Fetch active events sorted by volume
   for (let offset = 0; offset < 500; offset += 100) {
     try {
       const url = new URL(`${GAMMA_BASE}/events`);
