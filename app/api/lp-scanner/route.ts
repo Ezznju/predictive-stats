@@ -4,7 +4,7 @@ import type { ScannerMarket } from '@/lib/polymarket';
 import { withSharedCache } from '@/lib/scanner-cache';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const CACHE_KEY = 'lp-scanner';
 
