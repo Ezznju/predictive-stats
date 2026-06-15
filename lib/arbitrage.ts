@@ -112,6 +112,30 @@ interface KalshiMarketInput {
   volume_fp: string;
 }
 
+/* ── Pre-match: find which Kalshi events are worth fetching ────────── */
+
+export function preMatchEvents(
+  polyEvents: PolymarketEvent[],
+  kalshiEvents: KalshiEventInput[]
+): Set<string> {
+  const matchedTickers = new Set<string>();
+
+  for (const polyEvent of polyEvents) {
+    const polyKw = extractKeywords(polyEvent.title);
+    if (polyKw.size === 0) continue;
+
+    for (const kalshiEvent of kalshiEvents) {
+      const kalshiKw = extractKeywords(kalshiEvent.title);
+      const score = jaccardSimilarity(polyKw, kalshiKw);
+      if (score >= 0.25) {
+        matchedTickers.add(kalshiEvent.event_ticker);
+      }
+    }
+  }
+
+  return matchedTickers;
+}
+
 /* ── Core matching engine ──────────────────────────────────────────── */
 
 export function findArbitragePairs(

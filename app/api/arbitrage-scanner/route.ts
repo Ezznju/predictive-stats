@@ -1,61 +1,24 @@
 import { NextResponse } from 'next/server';
 import {
   fetchKalshiEvents,
-  type KalshiEvent,
+  fetchKalshiMarketsForEvent,
   type KalshiMarket,
 } from '@/lib/kalshi';
 import {
   fetchPolymarketEvents,
   findArbitragePairs,
+  preMatchEvents,
   type ArbitragePair,
 } from '@/lib/arbitrage';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30; // Allow up to 30s for Vercel serverless
+export const maxDuration = 30;
 
 /* ── In-memory cache ──────────────────────────────────────────────── */
 
 let cachedPairs: ArbitragePair[] | null = null;
 let cacheTimestamp = 0;
 const CACHE_TTL_MS = 5 * 60 * 1000;
-
-/* ── Bulk fetch Kalshi markets ─────────────────────────────────────── */
-
-const KALSHI_BASE = 'https://api.elections.kalshi.com/trade-api/v2';
-
-async function fetchAllKalshiMarkets(): Promise<Map<string, KalshiMarket[]>> {
-  const marketsByEvent = new Map<string, KalshiMarket[]>();
-  let cursor: string | undefined;
-
-  // Paginate through ALL open markets in bulk (much faster than per-event)
-  for (let page = 0; page < 10; page++) {
-    const url = new URL(`${KALSHI_BASE}/markets`);
-    url.searchParams.set('limit', '200');
-    url.searchParams.set('status', 'open');
-    if (cursor) url.searchParams.set('cursor', cursor);
-
-    const res = await fetch(url.toString(), {
-      headers: { Accept: 'application/json' },
-      next: { revalidate: 0 },
-    });
-
-    if (!res.ok) break;
-    const json = await res.json();
-    const markets: KalshiMarket[] = json.markets ?? [];
-
-    for (const m of markets) {
-      if (!marketsByEvent.has(m.event_ticker)) {
-        marketsByEvent.set(m.event_ticker, []);
-      }
-      marketsByEvent.get(m.event_ticker)!.push(m);
-    }
-
-    cursor = json.cursor;
-    if (!cursor || markets.length < 200) break;
-  }
-
-  return marketsByEvent;
-}
 
 /* ── GET /api/arbitrage-scanner ────────────────────────────────────── */
 
@@ -64,22 +27,42 @@ export async function GET() {
 
   if (!cachedPairs || now - cacheTimestamp > CACHE_TTL_MS) {
     try {
-      // Fetch everything in parallel — 3 requests total instead of 160+
-      const [polyEvents, kalshiEvents, kalshiMarketsByEvent] =
-        await Promise.all([
-          fetchPolymarketEvents(),
-          fetchKalshiEvents(),
-          fetchAllKalshiMarkets(),
-        ]);
+      // Step 1: Fetch events from both platforms in parallel
+      const [polyEvents, kalshiEvents] = await Promise.all([
+        fetchPolymarketEvents(),
+        fetchKalshiEvents(),
+      ]);
 
-      // Filter to non-sports Kalshi events
-      const relevantEvents: KalshiEvent[] = kalshiEvents.filter(
+      // Step 2: Pre-match events by title similarity to avoid
+      // fetching markets for every Kalshi event (saves 150+ API calls)
+      const relevantKalshiEvents = kalshiEvents.filter(
         (ev) => ev.category !== 'Sports'
       );
+      const matchedTickers = preMatchEvents(polyEvents, relevantKalshiEvents);
+
+      // Step 3: Only fetch markets for matched Kalshi events
+      const kalshiMarketsByEvent = new Map<string, KalshiMarket[]>();
+      const eventsToFetch = relevantKalshiEvents.filter((ev) =>
+        matchedTickers.has(ev.event_ticker)
+      );
+
+      // Batch fetch (20 concurrent)
+      const batchSize = 20;
+      for (let i = 0; i < eventsToFetch.length; i += batchSize) {
+        const batch = eventsToFetch.slice(i, i + batchSize);
+        const results = await Promise.all(
+          batch.map((ev) => fetchKalshiMarketsForEvent(ev.event_ticker))
+        );
+        for (let j = 0; j < batch.length; j++) {
+          if (results[j].length > 0) {
+            kalshiMarketsByEvent.set(batch[j].event_ticker, results[j]);
+          }
+        }
+      }
 
       cachedPairs = findArbitragePairs(
         polyEvents,
-        relevantEvents,
+        relevantKalshiEvents,
         kalshiMarketsByEvent
       );
       cacheTimestamp = now;
