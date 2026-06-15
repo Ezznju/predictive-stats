@@ -33,6 +33,8 @@ import {
   Pilcrow,
   RemoveFormatting,
   TrendingUp,
+  Play,
+  Twitter,
 } from 'lucide-react';
 
 interface RichEditorProps {
@@ -162,6 +164,35 @@ export function RichEditor({ content = '', onChange, placeholder = 'Start writin
     editor.chain().focus().insertContent(`<p>${shortcode}</p>`).run();
   };
 
+  const addYouTubeEmbed = () => {
+    const input = window.prompt(
+      'Paste a YouTube URL or video ID.\n\n' +
+        'Examples:\n' +
+        '  https://www.youtube.com/watch?v=dQw4w9WgXcQ\n' +
+        '  https://youtu.be/dQw4w9WgXcQ\n' +
+        '  dQw4w9WgXcQ'
+    );
+    if (!input) return;
+    const trimmed = input.trim();
+    if (!trimmed) return;
+    editor.chain().focus().insertContent(`<p>[youtube:${trimmed}]</p>`).run();
+  };
+
+  const addTweetEmbed = () => {
+    const input = window.prompt(
+      'Paste a Twitter/X post URL.\n\n' +
+        'Example:\n' +
+        '  https://x.com/elonmusk/status/1234567890'
+    );
+    if (!input) return;
+    const trimmed = input.trim();
+    if (!/https?:\/\/(twitter|x)\.com\/\w+\/status\/\d+/.test(trimmed)) {
+      alert('Please paste a valid Twitter/X post URL (e.g. https://x.com/user/status/123…)');
+      return;
+    }
+    editor.chain().focus().insertContent(`<p>[tweet:${trimmed}]</p>`).run();
+  };
+
   const words = editor.storage.characterCount.words();
   const chars = editor.storage.characterCount.characters();
   const readTime = Math.max(1, Math.ceil(words / 250));
@@ -251,6 +282,12 @@ export function RichEditor({ content = '', onChange, placeholder = 'Start writin
         </ToolbarButton>
         <ToolbarButton onClick={addPolymarketWidget} title="Insert live Polymarket odds widget">
           <TrendingUp className="w-4 h-4" />
+        </ToolbarButton>
+        <ToolbarButton onClick={addYouTubeEmbed} title="Embed YouTube video">
+          <Play className="w-4 h-4" />
+        </ToolbarButton>
+        <ToolbarButton onClick={addTweetEmbed} title="Embed Twitter/X post">
+          <Twitter className="w-4 h-4" />
         </ToolbarButton>
 
         <Divider />
