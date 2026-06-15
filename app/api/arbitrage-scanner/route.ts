@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
-import { fetchTopKalshiMarkets } from '@/lib/kalshi';
+import {
+  fetchKalshiEvents,
+  fetchKalshiMarketsForEvent,
+  type KalshiMarket,
+} from '@/lib/kalshi';
 import {
   fetchPolymarketEvents,
   findArbitragePairs,
@@ -21,26 +25,50 @@ export async function GET() {
 
   if (!cachedPairs || now - cacheTimestamp > CACHE_TTL_MS) {
     try {
-      // Fetch from both platforms in parallel
-      const [polyEvents, kalshiMarkets] = await Promise.all([
+      // Step 1: Fetch events from both platforms in parallel
+      const [polyEvents, kalshiEvents] = await Promise.all([
         fetchPolymarketEvents(),
-        fetchTopKalshiMarkets(),
+        fetchKalshiEvents(),
       ]);
 
-      cachedPairs = findArbitragePairs(polyEvents, kalshiMarkets);
+      // Step 2: For Kalshi events that could match Polymarket events,
+      // fetch their individual markets. We'll fetch markets for all
+      // non-sports Kalshi events (sports events rarely overlap).
+      const relevantKalshiEvents = kalshiEvents.filter(
+        (ev) => ev.category !== 'Sports'
+      );
+
+      // Batch fetch Kalshi markets (max 30 concurrent to be nice)
+      const kalshiMarketsByEvent = new Map<string, KalshiMarket[]>();
+      const batchSize = 20;
+
+      for (let i = 0; i < relevantKalshiEvents.length; i += batchSize) {
+        const batch = relevantKalshiEvents.slice(i, i + batchSize);
+        const results = await Promise.all(
+          batch.map((ev) => fetchKalshiMarketsForEvent(ev.event_ticker))
+        );
+        for (let j = 0; j < batch.length; j++) {
+          if (results[j].length > 0) {
+            kalshiMarketsByEvent.set(batch[j].event_ticker, results[j]);
+          }
+        }
+      }
+
+      cachedPairs = findArbitragePairs(
+        polyEvents,
+        relevantKalshiEvents,
+        kalshiMarketsByEvent
+      );
       cacheTimestamp = now;
     } catch (err) {
       console.error('Arbitrage Scanner fetch error:', err);
 
-      // Serve stale cache if available
       if (cachedPairs) {
         return NextResponse.json({
           pairs: cachedPairs,
           cached: true,
           stale: true,
           updatedAt: new Date(cacheTimestamp).toISOString(),
-          polyCount: 0,
-          kalshiCount: 0,
         });
       }
       return NextResponse.json(
