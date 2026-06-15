@@ -12,10 +12,20 @@ import {
   AlertTriangle,
   BarChart3,
   ArrowLeftRight,
-  Info,
   ChevronDown,
   ChevronUp,
+  Zap,
+  Target,
+  DollarSign,
+  Scale,
+  Sparkles,
+  Search,
+  Percent,
 } from 'lucide-react';
+
+/* ── Brand colors ──────────────────────────────────────────────────── */
+const POLY = '#7B3FE4';
+const KALSHI = '#00D395';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -92,7 +102,6 @@ export default function ArbitrageScannerPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
-  const [showGuide, setShowGuide] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -180,80 +189,183 @@ export default function ArbitrageScannerPage() {
     );
   }
 
+  const maxSpread =
+    pairs.length > 0 ? Math.max(...pairs.map((p) => p.arbPercent)) : 0;
+
   return (
-    <div className="min-h-screen bg-surface">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* ── Header ────────────────────────────────────── */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2.5 bg-white rounded-xl border-2 border-black shadow-pop">
-              <ArrowLeftRight className="w-6 h-6 text-brand-orange" />
-            </div>
-            <h1 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">
-              Arbitrage Scanner
-            </h1>
+    <div className="relative">
+      {/* ── Hero ──────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-black/5 py-14 sm:py-20">
+        {/* Decorative shapes */}
+        <div
+          className="absolute top-8 left-8 w-16 h-16 rounded-xl border-2 border-black rotate-12 opacity-70 hidden md:block"
+          style={{ background: POLY }}
+        />
+        <div
+          className="absolute -top-6 right-[18%] w-24 h-24 rounded-full opacity-50 hidden md:block"
+          style={{ background: KALSHI }}
+        />
+        <div className="absolute bottom-2 right-10 w-14 h-14 rounded-full bg-neon-lime border-2 border-black opacity-60 hidden md:block" />
+        <div
+          className="absolute top-1/2 left-[38%] -translate-y-1/2 w-10 h-10 rounded-lg -rotate-6 opacity-40 hidden lg:block"
+          style={{ background: KALSHI }}
+        />
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span className="inline-block px-3 py-1 text-xs font-bold text-black bg-neon-lime border-2 border-black rounded-full shadow-pop-sm">
+              FREE TOOL
+            </span>
+            <span className="inline-block px-3 py-1 text-xs font-bold text-black bg-neon-cyan border-2 border-black rounded-full shadow-pop-sm">
+              LIVE DATA
+            </span>
+            <span
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-white border-2 border-black rounded-full shadow-pop-sm"
+              style={{ background: POLY }}
+            >
+              POLYMARKET
+              <ArrowLeftRight className="w-3 h-3" />
+              <span style={{ color: KALSHI }} className="brightness-150">
+                KALSHI
+              </span>
+            </span>
           </div>
-          <p className="text-ink-muted max-w-2xl text-base sm:text-lg">
-            Spot price differences between{' '}
-            <span className="font-semibold text-ink">Polymarket</span> and{' '}
-            <span className="font-semibold text-ink">Kalshi</span> on the same
-            events. When the same outcome has different prices, there may be an
-            arbitrage opportunity.
+          <h1 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl text-ink mb-3">
+            Cross-Platform Arbitrage Scanner
+          </h1>
+          <p className="text-lg sm:text-xl text-ink-secondary leading-relaxed max-w-3xl">
+            The same event is often priced{' '}
+            <span className="font-bold" style={{ color: POLY }}>
+              differently
+            </span>{' '}
+            on{' '}
+            <span className="font-bold" style={{ color: POLY }}>
+              Polymarket
+            </span>{' '}
+            and{' '}
+            <span className="font-bold" style={{ color: KALSHI }}>
+              Kalshi
+            </span>
+            . This scanner finds those gaps in real time — so you can buy low on
+            one side, sell high on the other, and lock in the spread.
           </p>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        {/* ── What is this / How it helps ───────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {[
+            {
+              icon: Search,
+              color: POLY,
+              title: '1. Same event, two prices',
+              body: 'We scan hundreds of live markets on Polymarket and Kalshi and automatically match the ones asking the same question.',
+            },
+            {
+              icon: Scale,
+              color: KALSHI,
+              title: '2. Spot the gap',
+              body: 'When the YES price differs between the two platforms, that gap is a potential arbitrage opportunity — sorted biggest-first.',
+            },
+            {
+              icon: DollarSign,
+              color: '#FFBF00',
+              title: '3. Lock in the spread',
+              body: 'Buy YES on the cheaper platform, NO on the pricier one. If your total cost is under $1, the difference is your profit.',
+            },
+          ].map((c) => (
+            <div
+              key={c.title}
+              className="bg-white rounded-2xl border-2 border-black shadow-pop p-5 transition-all duration-200 hover:-translate-y-1"
+            >
+              <div
+                className="w-11 h-11 rounded-xl border-2 border-black flex items-center justify-center mb-3"
+                style={{ background: c.color }}
+              >
+                <c.icon
+                  className="w-5 h-5"
+                  style={{ color: c.color === '#FFBF00' ? '#000' : '#fff' }}
+                />
+              </div>
+              <h3 className="font-display font-bold text-base text-ink mb-1">
+                {c.title}
+              </h3>
+              <p className="text-sm text-ink-secondary leading-relaxed">
+                {c.body}
+              </p>
+            </div>
+          ))}
         </div>
 
         {/* ── Stats bar ─────────────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <div className="bg-white rounded-xl border-2 border-black shadow-pop-sm p-3 text-center">
-            <div className="text-2xl font-display font-bold">{pairs.length}</div>
-            <div className="text-xs text-ink-faint uppercase tracking-wide">
-              Matched Events
-            </div>
-          </div>
-          <div className="bg-white rounded-xl border-2 border-black shadow-pop-sm p-3 text-center">
-            <div className="text-2xl font-display font-bold text-neon-green">
-              {pairs.filter((p) => p.arbPercent >= 5).length}
-            </div>
-            <div className="text-xs text-ink-faint uppercase tracking-wide">
-              Arb ≥ 5%
-            </div>
-          </div>
-          <div className="bg-white rounded-xl border-2 border-black shadow-pop-sm p-3 text-center">
-            <div className="text-2xl font-display font-bold text-brand-orange">
-              {pairs.length > 0 ? fmtPercent(Math.max(...pairs.map((p) => p.arbPercent))) : '0%'}
-            </div>
-            <div className="text-xs text-ink-faint uppercase tracking-wide">
-              Max Spread
-            </div>
-          </div>
-          <div className="bg-white rounded-xl border-2 border-black shadow-pop-sm p-3 text-center">
-            <div className="text-2xl font-display font-bold">
-              {updatedAt
+          {[
+            {
+              label: 'Matched Events',
+              value: `${pairs.length}`,
+              icon: BarChart3,
+              color: 'bg-neon-cyan',
+            },
+            {
+              label: 'Arb ≥ 5%',
+              value: `${pairs.filter((p) => p.arbPercent >= 5).length}`,
+              icon: Zap,
+              color: 'bg-neon-lime',
+            },
+            {
+              label: 'Max Spread',
+              value: pairs.length > 0 ? fmtPercent(maxSpread) : '0%',
+              icon: Percent,
+              color: 'bg-brand-yellow',
+            },
+            {
+              label: 'Last Update',
+              value: updatedAt
                 ? new Date(updatedAt).toLocaleTimeString('en-US', {
                     hour: '2-digit',
                     minute: '2-digit',
                   })
-                : '—'}
+                : '—',
+              icon: RefreshCw,
+              color: 'bg-neon-green',
+            },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="bg-white rounded-xl border-2 border-black shadow-pop-sm p-3 flex items-center gap-3"
+            >
+              <div
+                className={`${s.color} w-9 h-9 rounded-lg border-2 border-black flex items-center justify-center flex-shrink-0`}
+              >
+                <s.icon className="w-4 h-4 text-black" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-display font-bold text-lg leading-tight truncate">
+                  {s.value}
+                </p>
+                <p className="text-[11px] text-ink-faint">{s.label}</p>
+              </div>
             </div>
-            <div className="text-xs text-ink-faint uppercase tracking-wide">
-              Last Update
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* ── Controls ──────────────────────────────────── */}
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white border-2 border-black rounded-lg shadow-pop-sm text-sm font-semibold hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-black bg-white border-2 border-black rounded-lg px-3 py-2 shadow-pop-sm hover:-translate-y-0.5 transition-transform"
           >
             <Filter className="w-4 h-4" />
             Filters
+            {(minArbPercent > 0 || categoryFilter !== 'all') && (
+              <span className="w-2 h-2 rounded-full bg-neon-magenta" />
+            )}
           </button>
           <button
             onClick={fetchData}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 bg-white border-2 border-black rounded-lg shadow-pop-sm text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-black bg-neon-cyan border-2 border-black rounded-lg px-3 py-2 shadow-pop-sm hover:-translate-y-0.5 transition-transform disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
@@ -350,12 +462,12 @@ export default function ArbitrageScannerPage() {
             <div className="hidden lg:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 border-b-2 border-black">
-                    <th className="px-4 py-3 text-left font-display text-xs uppercase tracking-wider text-ink-faint">
+                  <tr className="bg-black text-white">
+                    <th className="px-4 py-3 text-left font-display text-xs uppercase tracking-wider">
                       Event
                     </th>
                     <th
-                      className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider text-ink-faint cursor-pointer hover:text-ink select-none"
+                      className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none"
                       onClick={() => toggleSort('arbPercent')}
                     >
                       <span className="flex items-center justify-center gap-1">
@@ -363,28 +475,28 @@ export default function ArbitrageScannerPage() {
                       </span>
                     </th>
                     <th
-                      className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider text-ink-faint cursor-pointer hover:text-ink select-none"
+                      className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none"
                       onClick={() => toggleSort('priceDiffCents')}
                     >
                       <span className="flex items-center justify-center gap-1">
                         Diff <SortIcon field="priceDiffCents" />
                       </span>
                     </th>
-                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider text-ink-faint">
-                      <span className="text-[#7B3FE4]">Polymarket</span> YES
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider">
+                      <span style={{ color: '#A77BF0' }}>Polymarket</span> YES
                     </th>
-                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider text-ink-faint">
-                      <span className="text-[#00D395]">Kalshi</span> YES
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider">
+                      <span style={{ color: KALSHI }}>Kalshi</span> YES
                     </th>
                     <th
-                      className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider text-ink-faint cursor-pointer hover:text-ink select-none"
+                      className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none"
                       onClick={() => toggleSort('matchScore')}
                     >
                       <span className="flex items-center justify-center gap-1">
                         Match <SortIcon field="matchScore" />
                       </span>
                     </th>
-                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider text-ink-faint">
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider">
                       Links
                     </th>
                   </tr>
@@ -497,112 +609,184 @@ export default function ArbitrageScannerPage() {
           </div>
         )}
 
-        {/* ── How It Works Guide ────────────────────────── */}
-        <div className="mt-8">
-          <button
-            onClick={() => setShowGuide(!showGuide)}
-            className="flex items-center gap-2 text-left w-full bg-white rounded-xl border-2 border-black shadow-pop p-4 hover:bg-gray-50 transition-colors"
-          >
-            <Info className="w-5 h-5 text-brand-orange flex-shrink-0" />
-            <span className="font-display font-bold text-lg">
+        {/* ── How It Works Guide (always visible) ───────── */}
+        <div className="mt-14 space-y-8">
+          <div>
+            <h2 className="font-display font-bold text-2xl sm:text-3xl text-ink mb-2">
               How Cross-Platform Arbitrage Works
-            </span>
-            <div className="flex-1" />
-            {showGuide ? (
-              <ChevronUp className="w-5 h-5" />
-            ) : (
-              <ChevronDown className="w-5 h-5" />
-            )}
-          </button>
+            </h2>
+            <p className="text-ink-secondary max-w-3xl">
+              Prediction-market arbitrage means profiting from price differences
+              for the <strong className="text-ink">same outcome</strong> across two
+              platforms. Here&apos;s everything you need to use this scanner with
+              confidence.
+            </p>
+          </div>
 
-          {showGuide && (
-            <div className="bg-white rounded-b-xl border-2 border-t-0 border-black shadow-pop -mt-2 p-5 sm:p-6 space-y-4 text-sm text-ink-muted leading-relaxed">
-              <div>
-                <h3 className="font-display font-bold text-ink text-base mb-1">
-                  What is prediction market arbitrage?
-                </h3>
-                <p>
-                  When the same event is listed on two platforms at different prices,
-                  you can theoretically buy YES on the cheaper side and NO (or sell YES)
-                  on the more expensive side, locking in a risk-free profit regardless
-                  of the outcome. This is called <strong>arbitrage</strong>.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="font-display font-bold text-ink text-base mb-1">
-                  How to read the scanner
-                </h3>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>
-                    <strong>Arb %</strong> — The bigger the percentage, the larger the
-                    price gap between platforms.
-                  </li>
-                  <li>
-                    <strong>Diff</strong> — Absolute price difference in cents.
-                  </li>
-                  <li>
-                    <strong>Green price</strong> — The cheaper side for YES. Buy here.
-                  </li>
-                  <li>
-                    <strong>Match</strong> — How confident we are that both platforms are
-                    pricing the <em>same</em> event. &quot;Exact&quot; means high confidence.
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="font-display font-bold text-ink text-base mb-1">
-                  Example
-                </h3>
-                <p>
-                  If &quot;Will X happen?&quot; is priced at 40¢ YES on Polymarket and 48¢ YES
-                  on Kalshi, you could buy YES on Polymarket (40¢) and buy NO on Kalshi
-                  (52¢). Total cost: 92¢. Payout: $1 guaranteed. Profit: 8¢ per
-                  contract.
-                </p>
-              </div>
-
-              <div className="bg-brand-yellow/20 rounded-lg p-3 border border-brand-yellow/40">
-                <p className="font-semibold text-ink flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-brand-orange" />
-                  Important risks
-                </p>
-                <ul className="list-disc list-inside text-xs space-y-0.5 mt-1">
-                  <li>Execution risk: prices can move before you trade both sides</li>
-                  <li>
-                    Fees &amp; slippage: trading fees on both platforms eat into profit
-                  </li>
-                  <li>
-                    Resolution differences: platforms may resolve the same event differently
-                  </li>
-                  <li>
-                    Match accuracy: verify both markets are truly about the same event
-                  </li>
-                  <li>
-                    Capital lock-up: funds are tied until the event resolves
-                  </li>
-                </ul>
-              </div>
-
-              <p className="text-xs text-ink-faint">
-                This tool is for informational purposes only. Always do your own
-                research and verify matches before trading. Past price differences do
-                not guarantee future arbitrage opportunities.
-              </p>
+          {/* What is it */}
+          <div className="bg-white rounded-2xl border-2 border-black shadow-pop p-6 sm:p-8">
+            <div className="flex items-center gap-3 mb-4">
+              <span
+                className="flex-shrink-0 w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center"
+                style={{ background: POLY }}
+              >
+                <Sparkles className="w-5 h-5 text-white" />
+              </span>
+              <h3 className="font-display font-bold text-xl text-ink">
+                What is prediction-market arbitrage?
+              </h3>
             </div>
-          )}
-        </div>
+            <p className="text-ink-secondary leading-relaxed">
+              When the same event is listed on two platforms at different prices,
+              you can buy YES on the cheaper side and NO (or sell YES) on the more
+              expensive side. Because the two positions cover every outcome, you
+              lock in the price gap as profit{' '}
+              <strong className="text-ink">no matter what happens</strong>. That
+              gap is your arbitrage.
+            </p>
+          </div>
 
-        {/* ── Footer link ───────────────────────────────── */}
-        <div className="mt-6 text-center text-sm text-ink-faint">
-          <Link
-            href="/tools/lp-scanner"
-            className="hover:text-ink underline inline-flex items-center gap-1"
-          >
-            <TrendingUp className="w-3.5 h-3.5" />
-            Also check out our LP Reward Scanner
-          </Link>
+          {/* How to read */}
+          <div className="bg-white rounded-2xl border-2 border-black shadow-pop p-6 sm:p-8">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-neon-cyan border-2 border-black flex items-center justify-center">
+                <Target className="w-5 h-5 text-black" />
+              </span>
+              <h3 className="font-display font-bold text-xl text-ink">
+                How to read the scanner
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                {
+                  k: 'Arb %',
+                  v: 'The bigger the percentage, the larger the price gap between platforms.',
+                },
+                {
+                  k: 'Diff',
+                  v: 'The absolute price difference between the two YES prices, in cents.',
+                },
+                {
+                  k: 'Green price',
+                  v: 'The cheaper side for YES — this is where you buy.',
+                },
+                {
+                  k: 'Match',
+                  v: 'How confident we are both platforms price the same event. “Exact” = high confidence.',
+                },
+              ].map((item) => (
+                <div
+                  key={item.k}
+                  className="bg-surface/30 rounded-xl p-4 border border-black/10"
+                >
+                  <p className="font-display font-bold text-ink text-sm mb-0.5">
+                    {item.k}
+                  </p>
+                  <p className="text-sm text-ink-secondary">{item.v}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Worked example */}
+          <div className="bg-white rounded-2xl border-2 border-black shadow-pop p-6 sm:p-8">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-neon-lime border-2 border-black flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-black" />
+              </span>
+              <h3 className="font-display font-bold text-xl text-ink">
+                A worked example
+              </h3>
+            </div>
+            <p className="text-ink-secondary leading-relaxed mb-4">
+              Say <em>&quot;Will X happen?&quot;</em> is priced at{' '}
+              <strong className="text-ink">40¢ YES on Polymarket</strong> and{' '}
+              <strong className="text-ink">48¢ YES on Kalshi</strong>:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+              <div
+                className="rounded-xl p-4 border-2 border-black"
+                style={{ background: `${POLY}14` }}
+              >
+                <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: POLY }}>
+                  Buy YES · Polymarket
+                </p>
+                <p className="font-mono font-bold text-2xl text-ink">40¢</p>
+              </div>
+              <div
+                className="rounded-xl p-4 border-2 border-black"
+                style={{ background: `${KALSHI}14` }}
+              >
+                <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: '#00946a' }}>
+                  Buy NO · Kalshi
+                </p>
+                <p className="font-mono font-bold text-2xl text-ink">52¢</p>
+              </div>
+              <div className="rounded-xl p-4 border-2 border-black bg-neon-lime">
+                <p className="text-xs font-bold uppercase tracking-wide mb-1 text-black">
+                  Guaranteed profit
+                </p>
+                <p className="font-mono font-bold text-2xl text-black">+8¢</p>
+              </div>
+            </div>
+            <p className="text-sm text-ink-secondary">
+              Total cost: <strong className="text-ink">92¢</strong>. Payout at
+              resolution: <strong className="text-ink">$1.00</strong> guaranteed.
+              Profit: <strong className="text-ink">8¢ per contract</strong>, before
+              fees.
+            </p>
+          </div>
+
+          {/* Risks */}
+          <div className="bg-white rounded-2xl border-2 border-black shadow-pop p-6 sm:p-8">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-brand-orange border-2 border-black flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-white" />
+              </span>
+              <h3 className="font-display font-bold text-xl text-ink">
+                Risks to understand first
+              </h3>
+            </div>
+            <ul className="space-y-2 text-ink-secondary">
+              {[
+                ['Execution risk', 'prices can move before you trade both sides'],
+                ['Fees & slippage', 'trading fees on both platforms eat into profit'],
+                ['Resolution differences', 'platforms may resolve the same event differently'],
+                ['Match accuracy', 'always verify both markets are truly about the same event'],
+                ['Capital lock-up', 'funds are tied up until the event resolves'],
+              ].map(([k, v]) => (
+                <li key={k} className="flex items-start gap-2">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-orange flex-shrink-0" />
+                  <span>
+                    <strong className="text-ink">{k}:</strong> {v}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Disclaimer */}
+          <div className="bg-black/5 rounded-2xl border border-black/10 p-6 text-center">
+            <p className="text-xs text-ink-faint leading-relaxed max-w-2xl mx-auto">
+              <strong>Disclaimer:</strong> This tool is for educational and
+              informational purposes only. It is not financial advice. Always do
+              your own research and verify matches before trading. Past price
+              differences do not guarantee future arbitrage opportunities. Data is
+              sourced from public Polymarket and Kalshi APIs and may be delayed or
+              inaccurate.
+            </p>
+          </div>
+
+          {/* Cross-link */}
+          <div className="text-center">
+            <Link
+              href="/tools/lp-scanner"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-black bg-white border-2 border-black rounded-lg px-4 py-2.5 shadow-pop-sm hover:-translate-y-0.5 transition-transform"
+            >
+              <TrendingUp className="w-4 h-4" />
+              Also try our LP Reward Scanner
+            </Link>
+          </div>
         </div>
       </div>
     </div>

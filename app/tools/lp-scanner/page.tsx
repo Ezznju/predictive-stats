@@ -440,6 +440,47 @@ export default function LPScannerPage() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        {/* ── What is this / How it helps ───────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {[
+            {
+              icon: Crosshair,
+              color: 'bg-neon-lime',
+              title: '1. Find low-cost markets',
+              body: 'Polymarket pays daily USDC to anyone providing liquidity. We surface the markets where you can qualify with as little as $25–$250.',
+            },
+            {
+              icon: Shield,
+              color: 'bg-neon-cyan',
+              title: '2. Provide liquidity, low risk',
+              body: 'Place a resting limit order — no directional bet required. While it sits on the book within the spread, you earn rewards every day.',
+            },
+            {
+              icon: DollarSign,
+              color: 'bg-brand-yellow',
+              title: '3. Earn daily rewards',
+              body: 'The lower the competition, the bigger your slice of the reward pool. Sort by Score to find the best bang-for-buck opportunities first.',
+            },
+          ].map((c) => (
+            <div
+              key={c.title}
+              className="bg-white rounded-2xl border-2 border-black shadow-pop p-5 transition-all duration-200 hover:-translate-y-1"
+            >
+              <div
+                className={`${c.color} w-11 h-11 rounded-xl border-2 border-black flex items-center justify-center mb-3`}
+              >
+                <c.icon className="w-5 h-5 text-black" />
+              </div>
+              <h3 className="font-display font-bold text-base text-ink mb-1">
+                {c.title}
+              </h3>
+              <p className="text-sm text-ink-secondary leading-relaxed">
+                {c.body}
+              </p>
+            </div>
+          ))}
+        </div>
+
         {/* ── Stats Bar ─────────────────────────────────────────── */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
