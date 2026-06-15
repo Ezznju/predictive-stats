@@ -5,6 +5,9 @@
  * markets within matched events using tighter sub-title matching.
  */
 
+import { z } from 'zod';
+import { safeFetchJson } from './safe-fetch';
+
 /* ── Types ─────────────────────────────────────────────────────────── */
 
 export interface PolymarketEvent {
@@ -269,64 +272,96 @@ export function findArbitragePairs(
 /* ── Fetch Polymarket events with pricing ─────────────────────────── */
 
 const GAMMA_BASE = 'https://gamma-api.polymarket.com';
+const MAX_EVENT_OFFSET = 500; // safety cap; loop normally exits on a short page
+
+/**
+ * Gamma `/events` returns a bare array. We validate the event-level shape
+ * (the part that bit us before — the API returning an error object instead of
+ * an array) and keep the per-market mapping defensive, since Gamma sends some
+ * fields as strings and `outcomePrices` as a JSON-encoded string.
+ */
+const GammaEventSchema = z
+  .object({
+    id: z.union([z.string(), z.number()]).transform(String),
+    title: z.string(),
+    slug: z.string().optional().default(''),
+    markets: z.array(z.unknown()).optional().default([]),
+  })
+  .passthrough();
+
+const GammaEventsResponseSchema = z.array(GammaEventSchema);
 
 export async function fetchPolymarketEvents(): Promise<PolymarketEvent[]> {
   const allEvents: PolymarketEvent[] = [];
 
-  for (let offset = 0; offset < 500; offset += 100) {
+  for (let offset = 0; offset < MAX_EVENT_OFFSET; offset += 100) {
+    const url = new URL(`${GAMMA_BASE}/events`);
+    url.searchParams.set('active', 'true');
+    url.searchParams.set('closed', 'false');
+    url.searchParams.set('limit', '100');
+    url.searchParams.set('offset', String(offset));
+    url.searchParams.set('order', 'volume24hr');
+    url.searchParams.set('ascending', 'false');
+
+    let events: z.infer<typeof GammaEventsResponseSchema>;
     try {
-      const url = new URL(`${GAMMA_BASE}/events`);
-      url.searchParams.set('active', 'true');
-      url.searchParams.set('closed', 'false');
-      url.searchParams.set('limit', '100');
-      url.searchParams.set('offset', String(offset));
-      url.searchParams.set('order', 'volume24hr');
-      url.searchParams.set('ascending', 'false');
-
-      const res = await fetch(url.toString(), {
-        headers: { Accept: 'application/json' },
-        next: { revalidate: 0 },
-      });
-
-      if (!res.ok) break;
-      const events = await res.json();
-      if (!Array.isArray(events) || events.length === 0) break;
-
-      for (const ev of events) {
-        const markets: PolymarketMarket[] = (ev.markets ?? []).map(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (m: any) => ({
-            id: m.id,
-            question: m.question,
-            outcomePrices: m.outcomePrices
-              ? typeof m.outcomePrices === 'string'
-                ? JSON.parse(m.outcomePrices)
-                : m.outcomePrices
-              : [],
-            bestBid: m.bestBid || '',
-            bestAsk: m.bestAsk || '',
-            volume: m.volume || '0',
-            volume24hr: m.volume24hr || 0,
-            liquidity: m.liquidity || '0',
-            slug: m.slug || '',
-            image: m.image || '',
-            groupItemTitle: m.groupItemTitle || '',
-          })
-        );
-
-        allEvents.push({
-          id: ev.id,
-          title: ev.title,
-          slug: ev.slug,
-          markets,
-        });
-      }
-
-      if (events.length < 100) break;
-    } catch {
+      events = await safeFetchJson(
+        url.toString(),
+        GammaEventsResponseSchema,
+        { next: { revalidate: 0 } } as RequestInit,
+        { label: `polymarket events o${offset}` }
+      );
+    } catch (err) {
+      // First page failing = real outage → throw so the route serves stale
+      // cache. A later page failing = keep the events we already have.
+      if (offset === 0) throw err;
+      console.warn(`[polymarket] events page o${offset} failed:`, String(err));
       break;
     }
+
+    if (events.length === 0) break;
+
+    for (const ev of events) {
+      const markets: PolymarketMarket[] = (
+        (ev.markets ?? []) as Record<string, unknown>[]
+      ).map((m) => ({
+        id: String(m.id ?? ''),
+        question: String(m.question ?? ''),
+        outcomePrices: parseOutcomePrices(m.outcomePrices),
+        bestBid: String(m.bestBid ?? ''),
+        bestAsk: String(m.bestAsk ?? ''),
+        volume: String(m.volume ?? '0'),
+        volume24hr: typeof m.volume24hr === 'number' ? m.volume24hr : 0,
+        liquidity: String(m.liquidity ?? '0'),
+        slug: String(m.slug ?? ''),
+        image: String(m.image ?? ''),
+        groupItemTitle: String(m.groupItemTitle ?? ''),
+      }));
+
+      allEvents.push({
+        id: ev.id,
+        title: ev.title,
+        slug: ev.slug,
+        markets,
+      });
+    }
+
+    if (events.length < 100) break;
   }
 
   return allEvents;
+}
+
+/** Gamma sends `outcomePrices` as a JSON-encoded string (or sometimes array). */
+function parseOutcomePrices(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map(String);
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
 }
