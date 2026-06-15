@@ -35,6 +35,7 @@ export function Navbar({ siteName, categories }: NavbarProps) {
           <nav className="hidden md:flex items-center gap-6">
             <Link href="/articles" className="text-sm text-black/70 hover:text-black transition-colors font-medium">Articles</Link>
             <Link href="/platforms" className="text-sm text-black/70 hover:text-black transition-colors font-medium">Platforms</Link>
+            <Link href="/tools/lp-scanner" className="text-sm text-black/70 hover:text-black transition-colors font-medium">LP Scanner</Link>
             <Link href="/about" className="text-sm text-black/70 hover:text-black transition-colors font-medium">About</Link>
             <Link href="/contact" className="text-sm text-black/70 hover:text-black transition-colors font-medium">Contact</Link>
             <Link href="/newsletter" className="text-sm text-black/70 hover:text-black transition-colors font-medium">Newsletter</Link>
@@ -78,6 +79,7 @@ export function Navbar({ siteName, categories }: NavbarProps) {
           <nav className="px-4 py-4 space-y-1">
             <Link href="/articles" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-black/70 hover:text-black hover:bg-surface/30 rounded-lg transition-colors">Articles</Link>
             <Link href="/platforms" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-black/70 hover:text-black hover:bg-surface/30 rounded-lg transition-colors">Platforms</Link>
+            <Link href="/tools/lp-scanner" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-black/70 hover:text-black hover:bg-surface/30 rounded-lg transition-colors">LP Scanner</Link>
             <Link href="/about" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-black/70 hover:text-black hover:bg-surface/30 rounded-lg transition-colors">About</Link>
             <Link href="/contact" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-black/70 hover:text-black hover:bg-surface/30 rounded-lg transition-colors">Contact</Link>
             <Link href="/newsletter" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-black/70 hover:text-black hover:bg-surface/30 rounded-lg transition-colors">Newsletter</Link>
