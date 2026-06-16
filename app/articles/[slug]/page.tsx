@@ -22,6 +22,7 @@ import {
   getCategories,
   formatDate,
 } from '@/lib/db';
+import { autoLink } from '@/lib/auto-linker';
 
 export const dynamic = 'force-dynamic';
 
@@ -278,16 +279,20 @@ export default async function ArticlePage({ params }: Props) {
             prose-blockquote:border-l-black prose-blockquote:text-ink-secondary
             prose-code:text-black prose-code:bg-white/15 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
             prose-li:text-ink-secondary"
-          dangerouslySetInnerHTML={{ __html: embedTweet(embedYouTube(embedPolymarket(wrapTables(article.content)))) }}
+          dangerouslySetInnerHTML={{ __html: autoLink(embedTweet(embedYouTube(embedPolymarket(wrapTables(article.content))))) }}
         />
 
         {/* Tags */}
         <div className="mt-10 pt-6 border-t border-white/20">
           <div className="flex flex-wrap gap-2">
             {article.tags.map((tag) => (
-              <span key={tag} className="px-3 py-1 text-xs bg-white/15 text-ink-secondary rounded-full border border-white/20">
+              <Link
+                key={tag}
+                href={`/tag/${encodeURIComponent(tag.toLowerCase())}`}
+                className="px-3 py-1 text-xs bg-white/15 text-ink-secondary rounded-full border border-white/20 hover:bg-black hover:text-white hover:border-black transition-colors"
+              >
                 #{tag}
-              </span>
+              </Link>
             ))}
           </div>
         </div>

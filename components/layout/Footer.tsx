@@ -61,6 +61,7 @@ export function Footer({ settings, categories }: FooterProps) {
               <li><Link href="/newsletter" className="text-sm text-black/60 hover:text-black transition-colors">Newsletter</Link></li>
               <li><Link href="/articles" className="text-sm text-black/60 hover:text-black transition-colors">All Articles</Link></li>
               <li><Link href="/platforms" className="text-sm text-black/60 hover:text-black transition-colors">Platform Reviews</Link></li>
+              <li><Link href="/tools" className="text-sm text-black/60 hover:text-black transition-colors">Free Tools</Link></li>
             </ul>
           </div>
 
