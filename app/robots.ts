@@ -8,7 +8,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/api/', '/go/'],
+        disallow: ['/admin/', '/api/', '/go/', '/newsletter/unsubscribed'],
       },
     ],
     sitemap: `${settings.siteUrl || 'https://predictionsmarketfans.com'}/sitemap.xml`,

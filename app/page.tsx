@@ -192,6 +192,60 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Free Tools */}
+      <section className="py-12 border-b border-surface-border relative overflow-hidden">
+        <CornerDotSquare size={60} color="#29C5F6" dotColor="#FF00B8" className="absolute top-6 -right-4 opacity-70 hidden md:block" />
+        <HalfCircle size={80} color="#2BD96E" direction="right" className="absolute -left-10 bottom-8 opacity-70 hidden md:block" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <div className="heading-chip bg-neon-blue" />
+              <h2 className="font-display font-bold text-2xl text-black">Free Tools</h2>
+            </div>
+            <Link href="/tools" className="text-sm text-black hover:text-white font-medium flex items-center gap-1 transition-colors">
+              All tools <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Link
+              href="/tools/lp-scanner"
+              className="group bg-white rounded-2xl border-2 border-black p-5 card-pop card-pop-hover"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-[#7B3FE4]/10 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-[#7B3FE4]" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-sm text-ink group-hover:text-black transition-colors">LP Reward Scanner</h3>
+                  <p className="text-xs text-ink-muted">Polymarket</p>
+                </div>
+              </div>
+              <p className="text-sm text-ink-secondary leading-relaxed">
+                Find the highest-paying liquidity provider rewards across all active Polymarket markets. Real-time data, sorted by yield.
+              </p>
+            </Link>
+            <Link
+              href="/tools/arbitrage-scanner"
+              className="group bg-white rounded-2xl border-2 border-black p-5 card-pop card-pop-hover"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-[#00D395]/10 flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-[#00D395]" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-sm text-ink group-hover:text-black transition-colors">Arbitrage Scanner</h3>
+                  <p className="text-xs text-ink-muted">Polymarket × Kalshi</p>
+                </div>
+              </div>
+              <p className="text-sm text-ink-secondary leading-relaxed">
+                Spot cross-platform price gaps between Polymarket and Kalshi. See exploitable spreads in real time.
+              </p>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Categories */}
       <section className="py-12 border-b border-surface-border relative overflow-hidden">
         <FlowerShape size={100} color="#FF00B8" className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-80 hidden md:block" />

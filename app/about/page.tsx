@@ -54,11 +54,11 @@ export default async function AboutPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
         <div className="prose prose-lg max-w-none mb-16 prose-headings:font-display prose-headings:text-ink prose-p:text-ink-secondary prose-a:text-black">
           <h2>What We Cover</h2>
-          <p>Predictions Market Fans covers prediction markets, probabilistic forecasting, market sentiment analysis, and data-driven commentary across politics, economics, crypto, sports, and technology. We explain how markets price uncertainty, identify mispricings, and break down the mathematics behind prediction platforms.</p>
+          <p>Predictions Market Fans covers prediction markets, probabilistic forecasting, market sentiment analysis, and data-driven commentary across politics, economics, crypto, sports, and technology. We explain how markets price uncertainty, identify mispricings, and break down the mathematics behind prediction platforms. Explore our <Link href="/platforms">platform reviews</Link> or browse all <Link href="/articles">articles</Link>.</p>
 
           <h2>Our Approach</h2>
-          <p>Every article starts with data. We pull live information from Polymarket, Kalshi, Metaculus, and other platforms. We run the calculations ourselves and verify the numbers before publishing. If a strategy claims a 12% return, we show the backtest. If a market price implies a probability, we explain the conversion math.</p>
-          <p>We stress-test workflows rather than summarizing press releases. When we review a platform, we use it. When we write about a trading strategy, we model it. When we compare forecasting methods, we pull the calibration data.</p>
+          <p>Every article starts with data. We pull live information from <Link href="/platforms/polymarket">Polymarket</Link>, <Link href="/platforms/kalshi">Kalshi</Link>, Metaculus, and other platforms. We run the calculations ourselves and verify the numbers before publishing. If a strategy claims a 12% return, we show the backtest. If a market price implies a probability, we explain the conversion math.</p>
+          <p>We stress-test workflows rather than summarizing press releases. When we review a platform, we use it. When we write about a trading strategy, we model it. When we compare forecasting methods, we pull the calibration data. Try our free <Link href="/tools/lp-scanner">LP Reward Scanner</Link> and <Link href="/tools/arbitrage-scanner">Arbitrage Scanner</Link> to see this approach in action.</p>
         </div>
 
         {/* Values */}

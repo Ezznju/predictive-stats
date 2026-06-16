@@ -1,4 +1,6 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
 
 export const metadata: Metadata = {
@@ -31,6 +33,25 @@ export default function NewsletterPage() {
               <p className="text-xs text-ink-secondary mt-1">{item.desc}</p>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Explore while you wait */}
+      <div className="mt-12 pt-8 border-t border-white/20">
+        <h2 className="font-display font-bold text-xl text-ink mb-4">Explore while you wait</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link href="/articles" className="p-4 bg-white rounded-xl border border-white/20 shadow-sm hover:border-black/20 hover:shadow-md transition-all group">
+            <h3 className="font-display font-semibold text-sm text-ink group-hover:text-black transition-colors flex items-center gap-2">Latest Articles <ArrowRight className="w-3 h-3" /></h3>
+            <p className="text-xs text-ink-secondary mt-1">Read our latest prediction market analysis.</p>
+          </Link>
+          <Link href="/tools" className="p-4 bg-white rounded-xl border border-white/20 shadow-sm hover:border-black/20 hover:shadow-md transition-all group">
+            <h3 className="font-display font-semibold text-sm text-ink group-hover:text-black transition-colors flex items-center gap-2">Free Tools <ArrowRight className="w-3 h-3" /></h3>
+            <p className="text-xs text-ink-secondary mt-1">LP reward scanner &amp; arbitrage finder.</p>
+          </Link>
+          <Link href="/platforms" className="p-4 bg-white rounded-xl border border-white/20 shadow-sm hover:border-black/20 hover:shadow-md transition-all group">
+            <h3 className="font-display font-semibold text-sm text-ink group-hover:text-black transition-colors flex items-center gap-2">Platform Reviews <ArrowRight className="w-3 h-3" /></h3>
+            <p className="text-xs text-ink-secondary mt-1">Compare Polymarket, Kalshi &amp; more.</p>
+          </Link>
         </div>
       </div>
     </div>

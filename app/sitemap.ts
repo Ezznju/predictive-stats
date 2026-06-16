@@ -14,20 +14,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const baseUrl = settings.siteUrl || 'https://predictionsmarketfans.com';
 
+  // Use a fixed date for truly static pages — only update when content actually changes.
+  // This avoids wasting crawl budget on pages Google has already indexed.
+  const staticDate = new Date('2025-06-01');
+
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/articles`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${baseUrl}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${baseUrl}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${baseUrl}/newsletter`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${baseUrl}/search`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${baseUrl}/platforms`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/tools`, lastModified: staticDate, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/tools/lp-scanner`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/tools/arbitrage-scanner`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${baseUrl}/privacy`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${baseUrl}/disclaimer`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${baseUrl}/disclosure`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${baseUrl}/platforms`, lastModified: staticDate, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/about`, lastModified: staticDate, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/contact`, lastModified: staticDate, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${baseUrl}/newsletter`, lastModified: staticDate, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/search`, lastModified: staticDate, changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${baseUrl}/privacy`, lastModified: staticDate, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${baseUrl}/terms`, lastModified: staticDate, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${baseUrl}/disclaimer`, lastModified: staticDate, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${baseUrl}/disclosure`, lastModified: staticDate, changeFrequency: 'yearly', priority: 0.3 },
   ];
 
   const articlePages = articles.map((a) => ({
@@ -58,5 +63,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...articlePages, ...categoryPages, ...authorPages, ...platformPages];
+  // Collect unique tags from all articles for tag archive pages
+  const tagSet = new Set<string>();
+  for (const a of articles) {
+    for (const t of a.tags ?? []) {
+      tagSet.add(t.toLowerCase());
+    }
+  }
+  const tagPages = Array.from(tagSet).map((tag) => ({
+    url: `${baseUrl}/tag/${encodeURIComponent(tag)}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.5,
+  }));
+
+  return [...staticPages, ...articlePages, ...categoryPages, ...authorPages, ...platformPages, ...tagPages];
 }

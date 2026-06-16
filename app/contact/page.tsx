@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Send, Check, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { Mail, Send, Check, Loader2, ArrowRight } from 'lucide-react';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -127,6 +128,25 @@ export default function ContactPage() {
         </div>
         <p className="text-ink-secondary text-sm">For press inquiries, pitch submissions, and partnership proposals:</p>
         <a href="mailto:ezzekielnjuguna.en@gmail.com" className="text-black hover:text-black/80 text-sm mt-1 inline-block">ezzekielnjuguna.en@gmail.com</a>
+      </div>
+
+      {/* While you're here */}
+      <div className="mt-12">
+        <h2 className="font-display font-bold text-xl text-ink mb-4">While you&apos;re here</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link href="/articles" className="p-4 bg-white rounded-xl border border-white/20 shadow-sm hover:border-black/20 hover:shadow-md transition-all group">
+            <h3 className="font-display font-semibold text-sm text-ink group-hover:text-black transition-colors flex items-center gap-2">Latest Analysis <ArrowRight className="w-3 h-3" /></h3>
+            <p className="text-xs text-ink-secondary mt-1">Data-driven articles on prediction markets.</p>
+          </Link>
+          <Link href="/tools" className="p-4 bg-white rounded-xl border border-white/20 shadow-sm hover:border-black/20 hover:shadow-md transition-all group">
+            <h3 className="font-display font-semibold text-sm text-ink group-hover:text-black transition-colors flex items-center gap-2">Free Tools <ArrowRight className="w-3 h-3" /></h3>
+            <p className="text-xs text-ink-secondary mt-1">LP scanner and arbitrage finder.</p>
+          </Link>
+          <Link href="/platforms" className="p-4 bg-white rounded-xl border border-white/20 shadow-sm hover:border-black/20 hover:shadow-md transition-all group">
+            <h3 className="font-display font-semibold text-sm text-ink group-hover:text-black transition-colors flex items-center gap-2">Platform Reviews <ArrowRight className="w-3 h-3" /></h3>
+            <p className="text-xs text-ink-secondary mt-1">Compare Polymarket, Kalshi &amp; more.</p>
+          </Link>
+        </div>
       </div>
     </div>
   );

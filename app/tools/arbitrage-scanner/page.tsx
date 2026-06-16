@@ -13,6 +13,7 @@ import {
   BarChart3,
   ArrowLeftRight,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Zap,
   Target,
@@ -22,6 +23,7 @@ import {
   Search,
   Percent,
 } from 'lucide-react';
+import { ToolRelatedContent } from '@/components/ToolRelatedContent';
 
 /* ── Brand colors ──────────────────────────────────────────────────── */
 const POLY = '#7B3FE4';
@@ -212,6 +214,15 @@ export default function ArbitrageScannerPage() {
         />
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
+          {/* Breadcrumbs */}
+          <nav className="flex items-center gap-2 text-xs text-ink-muted mb-4">
+            <Link href="/" className="hover:text-ink transition-colors">Home</Link>
+            <ChevronRight className="w-3 h-3" />
+            <Link href="/tools" className="hover:text-ink transition-colors">Tools</Link>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-ink-secondary">Arbitrage Scanner</span>
+          </nav>
+
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <span className="inline-block px-3 py-1 text-xs font-bold text-black bg-neon-lime border-2 border-black rounded-full shadow-pop-sm">
               FREE TOOL
@@ -777,16 +788,8 @@ export default function ArbitrageScannerPage() {
             </p>
           </div>
 
-          {/* Cross-link */}
-          <div className="text-center">
-            <Link
-              href="/tools/lp-scanner"
-              className="inline-flex items-center gap-1.5 text-sm font-bold text-black bg-white border-2 border-black rounded-lg px-4 py-2.5 shadow-pop-sm hover:-translate-y-0.5 transition-transform"
-            >
-              <TrendingUp className="w-4 h-4" />
-              Also try our LP Reward Scanner
-            </Link>
-          </div>
+          {/* Related content & cross-links */}
+          <ToolRelatedContent currentTool="arbitrage-scanner" />
         </div>
       </div>
     </div>

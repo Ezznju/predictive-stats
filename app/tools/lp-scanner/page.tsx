@@ -20,6 +20,7 @@ import {
   LogOut,
   Info,
 } from 'lucide-react';
+import { ToolRelatedContent } from '@/components/ToolRelatedContent';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -420,6 +421,15 @@ export default function LPScannerPage() {
         <div className="absolute top-1/2 left-[35%] -translate-y-1/2 w-10 h-10 rounded-lg bg-neon-cyan/40 -rotate-6 hidden lg:block" />
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
+          {/* Breadcrumbs */}
+          <nav className="flex items-center gap-2 text-xs text-ink-muted mb-4">
+            <Link href="/" className="hover:text-ink transition-colors">Home</Link>
+            <ChevronRight className="w-3 h-3" />
+            <Link href="/tools" className="hover:text-ink transition-colors">Tools</Link>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-ink-secondary">LP Reward Scanner</span>
+          </nav>
+
           <div className="flex items-center gap-2 mb-3">
             <span className="inline-block px-3 py-1 text-xs font-bold text-black bg-neon-lime border-2 border-black rounded-full shadow-pop-sm">
               FREE TOOL
@@ -1064,6 +1074,9 @@ export default function LPScannerPage() {
               delayed or inaccurate.
             </p>
           </div>
+
+          {/* Related content & cross-links */}
+          <ToolRelatedContent currentTool="lp-scanner" />
         </div>
       </div>
     </div>
