@@ -22,13 +22,26 @@ const spaceGrotesk = Space_Grotesk({
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSiteSettings();
+  const siteUrl = settings.siteUrl || 'https://predictionsmarketfans.com';
+
   return {
-    metadataBase: new URL(settings.siteUrl || 'https://predictionsmarketfans.com'),
+    metadataBase: new URL(siteUrl),
     title: {
       default: `${settings.siteName} — ${settings.siteTagline}`,
       template: `%s | ${settings.siteName}`,
     },
     description: settings.siteDescription,
+    icons: {
+      icon: [
+        { url: '/favicon.ico', sizes: 'any' },
+        { url: '/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
+        { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
+        { url: '/favicon-48x48.png', type: 'image/png', sizes: '48x48' },
+        { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
+      ],
+      shortcut: ['/favicon.ico'],
+      apple: [{ url: '/apple-touch-icon.png', type: 'image/png', sizes: '180x180' }],
+    },
     openGraph: {
       type: 'website',
       siteName: settings.siteName,
