@@ -75,7 +75,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
               {category.name}
             </span>
           )}
-          <h3 className="font-display font-semibold text-sm text-black leading-snug group-hover:text-white transition-colors line-clamp-2 mt-0.5">
+          <h3 className="font-display font-semibold text-sm text-black leading-snug group-hover:text-white transition-colors mt-0.5">
             {article.title}
           </h3>
           <span className="text-[11px] text-black/60 mt-1 block">{article.readTime} min read</span>
@@ -87,7 +87,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
   if (variant === 'compact') {
     return (
       <Link href={`/articles/${article.slug}`} className="group block">
-        <h3 className="font-display font-semibold text-sm text-black leading-snug group-hover:text-white transition-colors line-clamp-2">
+        <h3 className="font-display font-semibold text-sm text-black leading-snug group-hover:text-white transition-colors">
           {article.title}
         </h3>
         <div className="flex items-center gap-2 mt-1 text-[11px] text-black/60">
@@ -115,7 +115,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
           )}
         </div>
         <div className="p-5">
-          <h3 className="font-display font-bold text-lg text-black leading-snug group-hover:text-brand-orange transition-colors line-clamp-2">
+          <h3 className="font-display font-bold text-lg text-black leading-snug group-hover:text-brand-orange transition-colors">
             {article.title}
           </h3>
           <p className="text-sm text-ink-secondary mt-2 line-clamp-2 leading-relaxed">{article.excerpt}</p>
