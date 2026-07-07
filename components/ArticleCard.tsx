@@ -34,10 +34,10 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
   if (variant === 'featured') {
     return (
       <Link href={`/articles/${article.slug}`} className="group block">
-        <div className="relative overflow-hidden rounded-2xl aspect-[16/9] mb-4 card-pop card-pop-hover">
+        <div className="relative flex min-h-[430px] items-end overflow-hidden rounded-2xl mb-4 card-pop card-pop-hover sm:min-h-[460px] lg:aspect-[16/9] lg:min-h-0">
           <CardImage src={article.featuredImage} alt={article.title} sizes="(max-width: 768px) 100vw, 66vw" priority />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6">
+          <div className="relative z-10 w-full p-5 sm:p-6">
             {category && (
               <span
                 className="category-badge mb-3 border-2 border-black shadow-pop-sm"
@@ -46,7 +46,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
                 {category.name}
               </span>
             )}
-            <h2 className="font-display font-bold text-2xl md:text-3xl text-white leading-tight group-hover:text-brand-yellow transition-colors">
+            <h2 className="font-display font-bold text-2xl sm:text-3xl text-white leading-tight group-hover:text-brand-yellow transition-colors">
               {article.title}
             </h2>
             <p className="text-white/80 text-sm mt-2 line-clamp-2">{article.excerpt}</p>
