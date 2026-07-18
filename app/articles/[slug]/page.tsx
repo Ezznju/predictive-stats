@@ -23,6 +23,7 @@ import {
   formatDate,
 } from '@/lib/db';
 import { autoLink } from '@/lib/auto-linker';
+import { embedTools } from '@/lib/tool-embed';
 
 export const dynamic = 'force-dynamic';
 
@@ -279,7 +280,7 @@ export default async function ArticlePage({ params }: Props) {
             prose-blockquote:border-l-black prose-blockquote:text-ink-secondary
             prose-code:text-black prose-code:bg-white/15 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
             prose-li:text-ink-secondary"
-          dangerouslySetInnerHTML={{ __html: autoLink(embedTweet(embedYouTube(embedPolymarket(wrapTables(article.content))))) }}
+          dangerouslySetInnerHTML={{ __html: autoLink(embedTweet(embedYouTube(embedPolymarket(embedTools(wrapTables(article.content)))))) }}
         />
 
         {/* Tags */}
