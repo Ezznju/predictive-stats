@@ -31,10 +31,32 @@ const KALSHI = '#00D395';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
+interface AnomalyFlag {
+  kind: string;
+  severity: 'info' | 'warn' | 'critical';
+  message: string;
+  value: number;
+}
+
+interface ExecutionPlan {
+  legs: { platform: string; side: string; price: number; shares: number; cost: number }[];
+  totalCost: number;
+  payout: number;
+  netProfit: number;
+  roiPct: number;
+  kellyFraction: number;
+  viable: boolean;
+  steps: string[];
+}
+
 interface ArbitragePair {
   eventName: string;
   category: string;
   matchScore: number;
+  matchConfidence: number;
+  opportunityScore: number;
+  anomalies: AnomalyFlag[];
+  plan: ExecutionPlan | null;
   poly: {
     question: string;
     yesPrice: number;
@@ -58,7 +80,7 @@ interface ArbitragePair {
   arbPercent: number;
 }
 
-type SortKey = 'arbPercent' | 'priceDiffCents' | 'matchScore' | 'polyVolume' | 'kalshiVolume';
+type SortKey = 'arbPercent' | 'priceDiffCents' | 'matchScore' | 'opportunityScore' | 'polyVolume' | 'kalshiVolume';
 
 /* ── Helpers ───────────────────────────────────────────────────────── */
 
@@ -74,6 +96,13 @@ function fmtCents(n: number): string {
 
 function fmtPercent(n: number): string {
   return `${n.toFixed(1)}%`;
+}
+
+function gradeBadge(score: number): { grade: string; color: string } {
+  if (score >= 75) return { grade: 'A', color: 'bg-neon-green text-black border-black' };
+  if (score >= 55) return { grade: 'B', color: 'bg-neon-lime text-black border-black' };
+  if (score >= 35) return { grade: 'C', color: 'bg-brand-yellow text-black border-black' };
+  return { grade: 'D', color: 'bg-gray-300 text-black border-black' };
 }
 
 function arbLabel(pct: number): { text: string; color: string } {
@@ -154,6 +183,10 @@ export default function ArbitrageScannerPage() {
         case 'matchScore':
           va = a.matchScore;
           vb = b.matchScore;
+          break;
+        case 'opportunityScore':
+          va = a.opportunityScore ?? 0;
+          vb = b.opportunityScore ?? 0;
           break;
         case 'polyVolume':
           va = a.poly.volume24h;
@@ -507,6 +540,14 @@ export default function ArbitrageScannerPage() {
                         Match <SortIcon field="matchScore" />
                       </span>
                     </th>
+                    <th
+                      className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none"
+                      onClick={() => toggleSort('opportunityScore')}
+                    >
+                      <span className="flex items-center justify-center gap-1">
+                        Score <SortIcon field="opportunityScore" />
+                      </span>
+                    </th>
                     <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider">
                       Links
                     </th>
@@ -568,6 +609,25 @@ export default function ArbitrageScannerPage() {
                             <span className={`text-xs font-semibold ${match.color}`}>
                               {match.text}
                             </span>
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            {pair.opportunityScore > 0 ? (
+                              <span
+                                className={`inline-flex items-center justify-center w-7 h-7 font-mono font-bold text-sm rounded-lg border-2 ${gradeBadge(pair.opportunityScore).color}`}
+                              >
+                                {gradeBadge(pair.opportunityScore).grade}
+                              </span>
+                            ) : (
+                              <span className="text-ink-faint text-xs">—</span>
+                            )}
+                            {pair.anomalies?.length > 0 && (
+                              <span
+                                className="block text-[10px] font-bold text-brand-pink mt-0.5"
+                                title={pair.anomalies.map((a) => a.message).join('\n')}
+                              >
+                                ⚠ {pair.anomalies.length}
+                              </span>
+                            )}
                           </td>
                           <td className="px-3 py-3 text-center">
                             <div className="flex items-center justify-center gap-2">
@@ -928,6 +988,55 @@ function ExpandedDetail({ pair }: { pair: ArbitragePair }) {
           </p>
         </div>
       </div>
+
+      {/* Execution Plan */}
+      {pair.plan && pair.plan.viable && (
+        <div className="md:col-span-2 rounded-lg bg-neon-green/5 border border-neon-green/30 p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Target className="w-4 h-4 text-neon-green" />
+            <span className="font-display font-bold text-sm">Optimal Execution Plan</span>
+            <span className="text-[10px] font-bold bg-neon-green text-black rounded px-1.5 py-0.5 border border-black">
+              +{fmtPercent(pair.plan.roiPct)} ROI
+            </span>
+          </div>
+          <div className="space-y-1.5 text-xs">
+            {pair.plan.steps.map((step, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <span className="font-mono font-bold text-neon-green mt-0.5">{i + 1}.</span>
+                <span className="text-ink-muted">{step}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-4 mt-2 text-[11px] text-ink-faint">
+            <span>Net profit: <strong className="text-neon-green">${pair.plan.netProfit.toFixed(2)}</strong></span>
+            <span>Kelly half: <strong className="text-ink">{(pair.plan.kellyFraction * 100).toFixed(1)}%</strong></span>
+          </div>
+        </div>
+      )}
+
+      {/* Anomaly flags */}
+      {pair.anomalies && pair.anomalies.length > 0 && (
+        <div className="md:col-span-2 space-y-1.5">
+          <p className="text-[11px] font-display font-bold text-ink-faint uppercase tracking-wide">
+            Integrity flags
+          </p>
+          {pair.anomalies.map((a, i) => (
+            <div
+              key={i}
+              className={`flex items-start gap-2 text-[11px] rounded-lg px-2.5 py-1.5 border ${
+                a.severity === 'critical'
+                  ? 'bg-brand-pink/10 border-brand-pink/40 text-brand-pink'
+                  : a.severity === 'warn'
+                    ? 'bg-brand-orange/10 border-brand-orange/30 text-brand-orange'
+                    : 'bg-surface/40 border-black/10 text-ink-faint'
+              }`}
+            >
+              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+              <span>{a.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

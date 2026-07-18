@@ -8,6 +8,9 @@
 
 import { z } from 'zod';
 import { safeFetchJson } from './safe-fetch';
+import { scoreOpportunity } from './scoring';
+import { analyzeMarket, type AnomalyReport } from './anomaly';
+import { round } from './intel';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -70,6 +73,16 @@ export interface ScannerMarket {
   entryCost: number;
   /** Reward efficiency: rewardPerDay / max(competition, 1) / max(entryCost, 1) × 1000 */
   rewardScore: number;
+  /** 0..100 blended opportunity score (profit + liquidity + risk + time). */
+  opportunityScore: number;
+  /** Estimated annualised reward APR (%) if held in reward window. */
+  aprPct: number;
+  /** Reward window remaining in hours (Infinity if open-ended). */
+  hoursRemaining: number;
+  /** Integrity flags (wash trading, wide spread, thin book…). */
+  anomalies: import('./anomaly').AnomalyFlag[];
+  /** True if flagged critical (should be hidden by default). */
+  blocked: boolean;
   /** 24h volume */
   volume24h: number;
   /** End date */
@@ -98,7 +111,10 @@ const MAX_REWARD_PAGES = 30; // safety cap; loop normally exits on empty cursor
 /* ── Schemas ───────────────────────────────────────────────────────── */
 
 const RewardConfigSchema = z
-  .object({ rate_per_day: z.number().optional().default(0) })
+  .object({
+    rate_per_day: z.number().optional().default(0),
+    end_date: z.union([z.string(), z.number()]).optional(),
+  })
   .passthrough();
 
 const RewardMarketSchema = z
@@ -126,6 +142,7 @@ const RewardMarketSchema = z
       .optional()
       .default([]),
     volume_24hr: z.number().optional().default(0),
+    one_day_price_change: z.number().optional().default(0),
     end_date: z.string().optional().default(''),
   })
   .passthrough();
@@ -191,7 +208,8 @@ function toScannerMarket(m: RewardMarketRaw): ScannerMarket {
   const noToken = m.tokens.find((t) => t.outcome === 'No') ?? m.tokens[1];
 
   const yesPrice = yesToken?.price ?? 0.5;
-  const noPrice = noToken?.price ?? 0.5;
+  const noTokenPrice = noToken?.price ?? 0.5;
+  const noPrice = 1 - noTokenPrice; // Kalshi/poly convention: NO = 1 - YES
   const cheaperPrice = Math.min(yesPrice, noPrice);
   const entryCost = m.rewards_min_size * cheaperPrice;
 
@@ -201,12 +219,48 @@ function toScannerMarket(m: RewardMarketRaw): ScannerMarket {
     0
   );
 
-  // Reward score: higher is better for the farmer
-  // Rewards / competition / entry cost (normalized)
-  const effectiveReward = totalRewardPerDay > 0 ? totalRewardPerDay : 0;
+  // Reward window remaining (hours) from the latest reward config end date.
+  const endDates = m.rewards_config
+    .map((rc) => (rc.end_date ? new Date(rc.end_date).getTime() : NaN))
+    .filter((t) => !Number.isNaN(t));
+  const latestEnd = endDates.length ? Math.max(...endDates) : NaN;
+  const hoursRemaining = Number.isFinite(latestEnd)
+    ? Math.max(0, (latestEnd - Date.now()) / 3_600_000)
+    : Infinity;
+
+  // Estimated annualised APR for the reward (rewards over window ÷ capital).
+  const aprPct = (() => {
+    if (totalRewardPerDay <= 0 || entryCost <= 0 || !Number.isFinite(hoursRemaining))
+      return 0;
+    const windowDays = Math.max(hoursRemaining / 24, 1);
+    const totalReward = totalRewardPerDay * windowDays;
+    const roi = totalReward / entryCost;
+    const years = windowDays / 365;
+    return years > 0 ? round((roi / years) * 100, 1) : round(roi * 100, 1);
+  })();
+
+  // Reward efficiency: rewards / competition / entry cost (normalized).
   const effectiveComp = Math.max(m.market_competitiveness, 0.01);
   const effectiveEntry = Math.max(entryCost, 1);
-  const rewardScore = (effectiveReward / effectiveComp / effectiveEntry) * 1000;
+  const rewardScore = (totalRewardPerDay / effectiveComp / effectiveEntry) * 1000;
+
+  // Integrity / anomaly scan on this market.
+  const report: AnomalyReport = analyzeMarket({
+    volume24h: m.volume_24hr,
+    volumeTotal: 0,
+    liquidity: effectiveEntry * 1000, // rough proxy from min order
+    spread: m.spread,
+    priceChange24h: m.one_day_price_change ?? 0,
+  });
+
+  // Blended opportunity score (0..100).
+  const breakdown = scoreOpportunity({
+    edgePct: aprPct > 0 ? Math.min(aprPct, 500) / 10 : totalRewardPerDay * 2,
+    volumeUsd: m.volume_24hr,
+    confidence: Math.max(0.4, 1 - Math.min(1, m.market_competitiveness / 500)),
+    risk: report.riskScore,
+    hoursToExpiry: hoursRemaining,
+  });
 
   return {
     conditionId: m.condition_id,
@@ -214,7 +268,7 @@ function toScannerMarket(m: RewardMarketRaw): ScannerMarket {
     eventSlug: m.event_slug,
     question: m.question,
     image: m.image,
-    rewardPerDay: totalRewardPerDay,
+    rewardPerDay: round(totalRewardPerDay, 4),
     minShares: m.rewards_min_size,
     maxSpread: m.rewards_max_spread,
     competition: m.market_competitiveness,
@@ -223,8 +277,13 @@ function toScannerMarket(m: RewardMarketRaw): ScannerMarket {
     noPrice,
     yesTokenId: yesToken?.token_id ?? '',
     noTokenId: noToken?.token_id ?? '',
-    entryCost,
-    rewardScore: Number.isFinite(rewardScore) ? rewardScore : 0,
+    entryCost: round(entryCost, 2),
+    rewardScore: Number.isFinite(rewardScore) ? round(rewardScore, 2) : 0,
+    opportunityScore: breakdown.total,
+    aprPct,
+    hoursRemaining,
+    anomalies: report.flags,
+    blocked: report.blocked,
     volume24h: m.volume_24hr,
     endDate: m.end_date,
   };

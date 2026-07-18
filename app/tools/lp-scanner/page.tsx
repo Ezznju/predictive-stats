@@ -24,6 +24,13 @@ import { ToolRelatedContent } from '@/components/ToolRelatedContent';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
+interface AnomalyFlag {
+  kind: string;
+  severity: 'info' | 'warn' | 'critical';
+  message: string;
+  value: number;
+}
+
 interface ScannerMarket {
   conditionId: string;
   slug: string;
@@ -41,6 +48,11 @@ interface ScannerMarket {
   noTokenId: string;
   entryCost: number;
   rewardScore: number;
+  opportunityScore: number;
+  aprPct: number;
+  hoursRemaining: number;
+  anomalies: AnomalyFlag[];
+  blocked: boolean;
   volume24h: number;
   endDate: string;
 }
@@ -57,6 +69,8 @@ interface OrderBook {
 
 type SortKey =
   | 'rewardScore'
+  | 'opportunityScore'
+  | 'aprPct'
   | 'rewardPerDay'
   | 'minShares'
   | 'competition'
@@ -94,6 +108,19 @@ function spreadLabel(
   if (spreadCents >= maxSpread * 0.4)
     return { text: 'Medium', color: 'text-brand-amber font-bold' };
   return { text: 'Tight', color: 'text-brand-pink font-bold' };
+}
+
+function gradeBadge(score: number): { grade: string; color: string } {
+  if (score >= 75) return { grade: 'A', color: 'bg-neon-green text-black border-black' };
+  if (score >= 55) return { grade: 'B', color: 'bg-neon-lime text-black border-black' };
+  if (score >= 35) return { grade: 'C', color: 'bg-brand-yellow text-black border-black' };
+  return { grade: 'D', color: 'bg-gray-300 text-black border-black' };
+}
+
+function fmtApr(n: number): string {
+  if (!Number.isFinite(n)) return '—';
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k%`;
+  return `${n.toFixed(1)}%`;
 }
 
 /* ── Expanded Row: Order Book ──────────────────────────────────────── */
@@ -346,6 +373,7 @@ export default function LPScannerPage() {
   const [maxMinShares, setMaxMinShares] = useState(250);
   const [minReward, setMinReward] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
+  const [hideFlagged, setHideFlagged] = useState(true);
 
   // Expansion
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -383,7 +411,7 @@ export default function LPScannerPage() {
   // Filter & sort
   const filtered = useMemo(() => {
     let list = markets.filter(
-      (m) => m.minShares <= maxMinShares && m.rewardPerDay >= minReward
+      (m) => m.minShares <= maxMinShares && m.rewardPerDay >= minReward && (!hideFlagged || !m.blocked)
     );
     list.sort((a, b) => {
       const aVal = a[sortKey];
@@ -391,7 +419,7 @@ export default function LPScannerPage() {
       return sortDir === 'desc' ? bVal - aVal : aVal - bVal;
     });
     return list;
-  }, [markets, maxMinShares, minReward, sortKey, sortDir]);
+  }, [markets, maxMinShares, minReward, hideFlagged, sortKey, sortDir]);
 
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
@@ -405,6 +433,11 @@ export default function LPScannerPage() {
   // Stats
   const totalRewardMarkets = markets.length;
   const totalWithRewards = markets.filter((m) => m.rewardPerDay > 0).length;
+  const flaggedCount = markets.filter((m) => m.blocked).length;
+  const avgOpportunity =
+    markets.length > 0
+      ? markets.reduce((s, m) => s + m.opportunityScore, 0) / markets.length
+      : 0;
   const avgCompetition =
     markets.length > 0
       ? markets.reduce((s, m) => s + m.competition, 0) / markets.length
@@ -507,16 +540,16 @@ export default function LPScannerPage() {
               color: 'bg-neon-lime',
             },
             {
-              label: 'Avg Competition',
-              value: fmtNum(avgCompetition, 1),
+              label: 'Avg Score',
+              value: avgOpportunity ? fmtNum(avgOpportunity, 0) : '—',
               icon: TrendingUp,
               color: 'bg-brand-yellow',
             },
             {
-              label: 'Showing',
-              value: `${fmtNum(filtered.length)}/${fmtNum(totalRewardMarkets)}`,
-              icon: Filter,
-              color: 'bg-neon-green',
+              label: 'Flagged',
+              value: `${fmtNum(flaggedCount)}`,
+              icon: AlertTriangle,
+              color: 'bg-brand-pink',
             },
           ].map((s) => (
             <div
@@ -561,6 +594,16 @@ export default function LPScannerPage() {
                 className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`}
               />
               Refresh
+            </button>
+
+            <button
+              onClick={() => setHideFlagged((v) => !v)}
+              className={`inline-flex items-center gap-1.5 text-xs font-bold text-black border-2 border-black rounded-lg px-3 py-2 shadow-pop-sm hover:-translate-y-0.5 transition-transform ${
+                hideFlagged ? 'bg-neon-green' : 'bg-white'
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              {hideFlagged ? 'Hiding flagged' : 'Show flagged'}
             </button>
           </div>
 
@@ -703,7 +746,16 @@ export default function LPScannerPage() {
                     <th className="px-3 py-3">
                       <SortButton
                         label="Score"
-                        sortKey="rewardScore"
+                        sortKey="opportunityScore"
+                        currentSort={sortKey}
+                        currentDir={sortDir}
+                        onClick={handleSort}
+                      />
+                    </th>
+                    <th className="px-3 py-3">
+                      <SortButton
+                        label="APR"
+                        sortKey="aprPct"
                         currentSort={sortKey}
                         currentDir={sortDir}
                         onClick={handleSort}
@@ -808,12 +860,29 @@ export default function LPScannerPage() {
 
                             {/* Score */}
                             <td className="px-3 py-3">
-                              {m.rewardScore > 0 ? (
-                                <span className="inline-block font-mono font-bold text-sm text-black bg-neon-lime/60 rounded-lg px-2 py-0.5 border border-black">
-                                  {m.rewardScore.toFixed(1)}
+                              {m.opportunityScore > 0 ? (
+                                <span
+                                  className={`inline-flex items-center justify-center w-7 h-7 font-mono font-bold text-sm rounded-lg border-2 ${gradeBadge(m.opportunityScore).color}`}
+                                >
+                                  {gradeBadge(m.opportunityScore).grade}
                                 </span>
                               ) : (
                                 <span className="text-ink-faint text-xs">—</span>
+                              )}
+                            </td>
+
+                            {/* APR */}
+                            <td className="px-3 py-3">
+                              <span className="font-mono text-sm font-semibold">
+                                {m.aprPct > 0 ? fmtApr(m.aprPct) : '—'}
+                              </span>
+                              {m.anomalies.length > 0 && (
+                                <span
+                                  className="block text-[10px] font-bold text-brand-pink mt-0.5"
+                                  title={m.anomalies.map((a) => a.message).join('\n')}
+                                >
+                                  ⚠ {m.anomalies.length}
+                                </span>
                               )}
                             </td>
 

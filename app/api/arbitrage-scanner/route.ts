@@ -11,6 +11,7 @@ import {
   type ArbitragePair,
 } from '@/lib/arbitrage';
 import { withSharedCache } from '@/lib/scanner-cache';
+import { pMap } from '@/lib/async-utils';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -33,24 +34,24 @@ async function scanArbitrage(): Promise<ArbitragePair[]> {
   );
   const matchedTickers = preMatchEvents(polyEvents, relevantKalshiEvents);
 
-  // Step 3: fetch markets only for matched Kalshi events (batched)
-  const kalshiMarketsByEvent = new Map<string, KalshiMarket[]>();
+  // Step 3: fetch markets only for matched Kalshi events, with bounded
+  // concurrency so we never burst-fire requests and trip rate limits.
   const eventsToFetch = relevantKalshiEvents.filter((ev) =>
     matchedTickers.has(ev.event_ticker)
   );
 
-  const batchSize = 20;
-  for (let i = 0; i < eventsToFetch.length; i += batchSize) {
-    const batch = eventsToFetch.slice(i, i + batchSize);
-    const results = await Promise.all(
-      batch.map((ev) => fetchKalshiMarketsForEvent(ev.event_ticker))
-    );
-    for (let j = 0; j < batch.length; j++) {
-      if (results[j].length > 0) {
-        kalshiMarketsByEvent.set(batch[j].event_ticker, results[j]);
-      }
+  const results = await pMap(
+    eventsToFetch,
+    (ev) => fetchKalshiMarketsForEvent(ev.event_ticker),
+    8
+  );
+
+  const kalshiMarketsByEvent = new Map<string, KalshiMarket[]>();
+  results.forEach((markets, i) => {
+    if (markets.length > 0) {
+      kalshiMarketsByEvent.set(eventsToFetch[i].event_ticker, markets);
     }
-  }
+  });
 
   return findArbitragePairs(
     polyEvents,

@@ -258,7 +258,6 @@ export default async function Home() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {categories.map((cat, i) => {
-              const count = allArticles.filter((a) => a.categorySlug === cat.slug).length;
               const brights = ['#D9F24B', '#2BD96E', '#29C5F6', '#C9B8F5', '#FF00B8', '#FFE642', '#9D5CFF', '#FF6B00'];
               const bg = brights[i % brights.length];
               const lightBg = ['#D9F24B', '#2BD96E', '#29C5F6', '#C9B8F5', '#FFE642'].includes(bg);
@@ -266,12 +265,11 @@ export default async function Home() {
                 <Link
                   key={cat.id}
                   href={`/category/${cat.slug}`}
-                  className="group rounded-2xl p-4 card-pop card-pop-hover"
+                  className="group rounded-2xl p-4 card-pop card-pop-hover flex items-center gap-3"
                   style={{ backgroundColor: bg }}
                 >
-                  <div className="w-3.5 h-3.5 rounded-full mb-3 border-2 border-black" style={{ backgroundColor: cat.color }} />
-                  <h3 className={`font-display font-bold text-sm ${lightBg ? 'text-black' : 'text-white'}`}>{cat.name}</h3>
-                  <p className={`text-xs mt-1 font-medium ${lightBg ? 'text-black/60' : 'text-white/80'}`}>{count} article{count !== 1 ? 's' : ''}</p>
+                  <div className="w-3.5 h-3.5 rounded-full shrink-0 border-2 border-black" style={{ backgroundColor: cat.color }} />
+                  <h3 className={`font-display font-bold text-sm leading-snug ${lightBg ? 'text-black' : 'text-white'}`}>{cat.name}</h3>
                 </Link>
               );
             })}

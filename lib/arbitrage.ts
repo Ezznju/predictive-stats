@@ -7,6 +7,10 @@
 
 import { z } from 'zod';
 import { safeFetchJson } from './safe-fetch';
+import { eventSimilarity } from './intel';
+import { scoreOpportunity } from './scoring';
+import { analyzeMarket, type AnomalyFlag } from './anomaly';
+import { buildExecutionPlan, type ExecutionPlan } from './execution';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -59,42 +63,15 @@ export interface ArbitragePair {
   priceDiffCents: number;
   cheaperYes: 'polymarket' | 'kalshi';
   arbPercent: number;
-}
 
-/* ── Text matching helpers ─────────────────────────────────────────── */
-
-const STOP_WORDS = new Set([
-  'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'by', 'is', 'be',
-  'will', 'would', 'could', 'should', 'may', 'might', 'can', 'has', 'have',
-  'had', 'do', 'does', 'did', 'are', 'was', 'were', 'been', 'being',
-  'this', 'that', 'these', 'those', 'it', 'its', 'or', 'and', 'but',
-  'if', 'then', 'than', 'so', 'not', 'no', 'yes', 'any', 'all',
-  'with', 'from', 'about', 'into', 'over', 'after', 'before',
-  'between', 'under', 'during', 'through', 'above', 'below',
-  'up', 'down', 'out', 'off', 'more', 'less', 'most', 'least',
-  'win', 'next', 'new', 'become', 'what', 'who', 'when', 'where',
-  'how', 'which', 'their', 'there', 'here', 'very', 'just',
-]);
-
-function extractKeywords(text: string): Set<string> {
-  return new Set(
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s'-]/g, ' ')
-      .split(/\s+/)
-      .filter((w) => w.length > 1 && !STOP_WORDS.has(w))
-  );
-}
-
-function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 && b.size === 0) return 0;
-  const arrA = Array.from(a);
-  let intersection = 0;
-  for (let i = 0; i < arrA.length; i++) {
-    if (b.has(arrA[i])) intersection++;
-  }
-  const union = a.size + b.size - intersection;
-  return union > 0 ? intersection / union : 0;
+  /** 0..1 confidence both platforms price the SAME event. */
+  matchConfidence: number;
+  /** 0..100 blended opportunity score. */
+  opportunityScore: number;
+  /** Integrity flags (wash trading, wide spread, etc). */
+  anomalies: AnomalyFlag[];
+  /** Exact trade sequence + Kelly sizing for max profit. */
+  plan: ExecutionPlan | null;
 }
 
 /* ── Kalshi types for matching ─────────────────────────────────────── */
@@ -124,13 +101,9 @@ export function preMatchEvents(
   const matchedTickers = new Set<string>();
 
   for (const polyEvent of polyEvents) {
-    const polyKw = extractKeywords(polyEvent.title);
-    if (polyKw.size === 0) continue;
-
     for (const kalshiEvent of kalshiEvents) {
-      const kalshiKw = extractKeywords(kalshiEvent.title);
-      const score = jaccardSimilarity(polyKw, kalshiKw);
-      if (score >= 0.25) {
+      const { score, conflict } = eventSimilarity(polyEvent.title, kalshiEvent.title);
+      if (!conflict && score >= 0.22) {
         matchedTickers.add(kalshiEvent.event_ticker);
       }
     }
@@ -149,17 +122,12 @@ export function findArbitragePairs(
   const pairs: ArbitragePair[] = [];
   const usedKalshiMarkets = new Set<string>();
 
-  // Step 1: Match events using title keywords
+  // Step 1: Match events using the fuzzy title engine.
   for (const polyEvent of polyEvents) {
-    const polyKw = extractKeywords(polyEvent.title);
-    if (polyKw.size === 0) continue;
-
-    // Find best matching Kalshi event
     let bestEvent: { event: KalshiEventInput; score: number } | null = null;
     for (const kalshiEvent of kalshiEvents) {
-      const kalshiKw = extractKeywords(kalshiEvent.title);
-      const score = jaccardSimilarity(polyKw, kalshiKw);
-      if (score >= 0.25 && (!bestEvent || score > bestEvent.score)) {
+      const { score, conflict } = eventSimilarity(polyEvent.title, kalshiEvent.title);
+      if (!conflict && score >= 0.22 && (!bestEvent || score > bestEvent.score)) {
         bestEvent = { event: kalshiEvent, score };
       }
     }
@@ -170,7 +138,7 @@ export function findArbitragePairs(
     const kalshiMarkets = kalshiMarketsByEvent.get(kalshiEvent.event_ticker) ?? [];
     if (kalshiMarkets.length === 0) continue;
 
-    // Step 2: Within matched events, pair individual markets
+    // Step 2: Within matched events, pair individual markets.
     for (const polyMarket of polyEvent.markets) {
       if (!polyMarket.outcomePrices || polyMarket.outcomePrices.length < 2)
         continue;
@@ -178,24 +146,15 @@ export function findArbitragePairs(
       const polyYesPrice = parseFloat(polyMarket.outcomePrices[0]);
       if (isNaN(polyYesPrice) || polyYesPrice < 0) continue;
 
-      // Build search text from polymarket market
       const polyQ = `${polyMarket.question} ${polyMarket.groupItemTitle || ''}`;
-      const polyMKw = extractKeywords(polyQ);
 
-      let bestMarket: { market: KalshiMarketInput; score: number } | null =
-        null;
-
+      let bestMarket: { market: KalshiMarketInput; score: number } | null = null;
       for (const km of kalshiMarkets) {
         if (usedKalshiMarkets.has(km.ticker)) continue;
-
         const kalshiQ = `${km.yes_sub_title || km.title}`;
-        const kalshiMKw = extractKeywords(kalshiQ);
-        const mScore = jaccardSimilarity(polyMKw, kalshiMKw);
-
-        // Market-level threshold: lower because markets within same event
-        // should be related. Use 0.15 for market-level matching.
-        if (mScore >= 0.15 && (!bestMarket || mScore > bestMarket.score)) {
-          bestMarket = { market: km, score: mScore };
+        const { score, conflict } = eventSimilarity(polyQ, kalshiQ);
+        if (!conflict && score >= 0.15 && (!bestMarket || score > bestMarket.score)) {
+          bestMarket = { market: km, score };
         }
       }
 
@@ -204,10 +163,9 @@ export function findArbitragePairs(
       const km = bestMarket.market;
       usedKalshiMarkets.add(km.ticker);
 
-      // Combined score = event match * 0.4 + market match * 0.6
-      const combinedScore = bestEvent.score * 0.4 + bestMarket.score * 0.6;
+      const matchConfidence = bestEvent.score * 0.4 + bestMarket.score * 0.6;
 
-      // Calculate prices
+      // ── Prices ──────────────────────────────────────────────────
       const kalshiYesBid = parseFloat(km.yes_bid_dollars) || 0;
       const kalshiYesAsk = parseFloat(km.yes_ask_dollars) || 0;
       const kalshiYesMid =
@@ -234,10 +192,38 @@ export function findArbitragePairs(
       const avgPrice = (polyMid + kalshiYesMid) / 2;
       const arbPercent = avgPrice > 0 ? (priceDiff / avgPrice) * 100 : 0;
 
+      // ── Integrity & anomaly detection ───────────────────────────
+      const polySpread = polyBestAsk > 0 && polyBestBid > 0 ? polyBestAsk - polyBestBid : 0;
+      const integrity = analyzeMarket({
+        volume24h: polyMarket.volume24hr || 0,
+        volumeTotal: parseFloat(polyMarket.volume) || 0,
+        liquidity: parseFloat(polyMarket.liquidity) || 0,
+        spread: polySpread,
+        priceChange24h: 0,
+      });
+
+      // ── Optimal execution plan ──────────────────────────────────
+      const plan = buildExecutionPlan({
+        polyYesAsk: polyBestAsk > 0 ? polyBestAsk : polyMid,
+        polyNoAsk: polyBestBid > 0 ? 1 - polyBestBid : 1 - polyMid,
+        kalshiYesAsk: kalshiYesAsk > 0 ? kalshiYesAsk : kalshiYesMid,
+        kalshiNoAsk: kalshiYesBid > 0 ? 1 - kalshiYesBid : 1 - kalshiYesMid,
+        maxShares: 100,
+      });
+
+      // ── Blended opportunity score ───────────────────────────────
+      const scoreBreakdown = scoreOpportunity({
+        edgePct: arbPercent,
+        volumeUsd: Math.max(polyMarket.volume24hr || 0, parseFloat(km.volume_fp) || 0),
+        confidence: matchConfidence,
+        risk: Math.max(integrity.riskScore, polySpread > 0 ? Math.min(1, polySpread * 4) : 0.2),
+        hoursToExpiry: 24 * 7, // unknown → assume ~1 week
+      });
+
       pairs.push({
         eventName: polyEvent.title || polyMarket.question,
         category: kalshiEvent.category,
-        matchScore: combinedScore,
+        matchScore: matchConfidence,
 
         poly: {
           question: polyMarket.question,
@@ -262,11 +248,27 @@ export function findArbitragePairs(
         priceDiffCents,
         cheaperYes,
         arbPercent,
+        matchConfidence,
+        opportunityScore: scoreBreakdown.total,
+        anomalies: integrity.flags,
+        plan: plan.viable ? plan : null,
       });
     }
   }
 
-  return pairs.sort((a, b) => b.arbPercent - a.arbPercent);
+  // De-duplicate: keep the highest-scoring pair per Kalshi market pair.
+  const seen = new Map<string, ArbitragePair>();
+  for (const p of pairs) {
+    const key = `${p.poly.question}::${p.kalshi.ticker}`;
+    const existing = seen.get(key);
+    if (!existing || p.opportunityScore > existing.opportunityScore) {
+      seen.set(key, p);
+    }
+  }
+
+  return Array.from(seen.values()).sort(
+    (a, b) => b.opportunityScore - a.opportunityScore
+  );
 }
 
 /* ── Fetch Polymarket events with pricing ─────────────────────────── */
