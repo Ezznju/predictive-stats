@@ -14,11 +14,20 @@ import { withSharedCache } from '@/lib/scanner-cache';
 import { pMap } from '@/lib/async-utils';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30;
+export const maxDuration = 10;
 
 const CACHE_KEY = 'arbitrage-scanner';
 
 /* ── Heavy scan: Polymarket × Kalshi cross-platform arbitrage ──────── */
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Scan timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
 
 async function scanArbitrage(): Promise<ArbitragePair[]> {
   // Step 1: fetch events from both platforms in parallel
@@ -64,9 +73,9 @@ async function scanArbitrage(): Promise<ArbitragePair[]> {
 
 export async function GET() {
   try {
-    const result = await withSharedCache<ArbitragePair[]>(
-      CACHE_KEY,
-      scanArbitrage
+    const result = await withTimeout(
+      withSharedCache<ArbitragePair[]>(CACHE_KEY, scanArbitrage),
+      8000
     );
 
     return NextResponse.json(

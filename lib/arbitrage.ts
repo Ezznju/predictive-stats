@@ -274,7 +274,7 @@ export function findArbitragePairs(
 /* ── Fetch Polymarket events with pricing ─────────────────────────── */
 
 const GAMMA_BASE = 'https://gamma-api.polymarket.com';
-const MAX_EVENT_OFFSET = 500; // safety cap; loop normally exits on a short page
+const MAX_EVENT_OFFSET = 200; // reduced for Vercel free tier (10s timeout)
 
 /**
  * Gamma `/events` returns a bare array. We validate the event-level shape

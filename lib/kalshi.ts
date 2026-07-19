@@ -69,7 +69,7 @@ export interface KalshiMarketWithEvent extends KalshiMarket {
 /* ── Constants ─────────────────────────────────────────────────────── */
 
 const KALSHI_BASE = 'https://api.elections.kalshi.com/trade-api/v2';
-const MAX_EVENT_PAGES = 25; // safety cap; loop normally exits on empty cursor
+const MAX_EVENT_PAGES = 10; // reduced for Vercel free tier (10s timeout)
 const PAGE_DELAY_MS = 120; // politeness gap between pages — Kalshi rate-limits
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
