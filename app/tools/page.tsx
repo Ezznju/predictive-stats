@@ -7,6 +7,7 @@ import {
   Zap,
   BarChart3,
   Shield,
+  Activity,
 } from 'lucide-react';
 import {
   FlowerShape,
@@ -26,6 +27,7 @@ export const metadata: Metadata = {
 const TOOLS = [
   {
     slug: 'lp-scanner',
+    href: '/tools/lp-scanner',
     name: 'LP Reward Scanner',
     tagline: 'Find the highest-paying liquidity provider rewards on Polymarket',
     description:
@@ -41,6 +43,7 @@ const TOOLS = [
   },
   {
     slug: 'arbitrage-scanner',
+    href: '/tools/arbitrage-scanner',
     name: 'Arbitrage Scanner',
     tagline: 'Spot price gaps between Polymarket and Kalshi',
     description:
@@ -52,6 +55,22 @@ const TOOLS = [
       'Arbitrage % calculation',
       'Match quality scoring',
       'Links to both platforms',
+    ],
+  },
+  {
+    slug: 'pulse',
+    href: '/pulse',
+    name: 'Prediction Pulse',
+    tagline: 'Real-time whale intelligence across prediction markets',
+    description:
+      'Track whale trades, monitor top wallets, and spot market-moving activity across Polymarket. Live leaderboard data, wallet intelligence scores, and anomaly detection.',
+    icon: Activity,
+    color: '#D9F24B',
+    highlights: [
+      'Live whale trade feed',
+      'Top trader leaderboard',
+      'Wallet intelligence scores',
+      'Market whale activity',
     ],
   },
 ];
@@ -114,11 +133,11 @@ export default function ToolsPage() {
           className="absolute -top-4 -right-4 opacity-40 hidden md:block"
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {TOOLS.map((tool) => (
             <Link
               key={tool.slug}
-              href={`/tools/${tool.slug}`}
+              href={tool.href}
               className="group bg-white rounded-2xl border-2 border-black p-6 shadow-pop hover:-translate-y-1 transition-transform"
             >
               <div
