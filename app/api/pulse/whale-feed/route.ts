@@ -12,28 +12,18 @@ export async function GET(request: Request) {
   const limit = Math.min(Number(searchParams.get('limit') ?? 50), 200);
 
   const result = await withPulseCache(PULSE_KEYS.whaleFeed(), async () => {
-    // 1. Get top whale wallets from leaderboard
-    const leaderboard = await fetchLeaderboard({ limit: 25, orderBy: 'PNL' });
+    // 1. Get most ACTIVE wallets (by volume, last 30 days) — not historical PNL winners
+    const leaderboard = await fetchLeaderboard({ limit: 25, orderBy: 'VOL', timePeriod: 'MONTH' });
     const whaleWallets = classifyWhalesFromLeaderboard(leaderboard);
     const whaleMap = new Map(whaleWallets.map((w) => [w.address, w]));
 
-    // 2. Fetch recent trades FROM whale wallets (not from markets)
-    //    This guarantees we find actual whale activity
-    const topWhales = whaleWallets.slice(0, 10);
+    // 2. Fetch recent trades FROM active wallets
+    const topWhales = whaleWallets.slice(0, 15);
     const whaleTrades = await Promise.allSettled(
-      topWhales.map((w) => fetchTrades({ user: w.address, limit: 10 }))
+      topWhales.map((w) => fetchTrades({ user: w.address, limit: 15 }))
     );
 
-    // 3. Collect all unique condition IDs from whale trades
-    const conditionIds = new Set<string>();
-    for (const result of whaleTrades) {
-      if (result.status !== 'fulfilled') continue;
-      for (const trade of result.value) {
-        conditionIds.add(trade.conditionId);
-      }
-    }
-
-    // 4. Fetch market metadata for these condition IDs
+    // 3. Fetch market metadata
     const events = await fetchGammaEvents({
       limit: 50,
       active: true,
@@ -56,19 +46,22 @@ export async function GET(request: Request) {
       }
     }
 
-    // 5. Build feed from whale trades (all trades from whales qualify)
+    // 4. Build feed — only trades from last 7 days, $1K+ size
+    const sevenDaysAgo = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
     const feed: WhaleFeedItem[] = [];
 
     for (const result of whaleTrades) {
       if (result.status !== 'fulfilled') continue;
       for (const trade of result.value) {
+        // Only show recent trades
+        if (trade.timestamp < sevenDaysAgo) continue;
+
         const usdcSize = Math.round(trade.size * trade.price * 100) / 100;
-        if (usdcSize < 1000) continue; // Only show $1K+ trades
+        if (usdcSize < 1000) continue;
 
         const marketInfo = marketMap.get(trade.conditionId);
         const wallet = whaleMap.get(trade.proxyWallet);
 
-        // Anomaly score based on trade size
         let score = 0;
         if (usdcSize >= 10000) score += 0.3;
         if (usdcSize >= 50000) score += 0.3;
@@ -95,7 +88,6 @@ export async function GET(request: Request) {
       }
     }
 
-    // Sort by timestamp descending, take top N
     feed.sort((a, b) => b.timestamp - a.timestamp);
     return feed.slice(0, limit);
   });

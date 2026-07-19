@@ -23,8 +23,8 @@ export const PULSE_KEYS = {
 
 /* ── TTLs (shorter than scanner tools — data changes fast) ── */
 
-const PULSE_SOFT_TTL_MS = 2 * 60 * 1000;  // 2 min soft TTL
-const PULSE_HARD_TTL_MS = 10 * 60 * 1000;  // 10 min hard TTL
+const PULSE_SOFT_TTL_MS = 30 * 1000;   // 30 sec soft TTL
+const PULSE_HARD_TTL_MS = 2 * 60 * 1000;  // 2 min hard TTL
 
 /** Wrapper around withSharedCache with Pulse-specific defaults. */
 export async function withPulseCache<T>(
