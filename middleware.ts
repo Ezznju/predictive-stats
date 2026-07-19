@@ -24,6 +24,7 @@ const PUBLIC_API_PREFIXES = [
   '/api/search',
   '/api/lp-scanner',
   '/api/arbitrage-scanner',
+  '/api/pulse',
 ];
 
 // Public POST routes (visitor-facing forms)
