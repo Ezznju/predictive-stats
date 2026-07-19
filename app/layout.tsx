@@ -6,7 +6,7 @@ import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { getSiteSettings, getCategories } from '@/lib/db';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // Revalidate layout data every hour
 
 const inter = Inter({
   subsets: ['latin'],
