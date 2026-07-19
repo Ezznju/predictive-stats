@@ -33,6 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/terms`, lastModified: staticDate, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${baseUrl}/disclaimer`, lastModified: staticDate, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${baseUrl}/disclosure`, lastModified: staticDate, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${baseUrl}/pulse`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
   ];
 
   const articlePages = articles.map((a) => ({
