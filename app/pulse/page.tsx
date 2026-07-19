@@ -79,7 +79,7 @@ export default function PulsePage() {
           />
 
           <div className="space-y-6">
-            <StatsBar stats={null} loading />
+            <StatsBar stats={null} loading={false} />
             <WhaleFeed />
           </div>
         </div>

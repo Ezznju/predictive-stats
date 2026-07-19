@@ -6,6 +6,7 @@ import { fetchLeaderboard } from '@/lib/pulse/polymarket-data';
 import type { WhaleFeedItem } from '@/lib/pulse/types';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 15;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
     }
 
     // 3. Fetch recent trades for top markets
-    const topConditionIds = Array.from(marketMap.keys()).slice(0, 20);
+    const topConditionIds = Array.from(marketMap.keys()).slice(0, 10);
     const allTrades = await Promise.allSettled(
       topConditionIds.map((cid) =>
         fetchTrades({ market: cid, limit: 20 })
