@@ -125,7 +125,7 @@ export default async function Home() {
                     {trending.slice(0, 4).map((article, i) => {
                       const cat = categoryMap.get(article.categorySlug);
                       return (
-                        <Link key={article.id} href={`/articles/${article.slug}`} className="flex items-start gap-3 group">
+                        <Link key={article.id} href={`/${article.categorySlug}/${article.slug}`} className="flex items-start gap-3 group">
                           <span className="text-2xl font-display font-bold text-black/30 leading-none mt-0.5">
                             {String(i + 1).padStart(2, '0')}
                           </span>

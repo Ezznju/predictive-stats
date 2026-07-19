@@ -28,24 +28,24 @@ import { embedTools } from '@/lib/tool-embed';
 export const dynamic = 'force-dynamic';
 
 interface Props {
-  params: { slug: string };
+  params: { category: string; slug: string };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const article = await getArticleBySlug(params.slug);
   if (!article) return { title: 'Article Not Found' };
   const author = await getAuthorById(article.authorId);
+  const categorySlug = params.category;
 
   return {
     title: article.seoTitle || article.title,
     description: article.metaDescription || article.excerpt,
-    alternates: { canonical: `/${article.categorySlug}/${article.slug}` },
+    alternates: { canonical: `/${categorySlug}/${article.slug}` },
     authors: author ? [{ name: author.name }] : undefined,
     openGraph: {
       type: 'article',
       title: article.seoTitle || article.title,
       description: article.metaDescription || article.excerpt,
-      // og:image comes from the auto-generated branded card (opengraph-image.tsx)
       publishedTime: article.publishDate,
       modifiedTime: article.updatedDate,
       authors: author ? [author.name] : undefined,
@@ -59,24 +59,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-/**
- * Wraps article tables in a horizontally scrollable container so wide
- * comparison tables don't force the whole page to overflow on phones.
- */
 function wrapTables(html: string): string {
   return html
     .replace(/<table(?![^>]*data-wrapped)/g, '<div class="table-scroll"><table')
     .replace(/<\/table>/g, '</table></div>');
 }
 
-/**
- * Converts Polymarket shortcodes written in the editor into placeholder divs
- * that <PolymarketEmbeds /> hydrates into live odds widgets on the client.
- *
- * Supported (each on its own line/paragraph):
- *   [polymarket:market-slug]        -> single market (Yes/No card)
- *   [polymarket-event:event-slug]   -> multi-outcome event (top 5 outcomes)
- */
 function embedPolymarket(html: string): string {
   return html.replace(
     /(?:<p[^>]*>\s*)?\[polymarket(-event)?:\s*([a-z0-9][a-z0-9-]*)\s*\](?:\s*<\/p>)?/gi,
@@ -85,16 +73,11 @@ function embedPolymarket(html: string): string {
   );
 }
 
-/**
- * Converts `[youtube:VIDEO_ID_OR_URL]` shortcodes into responsive iframes.
- * Accepts full URLs (youtube.com/watch?v=…, youtu.be/…, shorts/) or bare IDs.
- */
 function embedYouTube(html: string): string {
   return html.replace(
     /(?:<p[^>]*>\s*)?\[youtube:\s*([^\]\s]+)\s*\](?:\s*<\/p>)?/gi,
     (_match, raw: string) => {
       let videoId = raw.trim();
-      // Full URL → extract id
       try {
         const url = new URL(videoId.startsWith('http') ? videoId : `https://${videoId}`);
         if (url.hostname.includes('youtu.be')) {
@@ -103,9 +86,8 @@ function embedYouTube(html: string): string {
           videoId = url.searchParams.get('v') || url.pathname.split('/').filter(Boolean).pop() || videoId;
         }
       } catch {
-        // Already a bare ID — keep as-is
+        // Already a bare ID
       }
-      // Strip anything after & or ? in the extracted id
       videoId = videoId.split(/[?&#]/)[0];
       if (!videoId) return _match;
       return (
@@ -118,11 +100,6 @@ function embedYouTube(html: string): string {
   );
 }
 
-/**
- * Converts `[tweet:URL]` shortcodes into placeholder divs that
- * `<TwitterEmbeds />` hydrates on the client.
- * Accepts: https://twitter.com/user/status/123… or https://x.com/user/status/123…
- */
 function embedTweet(html: string): string {
   return html.replace(
     /(?:<p[^>]*>\s*)?\[tweet:\s*(https?:\/\/(?:twitter|x)\.com\/[^\]\s]+)\s*\](?:\s*<\/p>)?/gi,
@@ -134,7 +111,7 @@ function embedTweet(html: string): string {
   );
 }
 
-export default async function ArticlePage({ params }: Props) {
+export default async function CategoryArticlePage({ params }: Props) {
   const article = await getArticleBySlug(params.slug);
   if (!article) notFound();
 
@@ -150,9 +127,9 @@ export default async function ArticlePage({ params }: Props) {
   const authorMap = new Map(allAuthors.map(a => [a.id, a]));
   const categoryMap = new Map(allCategories.map(c => [c.slug, c]));
 
-  const articleUrl = `${settings.siteUrl || 'https://predictionsmarketfans.com'}/${article.categorySlug}/${article.slug}`;
+  const categorySlug = params.category;
+  const articleUrl = `${settings.siteUrl || 'https://predictionsmarketfans.com'}/${categorySlug}/${article.slug}`;
 
-  // JSON-LD structured data
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -175,7 +152,6 @@ export default async function ArticlePage({ params }: Props) {
     keywords: article.tags.join(', '),
   };
 
-  // BreadcrumbList structured data (Home > Category > Article)
   const siteUrl = settings.siteUrl || 'https://predictionsmarketfans.com';
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
@@ -183,7 +159,7 @@ export default async function ArticlePage({ params }: Props) {
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
       ...(category
-        ? [{ '@type': 'ListItem', position: 2, name: category.name, item: `${siteUrl}/${article.categorySlug}` }]
+        ? [{ '@type': 'ListItem', position: 2, name: category.name, item: `${siteUrl}/${categorySlug}` }]
         : []),
       { '@type': 'ListItem', position: category ? 3 : 2, name: article.title, item: articleUrl },
     ],

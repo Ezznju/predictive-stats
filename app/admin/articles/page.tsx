@@ -109,7 +109,7 @@ export default function AdminArticlesPage() {
                         <Link href={`/admin/articles/${article.id}`} className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors" title="Edit">
                           <Edit className="w-3.5 h-3.5" />
                         </Link>
-                        <Link href={`/articles/${article.slug}`} target="_blank" className="p-2 text-gray-500 hover:text-orange-600 hover:bg-gray-50 rounded-lg transition-colors" title="Preview">
+                        <Link href={`/${getCat(article.category_slug)?.slug || 'general'}/${article.slug}`} target="_blank" className="p-2 text-gray-500 hover:text-orange-600 hover:bg-gray-50 rounded-lg transition-colors" title="Preview">
                           <Eye className="w-3.5 h-3.5" />
                         </Link>
                         <button onClick={() => handleDelete(article.id)} className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">

@@ -33,7 +33,7 @@ interface ArticleCardProps {
 export function ArticleCard({ article, variant = 'default', author, category }: ArticleCardProps) {
   if (variant === 'featured') {
     return (
-      <Link href={`/articles/${article.slug}`} className="group block">
+      <Link href={`/${article.categorySlug}/${article.slug}`} className="group block">
         <div className="relative flex min-h-[430px] items-end overflow-hidden rounded-2xl mb-4 card-pop card-pop-hover sm:min-h-[460px] lg:aspect-[16/9] lg:min-h-0">
           <CardImage src={article.featuredImage} alt={article.title} sizes="(max-width: 768px) 100vw, 66vw" priority />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -65,7 +65,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
 
   if (variant === 'horizontal') {
     return (
-      <Link href={`/articles/${article.slug}`} className="group flex gap-4 items-start">
+      <Link href={`/${article.categorySlug}/${article.slug}`} className="group flex gap-4 items-start">
         <div className="relative w-24 h-24 md:w-28 md:h-20 rounded-xl overflow-hidden flex-shrink-0 border-2 border-black shadow-pop-sm">
           <CardImage src={article.featuredImage} alt={article.title} sizes="120px" />
         </div>
@@ -86,7 +86,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
 
   if (variant === 'compact') {
     return (
-      <Link href={`/articles/${article.slug}`} className="group block">
+      <Link href={`/${article.categorySlug}/${article.slug}`} className="group block">
         <h3 className="font-display font-semibold text-sm text-black leading-snug group-hover:text-white transition-colors">
           {article.title}
         </h3>
@@ -101,7 +101,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
 
   // Default card
   return (
-    <Link href={`/articles/${article.slug}`} className="group block">
+    <Link href={`/${article.categorySlug}/${article.slug}`} className="group block">
       <div className="bg-white rounded-2xl overflow-hidden card-pop card-pop-hover">
         <div className="relative aspect-[16/9] overflow-hidden">
           <CardImage src={article.featuredImage} alt={article.title} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />

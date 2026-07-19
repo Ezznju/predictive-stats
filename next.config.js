@@ -12,6 +12,11 @@ const nextConfig = {
       '/**': ['./assets/**'],
     },
   },
+  async redirects() {
+    // Dynamic redirects for /articles/{slug} -> /{category}/{slug}
+    // These are handled by middleware or can be done at runtime
+    return [];
+  },
 };
 
 module.exports = nextConfig;
