@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, TrendingUp, Zap, BarChart3 } from 'lucide-react';
+import { ArrowRight, TrendingUp, Zap, BarChart3, Activity } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
 import {
@@ -207,7 +207,7 @@ export default async function Home() {
               All tools <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Link
               href="/tools/lp-scanner"
               className="group bg-white rounded-2xl border-2 border-black p-5 card-pop card-pop-hover"
@@ -240,6 +240,23 @@ export default async function Home() {
               </div>
               <p className="text-sm text-ink-secondary leading-relaxed">
                 Spot cross-platform price gaps between Polymarket and Kalshi. See exploitable spreads in real time.
+              </p>
+            </Link>
+            <Link
+              href="/pulse"
+              className="group bg-white rounded-2xl border-2 border-black p-5 card-pop card-pop-hover"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-[#D9F24B]/10 flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-[#D9F24B]" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-sm text-ink group-hover:text-black transition-colors">Prediction Pulse</h3>
+                  <p className="text-xs text-ink-muted">Whale Tracker</p>
+                </div>
+              </div>
+              <p className="text-sm text-ink-secondary leading-relaxed">
+                Real-time whale intelligence across prediction markets. Track large trades, monitor top wallets, and spot market-moving activity.
               </p>
             </Link>
           </div>
