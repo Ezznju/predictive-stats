@@ -28,7 +28,7 @@ import {
   formatDate,
 } from '@/lib/db';
 
-export const revalidate = 3600; // Revalidate homepage every hour
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   alternates: { canonical: '/' },

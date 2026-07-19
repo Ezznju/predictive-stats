@@ -25,7 +25,7 @@ import {
 import { autoLink } from '@/lib/auto-linker';
 import { embedTools } from '@/lib/tool-embed';
 
-export const revalidate = 3600; // Revalidate article pages every hour
+export const dynamic = 'force-dynamic';
 
 interface Props {
   params: { slug: string };
