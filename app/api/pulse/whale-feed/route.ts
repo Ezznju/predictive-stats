@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { fetchTrades, fetchGammaEvents } from '@/lib/pulse/polymarket-data';
+import { fetchTrades, fetchLeaderboard, fetchGammaEvents } from '@/lib/pulse/polymarket-data';
 import { withPulseCache, PULSE_KEYS } from '@/lib/pulse/cache';
-import { classifyWhalesFromLeaderboard, isWhaleTrade } from '@/lib/pulse/whale-detection';
-import { fetchLeaderboard } from '@/lib/pulse/polymarket-data';
+import { classifyWhalesFromLeaderboard } from '@/lib/pulse/whale-detection';
 import type { WhaleFeedItem } from '@/lib/pulse/types';
 
 export const dynamic = 'force-dynamic';
@@ -13,22 +12,36 @@ export async function GET(request: Request) {
   const limit = Math.min(Number(searchParams.get('limit') ?? 50), 200);
 
   const result = await withPulseCache(PULSE_KEYS.whaleFeed(), async () => {
-    // 1. Get top whale wallets
-    const leaderboard = await fetchLeaderboard({ limit: 50, orderBy: 'PNL' });
+    // 1. Get top whale wallets from leaderboard
+    const leaderboard = await fetchLeaderboard({ limit: 25, orderBy: 'PNL' });
     const whaleWallets = classifyWhalesFromLeaderboard(leaderboard);
-    const whaleAddresses = new Set(whaleWallets.map((w) => w.address));
     const whaleMap = new Map(whaleWallets.map((w) => [w.address, w]));
 
-    // 2. Get top events by volume for market metadata
+    // 2. Fetch recent trades FROM whale wallets (not from markets)
+    //    This guarantees we find actual whale activity
+    const topWhales = whaleWallets.slice(0, 10);
+    const whaleTrades = await Promise.allSettled(
+      topWhales.map((w) => fetchTrades({ user: w.address, limit: 10 }))
+    );
+
+    // 3. Collect all unique condition IDs from whale trades
+    const conditionIds = new Set<string>();
+    for (const result of whaleTrades) {
+      if (result.status !== 'fulfilled') continue;
+      for (const trade of result.value) {
+        conditionIds.add(trade.conditionId);
+      }
+    }
+
+    // 4. Fetch market metadata for these condition IDs
     const events = await fetchGammaEvents({
-      limit: 30,
+      limit: 50,
       active: true,
       closed: false,
       order: 'volume24hr',
       ascending: false,
     });
 
-    // Build conditionId -> market info map
     const marketMap = new Map<string, { title: string; slug: string; eventSlug: string; liquidity: number }>();
     for (const event of events) {
       for (const market of event.markets ?? []) {
@@ -43,29 +56,24 @@ export async function GET(request: Request) {
       }
     }
 
-    // 3. Fetch recent trades for top markets
-    const topConditionIds = Array.from(marketMap.keys()).slice(0, 10);
-    const allTrades = await Promise.allSettled(
-      topConditionIds.map((cid) =>
-        fetchTrades({ market: cid, limit: 20 })
-      )
-    );
-
+    // 5. Build feed from whale trades (all trades from whales qualify)
     const feed: WhaleFeedItem[] = [];
 
-    for (const result of allTrades) {
+    for (const result of whaleTrades) {
       if (result.status !== 'fulfilled') continue;
       for (const trade of result.value) {
+        const usdcSize = Math.round(trade.size * trade.price * 100) / 100;
+        if (usdcSize < 1000) continue; // Only show $1K+ trades
+
         const marketInfo = marketMap.get(trade.conditionId);
-        const { isWhale, score } = isWhaleTrade(
-          trade,
-          whaleAddresses,
-          marketInfo?.liquidity
-        );
-
-        if (!isWhale) continue;
-
         const wallet = whaleMap.get(trade.proxyWallet);
+
+        // Anomaly score based on trade size
+        let score = 0;
+        if (usdcSize >= 10000) score += 0.3;
+        if (usdcSize >= 50000) score += 0.3;
+        if (usdcSize >= 100000) score += 0.2;
+        if (wallet && wallet.pnl > 1000000) score += 0.2;
 
         feed.push({
           walletAddress: trade.proxyWallet,
@@ -75,14 +83,14 @@ export async function GET(request: Request) {
           outcome: trade.outcome ?? '',
           size: trade.size,
           price: trade.price,
-          usdcSize: Math.round(trade.size * trade.price * 100) / 100,
+          usdcSize,
           marketTitle: marketInfo?.title ?? trade.title ?? '',
           marketSlug: marketInfo?.slug ?? trade.slug ?? '',
           eventSlug: marketInfo?.eventSlug ?? trade.eventSlug ?? '',
           conditionId: trade.conditionId,
           timestamp: trade.timestamp,
           txHash: trade.transactionHash ?? '',
-          anomalyScore: score,
+          anomalyScore: Math.min(score, 1),
         });
       }
     }

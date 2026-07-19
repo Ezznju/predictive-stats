@@ -14,7 +14,7 @@ import type { LeaderboardEntry, Trade, WhaleWallet } from './types';
 /* ── Constants ───────────────────────────────────────────── */
 
 /** Minimum absolute trade size to consider whale-worthy (USD). */
-const MIN_WHALE_SIZE_USD = 50;
+const MIN_WHALE_SIZE_USD = 1000;
 
 /** Top N leaderboard wallets to track. */
 const TOP_WHALE_RANKS = 50;
