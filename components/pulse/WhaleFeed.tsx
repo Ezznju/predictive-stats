@@ -68,6 +68,10 @@ export function WhaleFeed() {
     filtered = [...filtered].sort((a, b) => b.usdcSize - a.usdcSize);
   }
 
+  if (filters.sort === 'highest-conviction') {
+    filtered = [...filtered].sort((a, b) => (b.convictionScore ?? 0) - (a.convictionScore ?? 0));
+  }
+
   return (
     <div className="space-y-4">
       {/* Controls */}

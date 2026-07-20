@@ -55,6 +55,20 @@ interface ScannerMarket {
   blocked: boolean;
   volume24h: number;
   endDate: string;
+  lpScoring?: {
+    grossRewardApr: number;
+    spreadApr: number;
+    adverseSelectionApr: number;
+    inventoryCostApr: number;
+    dilutionApr: number;
+    netApr: number;
+    riskAdjustedScore: number;
+    score100: number;
+    recommendedAllocationPct: number;
+    riskFlags: string[];
+    volumeToLiquidity: number;
+    professorNotes: string[];
+  } | null;
 }
 
 interface OrderBookLevel {
@@ -320,6 +334,104 @@ function MiniBook({
       <p className="text-[10px] text-ink-faint mt-1">
         ★ = qualifying size (≥ {minShares} shares)
       </p>
+    </div>
+  );
+}
+
+/* ── LP Scoring Panel (Golden Professor Engine) ──────────────────── */
+
+function LPScoringPanel({
+  scoring,
+  market,
+}: {
+  scoring: NonNullable<ScannerMarket['lpScoring']>;
+  market: ScannerMarket;
+}) {
+  const grade = scoring.score100 >= 75 ? 'A' : scoring.score100 >= 55 ? 'B' : scoring.score100 >= 35 ? 'C' : 'D';
+  const gradeColor = scoring.score100 >= 75 ? 'bg-neon-green text-black' : scoring.score100 >= 55 ? 'bg-neon-lime text-black' : scoring.score100 >= 35 ? 'bg-brand-yellow text-black' : 'bg-gray-300 text-black';
+
+  return (
+    <div className="mt-3 bg-surface/30 rounded-xl p-4 sm:p-5 border border-black/10">
+      <div className="flex items-center gap-2 mb-3">
+        <Shield className="w-4 h-4 text-neon-green" />
+        <span className="font-display font-bold text-sm">Risk-Adjusted LP Analysis</span>
+        <span
+          className={`text-[10px] font-bold rounded px-1.5 py-0.5 border border-black ${gradeColor}`}
+        >
+          Grade {grade} · Score {scoring.score100}
+        </span>
+      </div>
+
+      {/* Yield Waterfall */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-3">
+        <div className="rounded-lg bg-neon-green/10 border border-neon-green/30 p-2">
+          <div className="text-ink-faint mb-0.5">Gross Reward APR</div>
+          <div className="font-mono font-bold text-neon-green">
+            {(scoring.grossRewardApr * 100).toFixed(1)}%
+          </div>
+        </div>
+        <div className="rounded-lg bg-neon-lime/10 border border-neon-lime/30 p-2">
+          <div className="text-ink-faint mb-0.5">Spread APR</div>
+          <div className="font-mono font-bold text-neon-lime">
+            {(scoring.spreadApr * 100).toFixed(1)}%
+          </div>
+        </div>
+        <div className="rounded-lg bg-brand-orange/10 border border-brand-orange/30 p-2">
+          <div className="text-ink-faint mb-0.5">Risk-Adjusted</div>
+          <div className="font-mono font-bold text-brand-orange">
+            {(scoring.riskAdjustedScore * 100).toFixed(1)}%
+          </div>
+        </div>
+        <div className="rounded-lg bg-neon-cyan/10 border border-neon-cyan/30 p-2">
+          <div className="text-ink-faint mb-0.5">Net After Costs</div>
+          <div className="font-mono font-bold text-neon-cyan">
+            {(scoring.netApr * 100).toFixed(1)}%
+          </div>
+        </div>
+      </div>
+
+      {/* Cost Breakdown */}
+      <div className="flex gap-4 text-[11px] text-ink-faint mb-3">
+        <span>Adverse selection: <strong className="text-brand-pink">{(scoring.adverseSelectionApr * 100).toFixed(2)}%</strong></span>
+        <span>Inventory cost: <strong className="text-brand-pink">{(scoring.inventoryCostApr * 100).toFixed(2)}%</strong></span>
+        <span>Dilution: <strong className="text-brand-pink">{(scoring.dilutionApr * 100).toFixed(2)}%</strong></span>
+      </div>
+
+      {/* Allocation Suggestion */}
+      {scoring.recommendedAllocationPct > 0 && (
+        <div className="rounded-lg bg-neon-cyan/5 border border-neon-cyan/20 p-2.5 mb-2">
+          <div className="flex items-center gap-2 text-[11px] mb-1">
+            <span className="font-display font-bold text-ink">Allocation:</span>
+            <span className="font-mono font-bold text-neon-cyan">
+              {scoring.recommendedAllocationPct.toFixed(1)}% of bankroll
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Risk Flags */}
+      {scoring.riskFlags.length > 0 && (
+        <div className="space-y-1">
+          {scoring.riskFlags.map((flag, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-2 text-[11px] bg-brand-orange/5 border border-brand-orange/20 rounded-lg px-2.5 py-1"
+            >
+              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-brand-orange" />
+              <span className="text-ink-muted">{flag}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Professor Notes */}
+      {scoring.professorNotes && scoring.professorNotes.length > 0 && (
+        <div className="mt-2 text-[10px] text-ink-faint space-y-0.5">
+          {scoring.professorNotes.map((note, i) => (
+            <p key={i}>• {note}</p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -904,6 +1016,7 @@ export default function LPScannerPage() {
                             <tr>
                               <td colSpan={9} className="px-3 py-3 bg-white">
                                 <OrderBookPanel market={m} />
+                                {m.lpScoring && <LPScoringPanel scoring={m.lpScoring} market={m} />}
                               </td>
                             </tr>
                           )}

@@ -57,6 +57,38 @@ interface ArbitragePair {
   opportunityScore: number;
   anomalies: AnomalyFlag[];
   plan: ExecutionPlan | null;
+  executable?: {
+    legs: { venue: string; action: string; avgPrice: number; size: number }[];
+    bestYes: number;
+    bestNo: number;
+    topGrossEdge: number;
+    executableSize: number;
+    targetSize: number;
+    grossProfitUsd: number;
+    feesUsd: number;
+    stressCostUsd: number;
+    netProfitUsd: number;
+    stressNetProfitUsd: number;
+    capitalRequiredUsd: number;
+    roi: number;
+    annualizedRoi: number;
+    stressRoi: number;
+    grossPerShare: number;
+    feesPerShare: number;
+    netPerShare: number;
+    confidence: number;
+    score100: number;
+    riskFlags: { severity: number; message: string }[];
+    confidenceParts: {
+      match: number;
+      liquidity: number;
+      freshness: number;
+      profitQuality: number;
+      resolution: number;
+    };
+    daysToResolution: number;
+    professorNotes: string[];
+  } | null;
   poly: {
     question: string;
     yesPrice: number;
@@ -988,6 +1020,105 @@ function ExpandedDetail({ pair }: { pair: ArbitragePair }) {
           </p>
         </div>
       </div>
+
+      {/* Executable Arbitrage — Golden Professor Engine */}
+      {pair.executable && (
+        <>
+          {/* Profit Waterfall */}
+          <div className="md:col-span-2 rounded-lg bg-white border border-gray-200 p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="w-4 h-4 text-neon-green" />
+              <span className="font-display font-bold text-sm">Executable Profit Waterfall</span>
+              <span className="text-[10px] font-bold bg-neon-green text-black rounded px-1.5 py-0.5 border border-black">
+                Score {pair.executable.score100}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div className="rounded-lg bg-neon-green/10 border border-neon-green/30 p-2">
+                <div className="text-ink-faint mb-0.5">Gross Profit</div>
+                <div className="font-mono font-bold text-neon-green">${pair.executable.grossProfitUsd.toFixed(2)}</div>
+                <div className="text-[10px] text-ink-faint">{pair.executable.grossPerShare.toFixed(3)}/share</div>
+              </div>
+              <div className="rounded-lg bg-brand-pink/10 border border-brand-pink/30 p-2">
+                <div className="text-ink-faint mb-0.5">Fees</div>
+                <div className="font-mono font-bold text-brand-pink">-${pair.executable.feesUsd.toFixed(2)}</div>
+                <div className="text-[10px] text-ink-faint">{pair.executable.feesPerShare.toFixed(3)}/share</div>
+              </div>
+              <div className="rounded-lg bg-brand-orange/10 border border-brand-orange/30 p-2">
+                <div className="text-ink-faint mb-0.5">Stress Cost</div>
+                <div className="font-mono font-bold text-brand-orange">-${pair.executable.stressCostUsd.toFixed(2)}</div>
+                <div className="text-[10px] text-ink-faint">extra slippage</div>
+              </div>
+              <div className="rounded-lg bg-neon-lime/10 border border-neon-lime/30 p-2">
+                <div className="text-ink-faint mb-0.5">Net Profit</div>
+                <div className="font-mono font-bold text-neon-lime">${pair.executable.netProfitUsd.toFixed(2)}</div>
+                <div className="text-[10px] text-ink-faint">{pair.executable.netPerShare.toFixed(3)}/share</div>
+              </div>
+            </div>
+            <div className="flex gap-4 mt-2 text-[11px] text-ink-faint">
+              <span>Executable: <strong className="text-ink">{pair.executable.executableSize} / {pair.executable.targetSize} shares</strong></span>
+              <span>Capital: <strong className="text-ink">${pair.executable.capitalRequiredUsd.toFixed(0)}</strong></span>
+              <span>ROI: <strong className="text-neon-green">{(pair.executable.roi * 100).toFixed(1)}%</strong></span>
+              <span>Annualized: <strong className="text-neon-green">{(pair.executable.annualizedRoi * 100).toFixed(1)}%</strong></span>
+            </div>
+          </div>
+
+          {/* Confidence Breakdown */}
+          <div className="rounded-lg bg-surface/30 border border-black/10 p-3">
+            <div className="text-[11px] font-display font-bold text-ink-faint uppercase tracking-wide mb-2">Confidence</div>
+            <div className="space-y-1.5">
+              {[
+                { label: 'Match', value: pair.executable.confidenceParts.match },
+                { label: 'Liquidity', value: pair.executable.confidenceParts.liquidity },
+                { label: 'Freshness', value: pair.executable.confidenceParts.freshness },
+                { label: 'Profit Quality', value: pair.executable.confidenceParts.profitQuality },
+                { label: 'Resolution', value: pair.executable.confidenceParts.resolution },
+              ].map((c) => (
+                <div key={c.label} className="flex items-center gap-2 text-[11px]">
+                  <span className="w-16 text-ink-faint">{c.label}</span>
+                  <div className="flex-1 h-1.5 rounded-full bg-black/5">
+                    <div
+                      className={`h-full rounded-full ${c.value >= 0.7 ? 'bg-neon-green' : c.value >= 0.4 ? 'bg-brand-yellow' : 'bg-brand-pink'}`}
+                      style={{ width: `${c.value * 100}%` }}
+                    />
+                  </div>
+                  <span className="font-mono w-8 text-right">{(c.value * 100).toFixed(0)}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Risk Flags */}
+          {pair.executable.riskFlags.length > 0 && (
+            <div className="rounded-lg bg-brand-orange/5 border border-brand-orange/20 p-3">
+              <div className="text-[11px] font-display font-bold text-ink-faint uppercase tracking-wide mb-2">Risk Flags</div>
+              <div className="space-y-1">
+                {pair.executable.riskFlags.map((flag, i) => (
+                  <div key={i} className="flex items-start gap-2 text-[11px]">
+                    <AlertTriangle className={`w-3 h-3 mt-0.5 flex-shrink-0 ${flag.severity >= 3 ? 'text-brand-pink' : flag.severity >= 2 ? 'text-brand-orange' : 'text-brand-yellow'}`} />
+                    <span className="text-ink-muted">{flag.message}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Professor Notes */}
+          {pair.executable.professorNotes.length > 0 && (
+            <div className="md:col-span-2 rounded-lg bg-black/[0.03] border border-black/10 p-3">
+              <div className="text-[11px] font-display font-bold text-ink-faint uppercase tracking-wide mb-1.5">Analysis Notes</div>
+              <ul className="space-y-1 text-[11px] text-ink-muted">
+                {pair.executable.professorNotes.map((note, i) => (
+                  <li key={i} className="flex items-start gap-1.5">
+                    <span className="text-brand-orange font-bold mt-0.5">›</span>
+                    <span>{note}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Execution Plan */}
       {pair.plan && pair.plan.viable && (

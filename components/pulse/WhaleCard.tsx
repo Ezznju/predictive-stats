@@ -28,6 +28,13 @@ function getAnomalyBadge(score: number): { label: string; color: string } | null
   return null;
 }
 
+function getConvictionBadge(score: number): { label: string; color: string } | null {
+  if (score >= 0.8) return { label: 'STRONG', color: 'bg-neon-green text-black' };
+  if (score >= 0.6) return { label: 'MODERATE', color: 'bg-neon-lime text-black' };
+  if (score >= 0.4) return { label: 'WEAK', color: 'bg-brand-yellow text-black' };
+  return null;
+}
+
 interface WhaleCardProps {
   trade: WhaleFeedItem;
 }
@@ -35,6 +42,7 @@ interface WhaleCardProps {
 export function WhaleCard({ trade }: WhaleCardProps) {
   const isBuy = trade.side === 'BUY';
   const anomalyBadge = getAnomalyBadge(trade.anomalyScore);
+  const convictionBadge = trade.convictionScore != null ? getConvictionBadge(trade.convictionScore) : null;
 
   return (
     <div className="bg-white border-2 border-black rounded-xl p-4 shadow-pop hover:-translate-y-0.5 transition-all group">
@@ -64,8 +72,8 @@ export function WhaleCard({ trade }: WhaleCardProps) {
         </span>
       </div>
 
-      {/* Amount + side */}
-      <div className="flex items-center gap-2 mb-2">
+      {/* Amount + side + badges */}
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
         <span className="text-lg font-display font-bold text-ink">
           {formatUSD(trade.usdcSize)}
         </span>
@@ -78,6 +86,13 @@ export function WhaleCard({ trade }: WhaleCardProps) {
         >
           {trade.side} {trade.outcome}
         </span>
+        {convictionBadge && (
+          <span
+            className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-black ${convictionBadge.color}`}
+          >
+            {convictionBadge.label}
+          </span>
+        )}
         {anomalyBadge && (
           <span
             className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full text-white ${anomalyBadge.color}`}
@@ -86,6 +101,20 @@ export function WhaleCard({ trade }: WhaleCardProps) {
           </span>
         )}
       </div>
+
+      {/* Risk flags */}
+      {trade.riskFlags && trade.riskFlags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {trade.riskFlags.slice(0, 2).map((flag, i) => (
+            <span
+              key={i}
+              className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-brand-orange/10 border border-brand-orange/30 text-brand-orange"
+            >
+              {flag}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Market */}
       <Link

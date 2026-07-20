@@ -11,6 +11,7 @@ import { eventSimilarity } from './intel';
 import { scoreOpportunity } from './scoring';
 import { analyzeMarket, type AnomalyFlag } from './anomaly';
 import { buildExecutionPlan, type ExecutionPlan } from './execution';
+import { clamp } from './intel';
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -366,4 +367,348 @@ function parseOutcomePrices(raw: unknown): string[] {
     }
   }
   return [];
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   EXECUTABLE ARBITRAGE ENGINE (Golden Professor Engine)
+   
+   Walks order book depth to find true executable profit after fees.
+   Outputs profit waterfall, confidence score, and risk flags.
+═════════════════════════════════════════════════════════════════════ */
+
+export interface OrderBookLevel {
+  price: number;
+  size: number;
+}
+
+export interface ExecutableArbInput {
+  id: string;
+  title: string;
+  yes: {
+    venue: string;
+    marketId: string;
+    book: { asks: OrderBookLevel[] };
+    snapshotAgeMs: number;
+  };
+  no: {
+    venue: string;
+    marketId: string;
+    book: { asks: OrderBookLevel[] };
+    snapshotAgeMs: number;
+  };
+  matchScore: number;
+  daysToResolution: number;
+  resolutionClarityScore: number;
+  config?: Partial<ExecutableArbConfig>;
+}
+
+export interface ExecutableArbConfig {
+  targetSize: number;
+  minMatchScore: number;
+  freshnessGoodMs: number;
+  freshnessBadMs: number;
+  minExecutableSize: number;
+  stressSlippage: number;
+  feeRateByVenue: Record<string, number>;
+}
+
+export interface ExecutableArbResult {
+  id: string;
+  title: string;
+  legs: { venue: string; action: string; avgPrice: number; size: number }[];
+  bestYes: number;
+  bestNo: number;
+  topGrossEdge: number;
+  executableSize: number;
+  targetSize: number;
+  grossProfitUsd: number;
+  feesUsd: number;
+  stressCostUsd: number;
+  netProfitUsd: number;
+  stressNetProfitUsd: number;
+  capitalRequiredUsd: number;
+  roi: number;
+  annualizedRoi: number;
+  stressRoi: number;
+  grossPerShare: number;
+  feesPerShare: number;
+  netPerShare: number;
+  confidence: number;
+  score100: number;
+  riskFlags: { severity: number; message: string }[];
+  confidenceParts: {
+    match: number;
+    liquidity: number;
+    freshness: number;
+    profitQuality: number;
+    resolution: number;
+  };
+  daysToResolution: number;
+  professorNotes: string[];
+}
+
+function cleanLevels(levels: OrderBookLevel[]): OrderBookLevel[] {
+  return levels
+    .filter(
+      (l) =>
+        isFinite(l.price) &&
+        isFinite(l.size) &&
+        l.size > 0 &&
+        l.price > 0 &&
+        l.price <= 1
+    )
+    .sort((a, b) => a.price - b.price)
+    .map((l) => ({ price: l.price, size: l.size }));
+}
+
+/**
+ * Compute executable arbitrage by walking the order book depth.
+ *
+ * Unlike top-of-book analysis, this finds the true fillable size and
+ * profit after consuming multiple price levels on both venues.
+ */
+export function computeExecutableArbitrage(
+  input: ExecutableArbInput
+): ExecutableArbResult | null {
+  const cfg: ExecutableArbConfig = {
+    targetSize: 1000,
+    minMatchScore: 0.68,
+    freshnessGoodMs: 60000,
+    freshnessBadMs: 300000,
+    minExecutableSize: 50,
+    stressSlippage: 0.005,
+    feeRateByVenue: { polymarket: 0.02, kalshi: 0.01 },
+    ...input.config,
+  };
+
+  const yesLevels = cleanLevels(input.yes.book.asks || []);
+  const noLevels = cleanLevels(input.no.book.asks || []);
+  if (!yesLevels.length || !noLevels.length) return null;
+
+  const bestYes = yesLevels[0].price;
+  const bestNo = noLevels[0].price;
+  const targetSize = Math.max(1, cfg.targetSize);
+  const rY = cfg.feeRateByVenue[input.yes.venue] ?? 0;
+  const rN = cfg.feeRateByVenue[input.no.venue] ?? 0;
+
+  // Walk the book — consume levels until target filled or unprofitable
+  let yi = 0,
+    ni = 0;
+  let yesRemain = yesLevels[0].size;
+  let noRemain = noLevels[0].size;
+  let targetRemaining = targetSize;
+  let filled = 0,
+    yesCost = 0,
+    noCost = 0,
+    proceeds = 0,
+    fees = 0;
+
+  while (
+    yi < yesLevels.length &&
+    ni < noLevels.length &&
+    targetRemaining > 0
+  ) {
+    const y = yesLevels[yi];
+    const n = noLevels[ni];
+    const chunk = Math.min(yesRemain, noRemain, targetRemaining);
+    if (chunk <= 0) break;
+
+    const grossPerShare = 1 - (y.price + n.price);
+    const chunkFees = (y.price * rY + n.price * rN) * chunk;
+
+    // Stop if marginal slice is unprofitable
+    if (grossPerShare * chunk - chunkFees <= 0) break;
+
+    yesCost += y.price * chunk;
+    noCost += n.price * chunk;
+    fees += chunkFees;
+    proceeds += chunk;
+    filled += chunk;
+    targetRemaining -= chunk;
+    yesRemain -= chunk;
+    noRemain -= chunk;
+
+    if (yesRemain <= 1e-9) {
+      yi++;
+      yesRemain = yesLevels[yi]?.size ?? 0;
+    }
+    if (noRemain <= 1e-9) {
+      ni++;
+      noRemain = noLevels[ni]?.size ?? 0;
+    }
+  }
+
+  if (filled <= 0) return null;
+
+  const totalCost = yesCost + noCost;
+  const grossProfit = proceeds - totalCost;
+  const netProfit = grossProfit - fees;
+  if (netProfit <= 0) return null;
+
+  const capitalRequired = totalCost + fees;
+  const roi = netProfit / capitalRequired;
+  const days = input.daysToResolution || 0;
+  const annualizedRoi =
+    days > 0 && roi > -1 ? Math.pow(1 + roi, 365 / days) - 1 : roi * 12;
+
+  // Stress test — extra slippage
+  const stressCost = filled * cfg.stressSlippage;
+  const stressNet = netProfit - stressCost;
+  const stressRoi = stressNet / capitalRequired;
+
+  // Freshness score
+  const ageMs = Math.max(
+    input.yes.snapshotAgeMs || 0,
+    input.no.snapshotAgeMs || 0
+  );
+  const freshnessScore =
+    ageMs <= cfg.freshnessGoodMs
+      ? 1
+      : ageMs >= cfg.freshnessBadMs
+        ? 0.1
+        : 1 -
+          ((ageMs - cfg.freshnessGoodMs) /
+            (cfg.freshnessBadMs - cfg.freshnessGoodMs)) *
+            0.9;
+
+  // Liquidity score — how much of target we could fill
+  const liquidityScore =
+    0.65 * clamp(filled / targetSize, 0, 1) +
+    0.35 * clamp(totalCost / 8000, 0, 1);
+
+  // Profit quality — net margin relative to 3% benchmark
+  const profitQualityScore = clamp((netProfit / proceeds) / 0.03, 0, 1);
+
+  const matchScore = clamp(input.matchScore ?? 0.5, 0, 1);
+  const resolutionClarityScore = clamp(
+    input.resolutionClarityScore ?? 0.65,
+    0,
+    1
+  );
+
+  // Confidence — weighted blend
+  const confidence = clamp(
+    0.30 * matchScore +
+      0.25 * liquidityScore +
+      0.20 * freshnessScore +
+      0.15 * profitQualityScore +
+      0.10 * resolutionClarityScore,
+    0,
+    1
+  );
+
+  // Risk flags
+  const riskFlags: { severity: number; message: string }[] = [];
+
+  if (matchScore < cfg.minMatchScore) {
+    riskFlags.push({
+      severity: 2,
+      message:
+        'Event matching is not strong enough to fully trust this pair.',
+    });
+  }
+  if (ageMs > cfg.freshnessBadMs) {
+    riskFlags.push({
+      severity: 3,
+      message: 'Quotes are stale — the edge may already be gone.',
+    });
+  } else if (ageMs > cfg.freshnessGoodMs) {
+    riskFlags.push({
+      severity: 1,
+      message: 'Quotes are aging. Verify before executing.',
+    });
+  }
+  if (filled < cfg.minExecutableSize) {
+    riskFlags.push({
+      severity: 2,
+      message: 'Executable size too small for meaningful profit.',
+    });
+  }
+  if (filled < targetSize) {
+    riskFlags.push({
+      severity: 1,
+      message: 'Only part of target size is currently executable.',
+    });
+  }
+  if (stressNet <= 0) {
+    riskFlags.push({
+      severity: 3,
+      message: 'A small amount of extra slippage removes the profit.',
+    });
+  }
+  if (days > 30) {
+    riskFlags.push({
+      severity: 1,
+      message: `Capital locked until resolution (${days} days).`,
+    });
+  }
+  if (resolutionClarityScore < 0.65) {
+    riskFlags.push({
+      severity: 2,
+      message: 'Resolution wording or source may be ambiguous.',
+    });
+  }
+
+  // Score 0-100
+  const score100 = Math.round(
+    100 * (0.55 * confidence + 0.45 * clamp(annualizedRoi / 0.25, 0, 1))
+  );
+
+  const professorNotes = [
+    `Top-of-book gross edge ${((1 - bestYes - bestNo) * 100).toFixed(2)}¢ per pair.`,
+    `After executable depth and fees, estimated net profit is $${netProfit.toFixed(2)}.`,
+    `Main risk: ${
+      riskFlags.length
+        ? riskFlags[0].message.toLowerCase()
+        : 'no major flags at current settings.'
+    }`,
+  ];
+
+  return {
+    id: input.id,
+    title: input.title,
+    legs: [
+      {
+        venue: input.yes.venue,
+        action: 'BUY YES',
+        avgPrice: yesCost / filled,
+        size: filled,
+      },
+      {
+        venue: input.no.venue,
+        action: 'BUY NO',
+        avgPrice: noCost / filled,
+        size: filled,
+      },
+    ],
+    bestYes,
+    bestNo,
+    topGrossEdge: 1 - bestYes - bestNo,
+    executableSize: filled,
+    targetSize,
+    grossProfitUsd: grossProfit,
+    feesUsd: fees,
+    stressCostUsd: stressCost,
+    netProfitUsd: netProfit,
+    stressNetProfitUsd: stressNet,
+    capitalRequiredUsd: capitalRequired,
+    roi,
+    annualizedRoi,
+    stressRoi,
+    grossPerShare: grossProfit / filled,
+    feesPerShare: fees / filled,
+    netPerShare: netProfit / filled,
+    confidence,
+    score100,
+    riskFlags,
+    confidenceParts: {
+      match: matchScore,
+      liquidity: liquidityScore,
+      freshness: freshnessScore,
+      profitQuality: profitQualityScore,
+      resolution: resolutionClarityScore,
+    },
+    daysToResolution: days,
+    professorNotes,
+  };
 }

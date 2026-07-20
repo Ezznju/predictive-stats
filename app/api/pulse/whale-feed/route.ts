@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchTrades, fetchLeaderboard, fetchGammaEvents } from '@/lib/pulse/polymarket-data';
 import { withPulseCache, PULSE_KEYS } from '@/lib/pulse/cache';
-import { classifyWhalesFromLeaderboard } from '@/lib/pulse/whale-detection';
+import { classifyWhalesFromLeaderboard, scoreWhaleTrade, aggregateWhaleFlow } from '@/lib/pulse/whale-detection';
 import type { WhaleFeedItem } from '@/lib/pulse/types';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const limit = Math.min(Number(searchParams.get('limit') ?? 50), 200);
 
   const result = await withPulseCache(PULSE_KEYS.whaleFeed(), async () => {
-    // 1. Get most ACTIVE wallets (by volume, last 30 days) — not historical PNL winners
+    // 1. Get most ACTIVE wallets (by volume, last 30 days)
     const leaderboard = await fetchLeaderboard({ limit: 25, orderBy: 'VOL', timePeriod: 'MONTH' });
     const whaleWallets = classifyWhalesFromLeaderboard(leaderboard);
     const whaleMap = new Map(whaleWallets.map((w) => [w.address, w]));
@@ -46,14 +46,13 @@ export async function GET(request: Request) {
       }
     }
 
-    // 4. Build feed — only trades from last 7 days, $1K+ size
+    // 4. Build feed with conviction scoring
     const sevenDaysAgo = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
     const feed: WhaleFeedItem[] = [];
 
     for (const result of whaleTrades) {
       if (result.status !== 'fulfilled') continue;
       for (const trade of result.value) {
-        // Only show recent trades
         if (trade.timestamp < sevenDaysAgo) continue;
 
         const usdcSize = Math.round(trade.size * trade.price * 100) / 100;
@@ -62,11 +61,31 @@ export async function GET(request: Request) {
         const marketInfo = marketMap.get(trade.conditionId);
         const wallet = whaleMap.get(trade.proxyWallet);
 
-        let score = 0;
-        if (usdcSize >= 10000) score += 0.3;
-        if (usdcSize >= 50000) score += 0.3;
-        if (usdcSize >= 100000) score += 0.2;
-        if (wallet && wallet.pnl > 1000000) score += 0.2;
+        // Score using conviction engine
+        const convictionInput = {
+          wallet: trade.proxyWallet,
+          marketId: trade.conditionId,
+          marketTitle: marketInfo?.title ?? trade.title ?? '',
+          category: 'POLITICS',
+          side: trade.side,
+          outcome: trade.outcome ?? '',
+          sizeUsd: usdcSize,
+          liquidityUsd: marketInfo?.liquidity ?? 50000,
+          timestamp: new Date(trade.timestamp * 1000).toISOString(),
+        };
+
+        const walletStats = wallet ? {
+          address: wallet.address,
+          trades: 0,
+          winRate: wallet.winRate,
+          roi: wallet.pnl / Math.max(1, wallet.volume),
+          avgSizeUsd: wallet.volume / Math.max(1, 30),
+          sizeStdUsd: wallet.volume / Math.max(1, 30) * 0.5,
+          brier: 0.25,
+          categoryExpertise: {} as Record<string, number>,
+        } : null;
+
+        const conviction = scoreWhaleTrade(convictionInput, walletStats, Date.now());
 
         feed.push({
           walletAddress: trade.proxyWallet,
@@ -83,17 +102,64 @@ export async function GET(request: Request) {
           conditionId: trade.conditionId,
           timestamp: trade.timestamp,
           txHash: trade.transactionHash ?? '',
-          anomalyScore: Math.min(score, 1),
+          anomalyScore: conviction.conviction,
+          convictionScore: conviction.conviction,
+          convictionParts: {
+            sizeZ: conviction.sizeScore,
+            walletSkill: conviction.walletSkill,
+            categoryExpertise: 0.45,
+            liquidityFactor: 0.5,
+            recencyDecay: conviction.recencyScore,
+            confidence: conviction.conviction,
+            compositeScore: conviction.conviction,
+            riskFlags: [],
+          },
+          riskFlags: [],
         });
       }
     }
 
-    feed.sort((a, b) => b.timestamp - a.timestamp);
-    return feed.slice(0, limit);
+    feed.sort((a, b) => (b.convictionScore ?? 0) - (a.convictionScore ?? 0));
+    const topFeed = feed.slice(0, limit);
+
+    // 5. Aggregate whale flow
+    const aggregatedInput = topFeed.map((item) => ({
+      wallet: item.walletAddress,
+      marketId: item.conditionId,
+      marketTitle: item.marketTitle,
+      category: 'POLITICS',
+      side: item.side as 'BUY' | 'SELL',
+      outcome: item.outcome,
+      sizeUsd: item.usdcSize,
+      liquidityUsd: 50000,
+      timestamp: new Date(item.timestamp * 1000).toISOString(),
+    }));
+
+    const statsMap = new Map();
+    for (const w of whaleWallets) {
+      statsMap.set(w.address, {
+        address: w.address,
+        trades: 0,
+        winRate: w.winRate,
+        roi: w.pnl / Math.max(1, w.volume),
+        avgSizeUsd: w.volume / Math.max(1, 30),
+        sizeStdUsd: w.volume / Math.max(1, 30) * 0.5,
+        brier: 0.25,
+        categoryExpertise: {} as Record<string, number>,
+      });
+    }
+
+    const aggregated = aggregateWhaleFlow(aggregatedInput, statsMap, Date.now());
+
+    return {
+      feed: topFeed,
+      aggregatedFlow: aggregated,
+    };
   });
 
   return NextResponse.json({
-    data: result.payload,
+    data: result.payload?.feed ?? [],
+    aggregatedFlow: result.payload?.aggregatedFlow ?? null,
     meta: {
       updatedAt: result.updatedAt,
       stale: result.stale,

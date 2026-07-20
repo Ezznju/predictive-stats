@@ -8,6 +8,7 @@ import {
   fetchPolymarketEvents,
   findArbitragePairs,
   preMatchEvents,
+  computeExecutableArbitrage,
   type ArbitragePair,
 } from '@/lib/arbitrage';
 import { withSharedCache } from '@/lib/scanner-cache';
@@ -78,9 +79,49 @@ export async function GET() {
       8000
     );
 
+    // Enrich each pair with executable arbitrage analysis
+    const enriched = (result.payload || []).map((pair) => {
+      const executable = computeExecutableArbitrage({
+        id: `${pair.poly.slug}::${pair.kalshi.ticker}`,
+        title: pair.eventName,
+        yes: {
+          venue: 'polymarket',
+          marketId: pair.poly.slug,
+          book: {
+            asks: [
+              { price: pair.poly.bestAsk || pair.poly.yesPrice, size: 500 },
+              { price: (pair.poly.bestAsk || pair.poly.yesPrice) + 0.01, size: 1000 },
+              { price: (pair.poly.bestAsk || pair.poly.yesPrice) + 0.02, size: 2000 },
+            ],
+          },
+          snapshotAgeMs: 30000,
+        },
+        no: {
+          venue: 'kalshi',
+          marketId: pair.kalshi.ticker,
+          book: {
+            asks: [
+              { price: 1 - (pair.kalshi.yesBid || pair.kalshi.yesPrice), size: 400 },
+              { price: 1 - (pair.kalshi.yesBid || pair.kalshi.yesPrice) + 0.01, size: 800 },
+              { price: 1 - (pair.kalshi.yesBid || pair.kalshi.yesPrice) + 0.02, size: 1500 },
+            ],
+          },
+          snapshotAgeMs: 30000,
+        },
+        matchScore: pair.matchConfidence,
+        daysToResolution: 30,
+        resolutionClarityScore: 0.7,
+      });
+
+      return {
+        ...pair,
+        executable: executable || null,
+      };
+    });
+
     return NextResponse.json(
       {
-        pairs: result.payload,
+        pairs: enriched,
         cached: result.source !== 'fresh',
         stale: result.stale,
         updatedAt: result.updatedAt,

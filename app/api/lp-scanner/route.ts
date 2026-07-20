@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchRewardMarkets, fetchOrderBook } from '@/lib/polymarket';
 import type { ScannerMarket } from '@/lib/polymarket';
 import { withSharedCache } from '@/lib/scanner-cache';
+import { scoreLP } from '@/lib/lp-scoring';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -34,9 +35,31 @@ export async function GET(request: NextRequest) {
       fetchRewardMarkets
     );
 
+    // Enrich each market with risk-adjusted LP scoring
+    const enriched = (result.payload || []).map((market) => {
+      const lpResult = scoreLP({
+        marketId: market.conditionId || market.yesTokenId || '',
+        name: market.question || '',
+        liquidityUsd: market.volume24h || 50000,
+        dailyRewardUsd: market.rewardPerDay || 0,
+        volume24hUsd: market.volume24h || 0,
+        spreadDecimal: market.currentSpread || 0.02,
+        adverseSelectionBps: 10,
+        volatilityDaily: 0.03,
+        rewardDilutionPctAnnual: 0.05,
+        feeCaptureShare: 0.05,
+        platformRiskScore: 0.2,
+      });
+
+      return {
+        ...market,
+        lpScoring: lpResult || null,
+      };
+    });
+
     return NextResponse.json(
       {
-        markets: result.payload,
+        markets: enriched,
         cached: result.source !== 'fresh',
         stale: result.stale,
         updatedAt: result.updatedAt,

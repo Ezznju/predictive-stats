@@ -123,6 +123,7 @@ export interface WhaleWallet {
   winRate: number;
   tradeCount: number;
   isSmart: boolean;
+  skillScore: number;
 }
 
 export interface WhaleTrade {
@@ -176,6 +177,18 @@ export interface WhaleFeedItem {
   timestamp: number;
   txHash: string;
   anomalyScore: number;
+  convictionScore?: number;
+  convictionParts?: {
+    sizeZ: number;
+    walletSkill: number;
+    categoryExpertise: number;
+    liquidityFactor: number;
+    recencyDecay: number;
+    confidence: number;
+    compositeScore: number;
+    riskFlags: string[];
+  };
+  riskFlags?: string[];
 }
 
 export interface PulseStats {
