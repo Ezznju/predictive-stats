@@ -50,6 +50,12 @@ interface ScannerMarket {
   rewardScore: number;
   opportunityScore: number;
   aprPct: number;
+  headlineAprPct: number;
+  realisticAprPct: number;
+  yourShare: number;
+  breaksEven: boolean;
+  breakEvenDays: number | null;
+  spreadViolation: boolean;
   hoursRemaining: number;
   anomalies: AnomalyFlag[];
   blocked: boolean;
@@ -117,6 +123,8 @@ function spreadLabel(
   maxSpread: number
 ): { text: string; color: string } {
   const spreadCents = current * 100;
+  if (spreadCents > maxSpread)
+    return { text: 'VIOLATION', color: 'text-brand-pink font-bold' };
   if (spreadCents >= maxSpread * 0.8)
     return { text: 'Wide', color: 'text-brand-green font-bold' };
   if (spreadCents >= maxSpread * 0.4)
@@ -546,14 +554,13 @@ export default function LPScannerPage() {
   const totalRewardMarkets = markets.length;
   const totalWithRewards = markets.filter((m) => m.rewardPerDay > 0).length;
   const flaggedCount = markets.filter((m) => m.blocked).length;
-  const avgOpportunity =
+  const spreadViolationCount = markets.filter((m) => m.spreadViolation).length;
+  const breaksEvenCount = markets.filter((m) => m.breaksEven).length;
+  const avgRealisticApr =
     markets.length > 0
-      ? markets.reduce((s, m) => s + m.opportunityScore, 0) / markets.length
+      ? markets.reduce((s, m) => s + m.realisticAprPct, 0) / markets.length
       : 0;
-  const avgCompetition =
-    markets.length > 0
-      ? markets.reduce((s, m) => s + m.competition, 0) / markets.length
-      : 0;
+  const totalDailyRewards = markets.reduce((s, m) => s + m.rewardPerDay, 0);
 
   return (
     <div className="relative">
@@ -601,20 +608,20 @@ export default function LPScannerPage() {
             {
               icon: Crosshair,
               color: 'bg-neon-lime',
-              title: '1. Find low-cost markets',
-              body: 'Polymarket pays daily USDC to anyone providing liquidity. We surface the markets where you can qualify with as little as $25–$250.',
+              title: '1. Find qualifying markets',
+              body: 'Polymarket pays daily USDC to LPs within the spread. We surface markets where you can qualify — and flag the ones where you actually break even.',
             },
             {
               icon: Shield,
               color: 'bg-neon-cyan',
-              title: '2. Provide liquidity, low risk',
-              body: 'Place a resting limit order — no directional bet required. While it sits on the book within the spread, you earn rewards every day.',
+              title: '2. Honest APR, not headline',
+              body: 'We model your real share of the reward pool based on competition. Headline says 9,000%? We show you the realistic number after dilution and time remaining.',
             },
             {
               icon: DollarSign,
               color: 'bg-brand-yellow',
-              title: '3. Earn daily rewards',
-              body: 'The lower the competition, the bigger your slice of the reward pool. Sort by Score to find the best bang-for-buck opportunities first.',
+              title: '3. Know the risks',
+              body: 'One adverse fill on a volatile market can eat months of LP rewards. We flag spread violations, inventory risk, and markets where you won\'t recoup before resolution.',
             },
           ].map((c) => (
             <div
@@ -640,28 +647,28 @@ export default function LPScannerPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
             {
-              label: 'Reward Markets',
+              label: 'Unique Markets',
               value: fmtNum(totalRewardMarkets),
               icon: BarChart3,
               color: 'bg-neon-cyan',
             },
             {
-              label: 'Active Rewards',
-              value: fmtNum(totalWithRewards),
+              label: 'Total $/Day Pooled',
+              value: fmt$(totalDailyRewards),
               icon: DollarSign,
               color: 'bg-neon-lime',
             },
             {
-              label: 'Avg Score',
-              value: avgOpportunity ? fmtNum(avgOpportunity, 0) : '—',
+              label: 'Break Even Before Res.',
+              value: `${breaksEvenCount}`,
               icon: TrendingUp,
               color: 'bg-brand-yellow',
             },
             {
-              label: 'Flagged',
-              value: `${fmtNum(flaggedCount)}`,
+              label: 'Spread Violations',
+              value: `${spreadViolationCount}`,
               icon: AlertTriangle,
-              color: 'bg-brand-pink',
+              color: spreadViolationCount > 0 ? 'bg-brand-pink' : 'bg-neon-green',
             },
           ].map((s) => (
             <div
@@ -953,14 +960,27 @@ export default function LPScannerPage() {
                               </span>
                             </td>
 
-                            {/* Spread */}
+                            {/* Spread — Qualifying max */}
                             <td className="px-3 py-3">
-                              <span className={`text-sm ${spr.color}`}>
-                                {(m.currentSpread * 100).toFixed(1)}¢
-                              </span>
-                              <span className="block text-[10px] text-ink-faint">
-                                max {m.maxSpread}¢
-                              </span>
+                              {m.spreadViolation ? (
+                                <div>
+                                  <span className="inline-block text-[10px] font-bold text-white bg-brand-pink rounded px-1.5 py-0.5 border border-black">
+                                    {(m.currentSpread * 100).toFixed(1)}¢ EXCEEDS
+                                  </span>
+                                  <span className="block text-[10px] font-bold text-brand-pink mt-0.5">
+                                    max {(m.maxSpread * 100).toFixed(1)}¢
+                                  </span>
+                                </div>
+                              ) : (
+                                <div>
+                                  <span className={`text-sm ${spr.color}`}>
+                                    {(m.currentSpread * 100).toFixed(1)}¢
+                                  </span>
+                                  <span className="block text-[10px] text-ink-faint">
+                                    max {(m.maxSpread * 100).toFixed(1)}¢
+                                  </span>
+                                </div>
+                              )}
                             </td>
 
                             {/* Entry Cost */}
@@ -983,11 +1003,27 @@ export default function LPScannerPage() {
                               )}
                             </td>
 
-                            {/* APR */}
+                            {/* APR — Realistic */}
                             <td className="px-3 py-3">
-                              <span className="font-mono text-sm font-semibold">
-                                {m.aprPct > 0 ? fmtApr(m.aprPct) : '—'}
-                              </span>
+                              {m.spreadViolation ? (
+                                <div>
+                                  <span className="font-mono text-sm font-bold text-brand-pink">
+                                    $0
+                                  </span>
+                                  <span className="block text-[10px] font-bold text-brand-pink mt-0.5">
+                                    SPREAD VIOLATION
+                                  </span>
+                                </div>
+                              ) : (
+                                <div>
+                                  <span className="font-mono text-sm font-semibold">
+                                    {m.realisticAprPct > 0 ? fmtApr(m.realisticAprPct) : '—'}
+                                  </span>
+                                  <span className="block text-[10px] text-ink-faint mt-0.5">
+                                    realistic
+                                  </span>
+                                </div>
+                              )}
                               {m.anomalies.length > 0 && (
                                 <span
                                   className="block text-[10px] font-bold text-brand-pink mt-0.5"
@@ -998,7 +1034,7 @@ export default function LPScannerPage() {
                               )}
                             </td>
 
-                            {/* Prices */}
+                            {/* Prices — labeled bid/ask */}
                             <td className="px-3 py-3">
                               <div className="flex gap-1.5">
                                 <span className="text-[11px] font-mono bg-neon-green/20 text-neon-green rounded px-1.5 py-0.5 border border-neon-green/30">
@@ -1008,6 +1044,9 @@ export default function LPScannerPage() {
                                   N {m.noPrice.toFixed(2)}
                                 </span>
                               </div>
+                              <span className="block text-[10px] text-ink-faint mt-0.5">
+                                mid · {(m.yesPrice * 100).toFixed(0)}¢/{((1 - m.noPrice) * 100).toFixed(0)}¢
+                              </span>
                             </td>
                           </tr>
 
@@ -1169,8 +1208,8 @@ export default function LPScannerPage() {
             </div>
             <div className="space-y-3 text-ink-secondary">
               <p>
-                You&apos;re farming rewards, <strong className="text-ink">not taking directional risk</strong>.
-                You want your orders resting on the book (earning rewards), not getting filled.
+                You&apos;re earning LP rewards while your order rests on the book, <strong className="text-ink">but you still have directional risk</strong>.
+                If you get filled and the market moves against you, the loss can exceed months of rewards.
               </p>
               <ul className="list-disc pl-5 space-y-1">
                 <li>

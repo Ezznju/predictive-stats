@@ -75,8 +75,20 @@ export interface ScannerMarket {
   rewardScore: number;
   /** 0..100 blended opportunity score (profit + liquidity + risk + time). */
   opportunityScore: number;
-  /** Estimated annualised reward APR (%) if held in reward window. */
+  /** Realistic annualised reward APR (%) accounting for competition dilution. */
   aprPct: number;
+  /** Headline APR assuming solo farming (reference only, not displayed as primary). */
+  headlineAprPct: number;
+  /** Realistic APR after competition modeling. */
+  realisticAprPct: number;
+  /** Your estimated share of the reward pool (0..1). */
+  yourShare: number;
+  /** Whether realistic earnings break even before resolution. */
+  breaksEven: boolean;
+  /** Days to break even at realistic pace, or null if never. */
+  breakEvenDays: number | null;
+  /** True if current spread exceeds qualifying max (earns $0). */
+  spreadViolation: boolean;
   /** Reward window remaining in hours (Infinity if open-ended). */
   hoursRemaining: number;
   /** Integrity flags (wash trading, wide spread, thin book…). */
@@ -196,9 +208,35 @@ export async function fetchRewardMarkets(): Promise<ScannerMarket[]> {
     if (!cursor || cursor === 'LTE=' || json.data.length < 100) break;
   }
 
-  // Filter to only reward-eligible markets and transform
-  return allMarkets
-    .filter((m) => m.rewards_min_size > 0 || m.rewards_config.length > 0)
+  // Filter, dedupe, and transform
+  // Dedupe by condition_id (API may return same market with different reward configs)
+  const dedupedMap = new Map<string, RewardMarketRaw>();
+  for (const m of allMarkets) {
+    const id = m.condition_id;
+    if (!id) continue;
+    const existing = dedupedMap.get(id);
+    if (existing) {
+      // Merge reward configs from duplicate entries
+      const mergedConfigs = [...existing.rewards_config, ...m.rewards_config];
+      existing.rewards_config = mergedConfigs;
+      // Keep higher min size
+      existing.rewards_min_size = Math.max(existing.rewards_min_size, m.rewards_min_size);
+      // Keep wider max spread
+      existing.rewards_max_spread = Math.max(existing.rewards_max_spread, m.rewards_max_spread);
+    } else {
+      dedupedMap.set(id, { ...m });
+    }
+  }
+
+  return Array.from(dedupedMap.values())
+    .filter((m) => {
+      // Must have reward config
+      if (!m.rewards_config.length || m.rewards_min_size <= 0) return false;
+      // Must actually pay rewards (not $0/day)
+      const totalReward = m.rewards_config.reduce((sum, rc) => sum + (rc.rate_per_day ?? 0), 0);
+      if (totalReward <= 0) return false;
+      return true;
+    })
     .map(toScannerMarket)
     .sort((a, b) => b.rewardScore - a.rewardScore);
 }
@@ -228,8 +266,11 @@ function toScannerMarket(m: RewardMarketRaw): ScannerMarket {
     ? Math.max(0, (latestEnd - Date.now()) / 3_600_000)
     : Infinity;
 
-  // Estimated annualised APR for the reward (rewards over window ÷ capital).
-  const aprPct = (() => {
+  // Spread violation: current spread exceeds qualifying max = $0 rewards
+  const spreadViolation = m.rewards_max_spread > 0 && m.spread > m.rewards_max_spread;
+
+  // Headline APR (solo, no competition — for reference only)
+  const headlineAprPct = (() => {
     if (totalRewardPerDay <= 0 || entryCost <= 0 || !Number.isFinite(hoursRemaining))
       return 0;
     const windowDays = Math.max(hoursRemaining / 24, 1);
@@ -239,10 +280,36 @@ function toScannerMarket(m: RewardMarketRaw): ScannerMarket {
     return years > 0 ? round((roi / years) * 100, 1) : round(roi * 100, 1);
   })();
 
+  // Realistic APR — models competition dilution
+  // Your share of rewards = your_liquidity / (your_liquidity + competitor_liquidity)
+  // competitor_liquidity ≈ competition × entryCost (competition = number of qualifying LPs)
+  const compLiquidity = Math.max(m.market_competitiveness, 0) * entryCost;
+  const yourShare = entryCost + compLiquidity > 0
+    ? entryCost / (entryCost + compLiquidity)
+    : 1;
+  // Apply time decay — if market resolves soon, you earn less total
+  const windowDays = Number.isFinite(hoursRemaining) ? Math.max(hoursRemaining / 24, 1) : 365;
+  const totalRewardSolo = totalRewardPerDay * windowDays;
+  const totalRewardRealistic = totalRewardSolo * yourShare;
+  const realisticRoi = entryCost > 0 ? totalRewardRealistic / entryCost : 0;
+  const realisticYears = windowDays / 365;
+  const realisticAprPct = realisticYears > 0
+    ? round((realisticRoi / realisticYears) * 100, 1)
+    : round(realisticRoi * 100, 1);
+
+  // Break-even analysis: does realistic return exceed entry cost before resolution?
+  const realisticEarnings = totalRewardPerDay * windowDays * yourShare;
+  const breaksEven = realisticEarnings >= entryCost;
+  const breakEvenDays = totalRewardPerDay * yourShare > 0
+    ? entryCost / (totalRewardPerDay * yourShare)
+    : Infinity;
+
   // Reward efficiency: rewards / competition / entry cost (normalized).
   const effectiveComp = Math.max(m.market_competitiveness, 0.01);
   const effectiveEntry = Math.max(entryCost, 1);
-  const rewardScore = (totalRewardPerDay / effectiveComp / effectiveEntry) * 1000;
+  const rewardScore = spreadViolation
+    ? 0
+    : (totalRewardPerDay / effectiveComp / effectiveEntry) * 1000;
 
   // Integrity / anomaly scan on this market.
   const report: AnomalyReport = analyzeMarket({
@@ -253,9 +320,20 @@ function toScannerMarket(m: RewardMarketRaw): ScannerMarket {
     priceChange24h: m.one_day_price_change ?? 0,
   });
 
+  // Spread violation is a hard blocker
+  if (spreadViolation) {
+    report.flags.push({
+      kind: 'spread_violation',
+      severity: 'critical',
+      message: `Current spread (${(m.spread * 100).toFixed(1)}¢) exceeds qualifying max (${(m.rewards_max_spread * 100).toFixed(1)}¢) — earns $0 in rewards`,
+      value: m.spread,
+    });
+    report.blocked = true;
+  }
+
   // Blended opportunity score (0..100).
   const breakdown = scoreOpportunity({
-    edgePct: aprPct > 0 ? Math.min(aprPct, 500) / 10 : totalRewardPerDay * 2,
+    edgePct: realisticAprPct > 0 ? Math.min(realisticAprPct, 500) / 10 : totalRewardPerDay * 2,
     volumeUsd: m.volume_24hr,
     confidence: Math.max(0.4, 1 - Math.min(1, m.market_competitiveness / 500)),
     risk: report.riskScore,
@@ -280,7 +358,13 @@ function toScannerMarket(m: RewardMarketRaw): ScannerMarket {
     entryCost: round(entryCost, 2),
     rewardScore: Number.isFinite(rewardScore) ? round(rewardScore, 2) : 0,
     opportunityScore: breakdown.total,
-    aprPct,
+    aprPct: realisticAprPct,
+    headlineAprPct,
+    realisticAprPct,
+    yourShare,
+    breaksEven,
+    breakEvenDays: Number.isFinite(breakEvenDays) ? breakEvenDays : null,
+    spreadViolation,
     hoursRemaining,
     anomalies: report.flags,
     blocked: report.blocked,

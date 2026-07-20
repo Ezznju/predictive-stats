@@ -10,6 +10,7 @@ export type AnomalyKind =
   | 'wash_trading'
   | 'price_spike'
   | 'spread_anomaly'
+  | 'spread_violation'
   | 'volume_outlier'
   | 'stale_data'
   | 'thin_book';
