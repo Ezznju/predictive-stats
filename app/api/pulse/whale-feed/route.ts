@@ -169,7 +169,7 @@ export async function GET(request: Request) {
         existing.lastTimestamp = Math.min(existing.lastTimestamp, item.timestamp);
         existing.firstTimestamp = Math.max(existing.firstTimestamp, item.timestamp);
         existing.avgConviction = (existing.avgConviction + (item.convictionScore ?? 0)) / 2;
-        existing.isParking = existing.isParking || item.isParking ?? false;
+        existing.isParking = existing.isParking || (item.isParking ?? false);
         existing.trades.push(item);
       } else {
         aggMap.set(key, {
