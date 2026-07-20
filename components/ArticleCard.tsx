@@ -36,7 +36,15 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
       <Link href={`/${article.categorySlug}/${article.slug}`} className="group block">
         <div className="relative flex min-h-[430px] items-end overflow-hidden rounded-2xl mb-4 card-pop card-pop-hover sm:min-h-[460px] lg:aspect-[16/9] lg:min-h-0">
           <CardImage src={article.featuredImage} alt={article.title} sizes="(max-width: 768px) 100vw, 66vw" priority />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          {/* taller, stronger scrim so multi-line / hover-yellow titles stay legible on any image */}
+          <div
+            className="absolute inset-0"
+            aria-hidden="true"
+            style={{
+              background:
+                'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.62) 42%, rgba(0,0,0,0.18) 74%, rgba(0,0,0,0) 100%)',
+            }}
+          />
           <div className="relative z-10 w-full p-5 sm:p-6">
             {category && (
               <span
