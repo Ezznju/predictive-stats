@@ -189,6 +189,35 @@ export interface WhaleFeedItem {
     riskFlags: string[];
   };
   riskFlags?: string[];
+  /** True if buy price > 95% — position close, not directional signal */
+  isParking?: boolean;
+  /** Edge room in percentage points (1 - price) * 100 */
+  edgeRoom?: number;
+}
+
+/** Aggregated card: same wallet + same market = one card */
+export interface AggregatedWhaleCard {
+  walletAddress: string;
+  walletUsername: string;
+  walletProfileImage: string;
+  marketTitle: string;
+  marketSlug: string;
+  eventSlug: string;
+  conditionId: string;
+  side: 'BUY' | 'SELL';
+  tradeCount: number;
+  totalUsdcSize: number;
+  avgPrice: number;
+  minPrice: number;
+  maxPrice: number;
+  firstTimestamp: number;
+  lastTimestamp: number;
+  avgConviction: number;
+  isParking: boolean;
+  edgeRoom: number;
+  /** Whether this is a rapid-repeat pattern (3+ trades in 20 min) */
+  isRapidRepeat: boolean;
+  trades: WhaleFeedItem[];
 }
 
 export interface PulseStats {

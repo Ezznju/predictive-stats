@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, Wifi, WifiOff } from 'lucide-react';
-import { WhaleCard } from './WhaleCard';
+import { WhaleCard, AggregatedCard } from './WhaleCard';
 import { FilterBar } from './FilterBar';
-import type { WhaleFeedItem, PulseFilters } from '@/lib/pulse/types';
+import type { WhaleFeedItem, AggregatedWhaleCard, PulseFilters } from '@/lib/pulse/types';
 
 const DEFAULT_FILTERS: PulseFilters = {
   category: 'ALL',
@@ -15,18 +15,24 @@ const DEFAULT_FILTERS: PulseFilters = {
 
 export function WhaleFeed() {
   const [trades, setTrades] = useState<WhaleFeedItem[]>([]);
+  const [cards, setCards] = useState<AggregatedWhaleCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<PulseFilters>(DEFAULT_FILTERS);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [minSize, setMinSize] = useState(0);
+  const [view, setView] = useState<'aggregated' | 'raw'>('aggregated');
 
   const fetchFeed = useCallback(async () => {
     try {
-      const res = await fetch('/api/pulse/whale-feed?limit=50');
+      const params = new URLSearchParams({ limit: '50' });
+      if (minSize > 0) params.set('minSize', String(minSize));
+      const res = await fetch(`/api/pulse/whale-feed?${params}`);
       if (!res.ok) throw new Error('Failed to fetch');
       const json = await res.json();
       setTrades(json.data ?? []);
+      setCards(json.cards ?? []);
       setLastUpdated(new Date());
       setError(null);
     } catch (err) {
@@ -34,7 +40,7 @@ export function WhaleFeed() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [minSize]);
 
   useEffect(() => {
     fetchFeed();
@@ -47,7 +53,7 @@ export function WhaleFeed() {
     return () => clearInterval(interval);
   }, [autoRefresh, fetchFeed]);
 
-  // Apply filters
+  // Apply client-side filters to raw trades
   let filtered = trades;
 
   if (filters.search) {
@@ -64,18 +70,34 @@ export function WhaleFeed() {
     filtered = filtered.filter((t) => t.usdcSize >= filters.minSize);
   }
 
-  if (filters.sort === 'largest') {
+  // Sort raw trades
+  if (filters.sort === 'newest') {
+    filtered = [...filtered].sort((a, b) => b.timestamp - a.timestamp);
+  } else if (filters.sort === 'largest') {
     filtered = [...filtered].sort((a, b) => b.usdcSize - a.usdcSize);
+  } else if (filters.sort === 'highest-conviction') {
+    filtered = [...filtered].sort((a, b) => (b.convictionScore ?? 0) - (a.convictionScore ?? 0));
   }
 
-  if (filters.sort === 'highest-conviction') {
-    filtered = [...filtered].sort((a, b) => (b.convictionScore ?? 0) - (a.convictionScore ?? 0));
+  // Filter aggregated cards
+  let filteredCards = cards;
+  if (filters.search) {
+    const q = filters.search.toLowerCase();
+    filteredCards = filteredCards.filter(
+      (c) =>
+        c.marketTitle.toLowerCase().includes(q) ||
+        c.walletUsername.toLowerCase().includes(q) ||
+        c.walletAddress.toLowerCase().includes(q)
+    );
+  }
+  if (filters.minSize > 0) {
+    filteredCards = filteredCards.filter((c) => c.totalUsdcSize >= filters.minSize);
   }
 
   return (
     <div className="space-y-4">
       {/* Controls */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
@@ -98,15 +120,55 @@ export function WhaleFeed() {
             </span>
           )}
         </div>
-        <button
-          onClick={() => {
-            setLoading(true);
-            fetchFeed();
-          }}
-          className="p-1.5 bg-white border-2 border-black rounded-lg shadow-pop-sm hover:-translate-y-0.5 transition-transform"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 text-ink ${loading ? 'animate-spin' : ''}`} />
-        </button>
+
+        <div className="flex items-center gap-2">
+          {/* View toggle */}
+          <div className="flex border-2 border-black rounded-lg overflow-hidden shadow-pop-sm">
+            <button
+              onClick={() => setView('aggregated')}
+              className={`px-3 py-1 text-[10px] font-bold ${
+                view === 'aggregated' ? 'bg-black text-white' : 'bg-white text-ink'
+              }`}
+            >
+              AGGREGATED
+            </button>
+            <button
+              onClick={() => setView('raw')}
+              className={`px-3 py-1 text-[10px] font-bold ${
+                view === 'raw' ? 'bg-black text-white' : 'bg-white text-ink'
+              }`}
+            >
+              RAW TAPE
+            </button>
+          </div>
+
+          {/* Size filter */}
+          <div className="flex items-center gap-1.5 bg-white border-2 border-black rounded-lg px-2 py-1 shadow-pop-sm">
+            <span className="text-[10px] text-ink-faint font-bold">MIN</span>
+            <select
+              value={minSize}
+              onChange={(e) => setMinSize(Number(e.target.value))}
+              className="text-[10px] font-bold bg-transparent border-none outline-none cursor-pointer"
+            >
+              <option value={0}>All</option>
+              <option value={1000}>$1K</option>
+              <option value={5000}>$5K</option>
+              <option value={10000}>$10K</option>
+              <option value={25000}>$25K</option>
+              <option value={50000}>$50K</option>
+            </select>
+          </div>
+
+          <button
+            onClick={() => {
+              setLoading(true);
+              fetchFeed();
+            }}
+            className="p-1.5 bg-white border-2 border-black rounded-lg shadow-pop-sm hover:-translate-y-0.5 transition-transform"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-ink ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
 
       <FilterBar filters={filters} onChange={setFilters} />
@@ -138,16 +200,34 @@ export function WhaleFeed() {
             </div>
           ))}
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-sm text-ink-faint">No whale trades found matching your filters.</p>
-        </div>
+      ) : view === 'aggregated' ? (
+        <>
+          {filteredCards.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-ink-faint">No aggregated whale activity found.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {filteredCards.map((card, i) => (
+                <AggregatedCard key={`${card.walletAddress}-${card.conditionId}-${i}`} card={card} />
+              ))}
+            </div>
+          )}
+        </>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {filtered.map((trade, i) => (
-            <WhaleCard key={`${trade.txHash}-${trade.timestamp}-${i}`} trade={trade} />
-          ))}
-        </div>
+        <>
+          {filtered.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-sm text-ink-faint">No whale trades found matching your filters.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {filtered.map((trade, i) => (
+                <WhaleCard key={`${trade.txHash}-${trade.timestamp}-${i}`} trade={trade} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
