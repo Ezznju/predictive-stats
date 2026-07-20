@@ -12,6 +12,7 @@ import {
   getCategories, getAuthors, getSiteSettings,
 } from '@/lib/db';
 import { buildHomepageContent } from '@/lib/homepage-content';
+import { DecisionLabStrip } from '@/components/golden/DecisionLabStrip';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { alternates: { canonical: '/' } };
@@ -304,40 +305,6 @@ export default async function Home() {
         </div>
       </section>
     </div>
-  );
-}
-
-function DecisionLabStrip() {
-  return (
-    <section className="relative bg-black text-white overflow-hidden">
-      {/* your shapes, kept as faint texture so the band still feels on-brand */}
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.16]" aria-hidden="true">
-        <ZigzagLine width={2000} height={40} color="#D9F24B" className="absolute -top-1 left-0" />
-        <CornerDotSquare size={70} color="#29C5F6" dotColor="#FF00B8" className="absolute -left-3 bottom-2 rotate-6" />
-        <ConcentricArches size={150} colors={['#FF00B8', '#FF6B00', '#FF00B8']} className="absolute -right-8 -bottom-10" />
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-7 relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
-        <div className="flex items-start gap-4">
-          <span className="inline-block w-4 h-7 rounded-md bg-neon-lime border-2 border-white shrink-0 mt-1" aria-hidden="true" />
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neon-cyan">The Decision Lab</span>
-            <h2 className="font-display font-bold text-2xl md:text-3xl text-white leading-tight mt-1">
-              Three free tools. Zero paywall. One honest number.
-            </h2>
-            <p className="text-white/70 text-sm mt-1.5 max-w-xl leading-relaxed">
-              LP rewards, cross-venue arbitrage, and whale intelligence — professor-grade and free,
-              each showing the <span className="text-white font-medium">realistic</span> figure instead of the headline fantasy.
-            </p>
-          </div>
-        </div>
-
-        <Link href="/tools"
-          className="inline-flex items-center gap-2 self-start md:self-auto bg-neon-lime text-black font-display font-bold text-sm px-5 py-3 rounded-xl border-2 border-white shadow-[4px_4px_0_0_#FF00B8] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#FF00B8] active:translate-x-0 active:translate-y-0 active:shadow-[4px_4px_0_0_#FF00B8] focus-visible:outline-white transition-all whitespace-nowrap">
-          Open the tools <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
-    </section>
   );
 }
 

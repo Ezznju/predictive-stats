@@ -259,3 +259,20 @@ html,
 body {
   overflow-x: clip;
 }
+
+/* ── Decision Lab live band ── */
+@keyframes gpe-cellflash { from { opacity: 1 } to { opacity: 0 } }
+.cell-ring {
+  position: absolute; inset: 0; border-radius: 0.75rem; pointer-events: none;
+  border: 1px solid var(--tc, #fff);
+  box-shadow: 0 0 0 1px var(--tc, #fff), 0 0 18px -4px var(--tc, #fff);
+  animation: gpe-cellflash 0.7s ease forwards;
+}
+@keyframes gpe-liveblink {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(63, 214, 143, 0.6) }
+  50%      { box-shadow: 0 0 0 6px rgba(63, 214, 143, 0) }
+}
+.live-dot {
+  width: 8px; height: 8px; border-radius: 9999px; background: #3fd68f;
+  animation: gpe-liveblink 1.5s ease-in-out infinite;
+}
