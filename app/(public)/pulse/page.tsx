@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { PulseHeader } from '@/components/pulse/PulseHeader';
 import { StatsBar } from '@/components/pulse/StatsBar';
 import { WhaleFeed } from '@/components/pulse/WhaleFeed';
@@ -79,6 +80,14 @@ export default function PulsePage() {
           />
 
           <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Link
+                href="/pulse/leaderboard"
+                className="text-xs font-bold px-3 py-1.5 rounded-full border-2 border-black bg-white shadow-pop-sm hover:-translate-y-0.5 transition-all"
+              >
+                Skill Leaderboard →
+              </Link>
+            </div>
             <StatsBar stats={null} loading={false} />
             <WhaleFeed />
           </div>
