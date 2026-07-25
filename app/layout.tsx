@@ -18,8 +18,8 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   metadataBase: new URL('https://predictionsmarketfans.com'),
   title: {
-    default: 'Predictions Market Fans — Sharp analysis for uncertain markets',
-    template: '%s | Predictions Market Fans',
+    default: 'PMF — Sharp analysis for uncertain markets',
+    template: '%s | PMF',
   },
   description: 'Sharp analysis for prediction markets. Covering Polymarket, Kalshi, Metaculus, and more.',
   icons: {
@@ -36,12 +36,12 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     siteName: 'Predictions Market Fans',
-    title: 'Predictions Market Fans — Sharp analysis for uncertain markets',
+    title: 'PMF — Sharp analysis for uncertain markets',
     description: 'Sharp analysis for prediction markets. Covering Polymarket, Kalshi, Metaculus, and more.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Predictions Market Fans — Sharp analysis for uncertain markets',
+    title: 'PMF — Sharp analysis for uncertain markets',
     description: 'Sharp analysis for prediction markets. Covering Polymarket, Kalshi, Metaculus, and more.',
   },
   robots: {
