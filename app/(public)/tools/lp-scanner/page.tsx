@@ -1,1308 +1,765 @@
 'use client';
 
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import {
-  ArrowUpDown,
-  ChevronDown,
-  ChevronRight,
-  ExternalLink,
-  Filter,
-  Loader2,
-  RefreshCw,
-  TrendingUp,
-  Shield,
-  AlertTriangle,
-  DollarSign,
-  BarChart3,
-  Crosshair,
-  Eye,
-  LogOut,
-  Info,
-} from 'lucide-react';
-import { ToolRelatedContent } from '@/components/ToolRelatedContent';
+  GAMES,
+  EsportsMatch,
+  FeedEvent,
+  createInitialMatches,
+  tick,
+  derive,
+  backfill,
+  winProbR,
+  winProbG,
+  isMatchPoint,
+} from '@/lib/esports/match-engine';
 
-/* ── Types ─────────────────────────────────────────────────────────── */
+/* ── Helpers ────────────────────────────────────────────────────────── */
 
-interface AnomalyFlag {
-  kind: string;
-  severity: 'info' | 'warn' | 'critical';
-  message: string;
-  value: number;
-}
+function clamp(v: number, a: number, b: number) { return Math.min(b, Math.max(a, v)); }
+function fmtT(s: number) { return Math.floor(Math.max(0, s) / 60) + ':' + String(Math.max(0, s) % 60).padStart(2, '0'); }
+function fmtTime() { return new Date().toUTCString().slice(17, 25); }
 
-interface ScannerMarket {
-  conditionId: string;
-  slug: string;
-  eventSlug: string;
-  question: string;
-  image: string;
-  rewardPerDay: number;
-  minShares: number;
-  maxSpread: number;
-  competition: number;
-  currentSpread: number;
-  yesPrice: number;
-  noPrice: number;
-  yesTokenId: string;
-  noTokenId: string;
-  entryCost: number;
-  rewardScore: number;
-  opportunityScore: number;
-  aprPct: number;
-  headlineAprPct: number;
-  realisticAprPct: number;
-  yourShare: number;
-  breaksEven: boolean;
-  breakEvenDays: number | null;
-  spreadViolation: boolean;
-  hoursRemaining: number;
-  anomalies: AnomalyFlag[];
-  blocked: boolean;
-  volume24h: number;
-  endDate: string;
-  lpScoring?: {
-    grossRewardApr: number;
-    spreadApr: number;
-    adverseSelectionApr: number;
-    inventoryCostApr: number;
-    dilutionApr: number;
-    netApr: number;
-    riskAdjustedScore: number;
-    score100: number;
-    recommendedAllocationPct: number;
-    riskFlags: string[];
-    volumeToLiquidity: number;
-    professorNotes: string[];
-  } | null;
-}
+/* ── Phase Cell ─────────────────────────────────────────────────────── */
 
-interface OrderBookLevel {
-  price: string;
-  size: string;
-}
-
-interface OrderBook {
-  bids: OrderBookLevel[];
-  asks: OrderBookLevel[];
-}
-
-type SortKey =
-  | 'rewardScore'
-  | 'opportunityScore'
-  | 'aprPct'
-  | 'rewardPerDay'
-  | 'minShares'
-  | 'competition'
-  | 'currentSpread'
-  | 'entryCost'
-  | 'volume24h';
-
-/* ── Helpers ───────────────────────────────────────────────────────── */
-
-function fmt$(n: number, decimals = 2): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}k`;
-  return `$${n.toFixed(decimals)}`;
-}
-
-function fmtNum(n: number, decimals = 0): string {
-  return n.toLocaleString('en-US', { maximumFractionDigits: decimals });
-}
-
-function competitionLabel(c: number): { text: string; color: string } {
-  if (c <= 10) return { text: 'Very Low', color: 'bg-neon-green text-black' };
-  if (c <= 50) return { text: 'Low', color: 'bg-neon-lime text-black' };
-  if (c <= 150) return { text: 'Medium', color: 'bg-brand-yellow text-black' };
-  if (c <= 500) return { text: 'High', color: 'bg-brand-orange text-black' };
-  return { text: 'Very High', color: 'bg-brand-pink text-white' };
-}
-
-function spreadLabel(
-  current: number,
-  maxSpread: number
-): { text: string; color: string } {
-  const spreadCents = current * 100;
-  if (spreadCents > maxSpread)
-    return { text: 'VIOLATION', color: 'text-brand-pink font-bold' };
-  if (spreadCents >= maxSpread * 0.8)
-    return { text: 'Wide', color: 'text-brand-green font-bold' };
-  if (spreadCents >= maxSpread * 0.4)
-    return { text: 'Medium', color: 'text-brand-amber font-bold' };
-  return { text: 'Tight', color: 'text-brand-pink font-bold' };
-}
-
-function gradeBadge(score: number): { grade: string; color: string } {
-  if (score >= 75) return { grade: 'A', color: 'bg-neon-green text-black border-black' };
-  if (score >= 55) return { grade: 'B', color: 'bg-neon-lime text-black border-black' };
-  if (score >= 35) return { grade: 'C', color: 'bg-brand-yellow text-black border-black' };
-  return { grade: 'D', color: 'bg-gray-300 text-black border-black' };
-}
-
-function fmtApr(n: number): string {
-  if (!Number.isFinite(n)) return '—';
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k%`;
-  return `${n.toFixed(1)}%`;
-}
-
-/* ── Expanded Row: Order Book ──────────────────────────────────────── */
-
-function OrderBookPanel({ market }: { market: ScannerMarket }) {
-  const [yesBook, setYesBook] = useState<OrderBook | null>(null);
-  const [noBook, setNoBook] = useState<OrderBook | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    Promise.all([
-      fetch(`/api/lp-scanner?book=${market.yesTokenId}`).then((r) =>
-        r.ok ? r.json() : null
-      ),
-      fetch(`/api/lp-scanner?book=${market.noTokenId}`).then((r) =>
-        r.ok ? r.json() : null
-      ),
-    ]).then(([yes, no]) => {
-      if (cancelled) return;
-      setYesBook(yes);
-      setNoBook(no);
-      setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [market.yesTokenId, market.noTokenId]);
-
-  if (loading) {
+function phaseCell(m: EsportsMatch) {
+  const g = GAMES[m.game];
+  if (!g) return <span className="s2-ph s2-ph-pre">—</span>;
+  if (m.state === 'PRE') return <span className="s2-ph s2-ph-pre">T-{fmtT(m.pre ?? 0)}</span>;
+  if (m.state === 'DONE') return <span className="s2-ph s2-ph-done">SETTLED</span>;
+  if (m.state === 'HT') return <span className="s2-ph s2-ph-ht">◼ HALFTIME</span>;
+  if (g.type === 'rounds') {
     return (
-      <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-5 h-5 animate-spin text-ink-faint" />
-        <span className="ml-2 text-sm text-ink-faint">Loading order book…</span>
-      </div>
+      <span className="s2-ph s2-ph-live">
+        <i className="s2-live-dot" />
+        R{m.round} · {fmtT(m.clock ?? 0)} · {(m.half ?? 0) === 1 ? '1H' : '2H'}
+        {isMatchPoint(m) && <b className="s2-mp"> MP</b>}
+      </span>
     );
   }
-
-  const midpoint = (market.yesPrice + (1 - market.noPrice)) / 2;
-  const tickSize = 0.01;
-  const suggestedBid = yesBook?.bids?.[0]
-    ? (parseFloat(yesBook.bids[0].price) - tickSize).toFixed(2)
-    : (midpoint - tickSize).toFixed(2);
-  const withinSpread =
-    Math.abs(parseFloat(suggestedBid) - midpoint) * 100 <= market.maxSpread;
-
   return (
-    <div className="bg-surface/30 rounded-xl p-4 sm:p-5">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* YES order book */}
-        <div>
-          <h4 className="font-display font-bold text-sm mb-2 flex items-center gap-1.5">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-neon-green" />
-            YES Order Book
-          </h4>
-          <MiniBook bids={yesBook?.bids} asks={yesBook?.asks} minShares={market.minShares} />
-        </div>
+    <span className="s2-ph s2-ph-live">
+      <i className="s2-live-dot" />
+      G{m.gNum} · {m.gMin}′
+    </span>
+  );
+}
 
-        {/* NO order book */}
-        <div>
-          <h4 className="font-display font-bold text-sm mb-2 flex items-center gap-1.5">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-brand-pink" />
-            NO Order Book
-          </h4>
-          <MiniBook bids={noBook?.bids} asks={noBook?.asks} minShares={market.minShares} />
-        </div>
+function scoreCell(m: EsportsMatch) {
+  const g = GAMES[m.game];
+  if (!g) return <span className="dim">—</span>;
+  if (m.state === 'PRE') return <span className="dim">—</span>;
+  if (g.type === 'rounds') {
+    return <>{m.sA}–{m.sB}{m.state === 'DONE' && <span className="dim"> F</span>}</>;
+  }
+  return <>{m.ga}–{m.gb}{((m.gNum ?? 1) > 1 || m.state === 'DONE') ? '' : <span className="dim"> G1</span>}</>;
+}
 
-        {/* Entry guidance */}
-        <div className="space-y-3">
-          <h4 className="font-display font-bold text-sm flex items-center gap-1.5">
-            <Crosshair className="w-4 h-4" />
-            Entry Guidance
-          </h4>
+function winTag(m: EsportsMatch) {
+  if (m.state === 'PRE') return <span className="s2-wtag s2-w-pre">T-MINUS</span>;
+  if (m.state === 'DONE') return <span className="s2-wtag s2-w-done">CLOSED</span>;
+  if (m.state === 'HT') return <span className="s2-wtag s2-w-arm">ARMING</span>;
+  if (isMatchPoint(m)) return <span className="s2-wtag s2-w-clutch">CLUTCH</span>;
+  if (m.secondHalf && m.decay > 0.45) return <span className="s2-wtag s2-w-open">WINDOW OPEN</span>;
+  if (m.secondHalf) return <span className="s2-wtag s2-w-arm">OPENING</span>;
+  return <span className="s2-wtag s2-w-early">EARLY</span>;
+}
 
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-ink-faint">Midpoint</span>
-              <span className="font-mono font-bold">{midpoint.toFixed(3)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-ink-faint">Best YES bid</span>
-              <span className="font-mono font-bold">
-                {yesBook?.bids?.[0]?.price ?? '—'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-ink-faint">Suggested entry</span>
-              <span className="font-mono font-bold text-neon-blue">
-                {suggestedBid} (1 tick below)
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-ink-faint">Within Max Spread?</span>
-              {withinSpread ? (
-                <span className="text-xs font-bold text-black bg-neon-green rounded-lg px-2 py-0.5 border border-black">
-                  ✓ YES
-                </span>
-              ) : (
-                <span className="text-xs font-bold text-white bg-brand-pink rounded-lg px-2 py-0.5 border border-black">
-                  ✗ NO
-                </span>
-              )}
-            </div>
-            <div className="flex justify-between">
-              <span className="text-ink-faint">Min order cost</span>
-              <span className="font-mono font-bold">
-                {fmt$(market.minShares * parseFloat(suggestedBid))}
-              </span>
-            </div>
-          </div>
-
-          <a
-            href={`https://polymarket.com/event/${market.eventSlug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-black bg-neon-cyan border-2 border-black rounded-lg px-3 py-1.5 shadow-pop-sm hover:-translate-y-0.5 transition-transform mt-2"
-          >
-            Open on Polymarket <ExternalLink className="w-3 h-3" />
-          </a>
-        </div>
-      </div>
+function edgeBar(m: EsportsMatch) {
+  const grad = m.edge >= 64
+    ? 'linear-gradient(90deg,var(--s2-cyn),var(--s2-yel))'
+    : m.edge >= 45
+    ? 'linear-gradient(90deg,var(--s2-cyn),var(--s2-grn))'
+    : 'linear-gradient(90deg,var(--s2-dim),var(--s2-mut))';
+  return (
+    <div>
+      <div className="s2-edge"><i style={{ width: m.edge + '%', background: grad }} /></div>
+      <span className={`s2-grade s2-g-${m.grade}`}>{m.grade} · {m.edge}</span>
     </div>
   );
 }
 
-function MiniBook({
-  bids,
-  asks,
-  minShares,
-}: {
-  bids?: OrderBookLevel[];
-  asks?: OrderBookLevel[];
-  minShares: number;
-}) {
-  const topBids = (bids ?? []).slice(0, 5);
-  const topAsks = (asks ?? []).slice(0, 5);
-
-  return (
-    <div className="text-xs font-mono">
-      {/* Asks (reversed so lowest ask is at bottom) */}
-      <div className="space-y-px mb-1">
-        {topAsks
-          .slice()
-          .reverse()
-          .map((a, i) => {
-            const size = parseFloat(a.size);
-            const qualifying = size >= minShares;
-            return (
-              <div
-                key={`a-${i}`}
-                className={`flex justify-between px-2 py-0.5 rounded ${
-                  qualifying
-                    ? 'bg-brand-pink/15 text-brand-pink'
-                    : 'bg-brand-pink/5 text-ink-faint'
-                }`}
-              >
-                <span>{parseFloat(a.price).toFixed(2)}</span>
-                <span>
-                  {fmtNum(size)}{' '}
-                  {qualifying && (
-                    <span className="text-[10px] opacity-70">★</span>
-                  )}
-                </span>
-              </div>
-            );
-          })}
-      </div>
-
-      <div className="border-t border-dashed border-ink-faint/30 my-1" />
-
-      {/* Bids */}
-      <div className="space-y-px">
-        {topBids.map((b, i) => {
-          const size = parseFloat(b.size);
-          const qualifying = size >= minShares;
-          return (
-            <div
-              key={`b-${i}`}
-              className={`flex justify-between px-2 py-0.5 rounded ${
-                qualifying
-                  ? 'bg-neon-green/15 text-neon-green'
-                  : 'bg-neon-green/5 text-ink-faint'
-              }`}
-            >
-              <span>{parseFloat(b.price).toFixed(2)}</span>
-              <span>
-                {fmtNum(size)}{' '}
-                {qualifying && (
-                  <span className="text-[10px] opacity-70">★</span>
-                )}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      <p className="text-[10px] text-ink-faint mt-1">
-        ★ = qualifying size (≥ {minShares} shares)
-      </p>
-    </div>
-  );
-}
-
-/* ── LP Scoring Panel (Golden Professor Engine) ──────────────────── */
-
-function LPScoringPanel({
-  scoring,
-  market,
-}: {
-  scoring: NonNullable<ScannerMarket['lpScoring']>;
-  market: ScannerMarket;
-}) {
-  const grade = scoring.score100 >= 75 ? 'A' : scoring.score100 >= 55 ? 'B' : scoring.score100 >= 35 ? 'C' : 'D';
-  const gradeColor = scoring.score100 >= 75 ? 'bg-neon-green text-black' : scoring.score100 >= 55 ? 'bg-neon-lime text-black' : scoring.score100 >= 35 ? 'bg-brand-yellow text-black' : 'bg-gray-300 text-black';
-
-  return (
-    <div className="mt-3 bg-surface/30 rounded-xl p-4 sm:p-5 border border-black/10">
-      <div className="flex items-center gap-2 mb-3">
-        <Shield className="w-4 h-4 text-neon-green" />
-        <span className="font-display font-bold text-sm">Risk-Adjusted LP Analysis</span>
-        <span
-          className={`text-[10px] font-bold rounded px-1.5 py-0.5 border border-black ${gradeColor}`}
-        >
-          Grade {grade} · Score {scoring.score100}
-        </span>
-      </div>
-
-      {/* Yield Waterfall */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-3">
-        <div className="rounded-lg bg-neon-green/10 border border-neon-green/30 p-2">
-          <div className="text-ink-faint mb-0.5">Gross Reward APR</div>
-          <div className="font-mono font-bold text-neon-green">
-            {(scoring.grossRewardApr * 100).toFixed(1)}%
-          </div>
-        </div>
-        <div className="rounded-lg bg-neon-lime/10 border border-neon-lime/30 p-2">
-          <div className="text-ink-faint mb-0.5">Spread APR</div>
-          <div className="font-mono font-bold text-neon-lime">
-            {(scoring.spreadApr * 100).toFixed(1)}%
-          </div>
-        </div>
-        <div className="rounded-lg bg-brand-orange/10 border border-brand-orange/30 p-2">
-          <div className="text-ink-faint mb-0.5">Risk-Adjusted</div>
-          <div className="font-mono font-bold text-brand-orange">
-            {(scoring.riskAdjustedScore * 100).toFixed(1)}%
-          </div>
-        </div>
-        <div className="rounded-lg bg-neon-cyan/10 border border-neon-cyan/30 p-2">
-          <div className="text-ink-faint mb-0.5">Net After Costs</div>
-          <div className="font-mono font-bold text-neon-cyan">
-            {(scoring.netApr * 100).toFixed(1)}%
-          </div>
-        </div>
-      </div>
-
-      {/* Cost Breakdown */}
-      <div className="flex gap-4 text-[11px] text-ink-faint mb-3">
-        <span>Adverse selection: <strong className="text-brand-pink">{(scoring.adverseSelectionApr * 100).toFixed(2)}%</strong></span>
-        <span>Inventory cost: <strong className="text-brand-pink">{(scoring.inventoryCostApr * 100).toFixed(2)}%</strong></span>
-        <span>Dilution: <strong className="text-brand-pink">{(scoring.dilutionApr * 100).toFixed(2)}%</strong></span>
-      </div>
-
-      {/* Allocation Suggestion */}
-      {scoring.recommendedAllocationPct > 0 && (
-        <div className="rounded-lg bg-neon-cyan/5 border border-neon-cyan/20 p-2.5 mb-2">
-          <div className="flex items-center gap-2 text-[11px] mb-1">
-            <span className="font-display font-bold text-ink">Allocation:</span>
-            <span className="font-mono font-bold text-neon-cyan">
-              {scoring.recommendedAllocationPct.toFixed(1)}% of bankroll
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Risk Flags */}
-      {scoring.riskFlags.length > 0 && (
-        <div className="space-y-1">
-          {scoring.riskFlags.map((flag, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-2 text-[11px] bg-brand-orange/5 border border-brand-orange/20 rounded-lg px-2.5 py-1"
-            >
-              <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0 text-brand-orange" />
-              <span className="text-ink-muted">{flag}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Professor Notes */}
-      {scoring.professorNotes && scoring.professorNotes.length > 0 && (
-        <div className="mt-2 text-[10px] text-ink-faint space-y-0.5">
-          {scoring.professorNotes.map((note, i) => (
-            <p key={i}>• {note}</p>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ── Sort Header Button ────────────────────────────────────────────── */
-
-function SortButton({
-  label,
-  sortKey,
-  currentSort,
-  currentDir,
-  onClick,
-}: {
-  label: string;
-  sortKey: SortKey;
-  currentSort: SortKey;
-  currentDir: 'asc' | 'desc';
-  onClick: (key: SortKey) => void;
-}) {
-  const active = currentSort === sortKey;
-  return (
-    <button
-      onClick={() => onClick(sortKey)}
-      className={`flex items-center gap-1 text-left font-display text-xs ${
-        active ? 'text-white' : 'text-white/70 hover:text-white'
-      }`}
-    >
-      {label}
-      <ArrowUpDown
-        className={`w-3 h-3 ${active ? 'opacity-100' : 'opacity-40'} ${
-          active && currentDir === 'asc' ? 'rotate-180' : ''
-        }`}
-      />
-    </button>
-  );
-}
-
-/* ── Main Scanner Page ─────────────────────────────────────────────── */
+/* ── Main Page ──────────────────────────────────────────────────────── */
 
 export default function LPScannerPage() {
-  const [markets, setMarkets] = useState<ScannerMarket[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [updatedAt, setUpdatedAt] = useState<string>('');
+  const [matches, setMatches] = useState<EsportsMatch[]>(() => {
+    const m = createInitialMatches();
+    m.forEach(backfill);
+    m.forEach(derive);
+    return m;
+  });
+  const [feed, setFeed] = useState<FeedEvent[]>([]);
+  const [paused, setPaused] = useState(false);
+  const [sortKey, setSortKey] = useState<'edge' | 'pool' | 'mNow' | 'spread' | 'est1k'>('edge');
+  const [sortDir, setSortDir] = useState(-1);
+  const [selGame, setSelGame] = useState('ALL');
+  const [q, setQ] = useState('');
+  const [winOnly, setWinOnly] = useState(false);
+  const [drawerId, setDrawerId] = useState<number | null>(null);
+  const [posCap, setPosCap] = useState(1000);
+  const [clock, setClock] = useState('--:--');
+  const [tickerOffset, setTickerOffset] = useState(0);
+  const feedRef = useRef<FeedEvent[]>([]);
 
-  // Sorting
-  const [sortKey, setSortKey] = useState<SortKey>('rewardScore');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  // Velocity calculator state
+  const [vCap, setVCap] = useState(1000);
+  const [vN, setVN] = useState(6);
+  const [vPool, setVPool] = useState(90);
+  const [vPhase, setVPhase] = useState(2.8);
 
-  // Filters
-  const [maxMinShares, setMaxMinShares] = useState(250);
-  const [minReward, setMinReward] = useState(0);
-  const [showFilters, setShowFilters] = useState(false);
-  const [hideFlagged, setHideFlagged] = useState(true);
-
-  // Expansion
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-
-  const fetchMarkets = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/lp-scanner');
-      if (!res.ok) throw new Error('API error');
-      const data = await res.json();
-      setMarkets(data.markets ?? []);
-      setUpdatedAt(data.updatedAt ?? '');
-    } catch {
-      setError('Failed to load markets. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+  const addFeed = useCallback((m: EsportsMatch, txt: string) => {
+    const evt: FeedEvent = {
+      t: fmtTime(),
+      tag: m.a + ' v ' + m.b,
+      mid: m.id,
+      txt,
+    };
+    feedRef.current = [evt, ...feedRef.current].slice(0, 20);
   }, []);
 
+  // Clock
   useEffect(() => {
-    fetchMarkets();
-  }, [fetchMarkets]);
+    const iv = setInterval(() => setClock(fmtTime()), 1000);
+    return () => clearInterval(iv);
+  }, []);
 
-  // Sort
-  const handleSort = (key: SortKey) => {
-    if (key === sortKey) {
-      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
-    } else {
-      setSortKey(key);
-      setSortDir(key === 'minShares' || key === 'competition' ? 'asc' : 'desc');
-    }
-  };
+  // Simulation tick
+  useEffect(() => {
+    if (paused) return;
+    const iv = setInterval(() => {
+      setMatches((prev) => {
+        const next = prev.map((m) => ({ ...m, hist: [...m.hist] }));
+        tick(next, addFeed);
+        return next;
+      });
+      setFeed([...feedRef.current]);
+    }, 2000);
+    return () => clearInterval(iv);
+  }, [paused, addFeed]);
 
-  // Filter & sort
-  const filtered = useMemo(() => {
-    let list = markets.filter(
-      (m) => m.minShares <= maxMinShares && m.rewardPerDay >= minReward && (!hideFlagged || !m.blocked)
-    );
-    list.sort((a, b) => {
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
-      return sortDir === 'desc' ? bVal - aVal : aVal - bVal;
-    });
-    return list;
-  }, [markets, maxMinShares, minReward, hideFlagged, sortKey, sortDir]);
-
-  const toggleExpand = (id: string) => {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+  // Advance 10 min
+  const advance = useCallback(() => {
+    setMatches((prev) => {
+      const next = prev.map((m) => ({ ...m, hist: [...m.hist] }));
+      for (let i = 0; i < 5; i++) tick(next, addFeed);
       return next;
     });
+    setFeed([...feedRef.current]);
+  }, [addFeed]);
+
+  // Sort
+  const filtered = useMemo(() => {
+    return matches
+      .filter(
+        (m) =>
+          (selGame === 'ALL' || m.game === selGame) &&
+          (!q || (m.a + ' ' + m.b + ' ' + m.league).toLowerCase().includes(q.toLowerCase())) &&
+          (!winOnly || m.winOpen)
+      )
+      .sort((a, b) => ((a as any)[sortKey] - (b as any)[sortKey]) * sortDir);
+  }, [matches, selGame, q, winOnly, sortKey, sortDir]);
+
+  const handleSort = (k: typeof sortKey) => {
+    if (sortKey === k) setSortDir(-sortDir);
+    else { setSortKey(k); setSortDir(-1); }
   };
 
-  // Stats
-  const totalRewardMarkets = markets.length;
-  const totalWithRewards = markets.filter((m) => m.rewardPerDay > 0).length;
-  const flaggedCount = markets.filter((m) => m.blocked).length;
-  const spreadViolationCount = markets.filter((m) => m.spreadViolation).length;
-  const breaksEvenCount = markets.filter((m) => m.breaksEven).length;
-  const avgRealisticApr =
-    markets.length > 0
-      ? markets.reduce((s, m) => s + m.realisticAprPct, 0) / markets.length
-      : 0;
-  const totalDailyRewards = markets.reduce((s, m) => s + m.rewardPerDay, 0);
+  const featured = matches[0];
+  const drawer = drawerId !== null ? matches.find((m) => m.id === drawerId) : null;
+  const sel = drawer;
+
+  // Velocity calc
+  const vBase = vCap / (20 * 300 + vCap);
+  const vShare = Math.min(0.85, vBase * vPhase);
+  const vPerMatch = vPool * vShare;
+  const vDaily = vPerMatch * vN;
+  const vStaticD = vPool * vBase;
 
   return (
-    <div className="relative">
-      {/* ── Hero Header ─────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-black/5 py-14 sm:py-20">
-        {/* Decorative shapes */}
-        <div className="absolute top-6 left-8 w-16 h-16 rounded-xl bg-neon-lime border-2 border-black rotate-12 opacity-60 hidden md:block" />
-        <div className="absolute -top-8 right-[20%] w-24 h-24 rounded-full bg-neon-blue/40 hidden md:block" />
-        <div className="absolute bottom-4 right-10 w-14 h-14 rounded-full bg-neon-magenta/50 hidden md:block" />
-        <div className="absolute top-1/2 left-[35%] -translate-y-1/2 w-10 h-10 rounded-lg bg-neon-cyan/40 -rotate-6 hidden lg:block" />
+    <div className="s2-root">
+      {/* Ambient layers */}
+      <div className="s2-bg-stripes" />
+      <div className="s2-bg-grid" />
+      <div className="s2-bg-glow s2-g1" />
+      <div className="s2-bg-glow s2-g2" />
+      <div className="s2-sweep" />
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
-          {/* Breadcrumbs */}
-          <nav className="flex items-center gap-2 text-xs text-ink-muted mb-4">
-            <Link href="/" className="hover:text-ink transition-colors">Home</Link>
-            <ChevronRight className="w-3 h-3" />
-            <Link href="/tools" className="hover:text-ink transition-colors">Tools</Link>
-            <ChevronRight className="w-3 h-3" />
-            <span className="text-ink-secondary">LP Reward Scanner</span>
-          </nav>
+      {/* Masthead */}
+      <header className="s2-masthead">
+        <div className="s2-brand">
+          ◢ SIDE·<b>TWO</b> <em>second-half esports LP desk</em>
+        </div>
+        <span className="s2-livebug"><i />IN-PLAY</span>
+        <div className="s2-mast-right">
+          <button
+            className="s2-feed-badge"
+            onClick={() => setPaused(!paused)}
+          >
+            <i className={paused ? '' : 's2-grn-dot'} />
+            <span>{paused ? 'SIM · PAUSED' : 'SIM · RUNNING'}</span>
+          </button>
+          <span className="s2-mono">{clock} UTC</span>
+          <button className="s2-btn" onClick={advance}>⏩ +10 min</button>
+        </div>
+      </header>
 
-          <div className="flex items-center gap-2 mb-3">
-            <span className="inline-block px-3 py-1 text-xs font-bold text-black bg-neon-lime border-2 border-black rounded-full shadow-pop-sm">
-              FREE TOOL
+      {/* Ticker */}
+      <div className="s2-ticker">
+        <div className="s2-ticker-track">
+          {[...matches, ...matches].map((m, i) => (
+            <span className="s2-tk" key={i}>
+              <b>{m.a} v {m.b}</b>
+              <span className="s2-mono">{(m.mid * 100).toFixed(1)}¢</span>
+              <span className={m.state === 'DONE' ? 'dim' : m.mid > (m.prevMid ?? m.mid) ? 's2-tup' : 's2-tdn'}>
+                {m.state === 'DONE' ? '■' : m.mid > (m.prevMid ?? m.mid) ? '▲' : '▼'}
+              </span>
             </span>
-            <span className="inline-block px-3 py-1 text-xs font-bold text-black bg-neon-cyan border-2 border-black rounded-full shadow-pop-sm">
-              LIVE DATA
-            </span>
-          </div>
-          <h1 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl text-ink mb-3">
-            Polymarket LP Reward Scanner
-          </h1>
-          <p className="text-lg sm:text-xl text-ink-secondary leading-relaxed max-w-3xl">
-            Find the best liquidity-provider reward farming opportunities on
-            Polymarket. Live data, sorted by profitability — updated every 5
-            minutes.
-          </p>
+          ))}
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        {/* ── What is this / How it helps ───────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {[
-            {
-              icon: Crosshair,
-              color: 'bg-neon-lime',
-              title: '1. Find qualifying markets',
-              body: 'Polymarket pays daily USDC to LPs within the spread. We surface markets where you can qualify — and flag the ones where you actually break even.',
-            },
-            {
-              icon: Shield,
-              color: 'bg-neon-cyan',
-              title: '2. Honest APR, not headline',
-              body: 'We model your real share of the reward pool based on competition. Headline says 9,000%? We show you the realistic number after dilution and time remaining.',
-            },
-            {
-              icon: DollarSign,
-              color: 'bg-brand-yellow',
-              title: '3. Know the risks',
-              body: 'One adverse fill on a volatile market can eat months of LP rewards. We flag spread violations, inventory risk, and markets where you won\'t recoup before resolution.',
-            },
-          ].map((c) => (
-            <div
-              key={c.title}
-              className="bg-white rounded-2xl border-2 border-black shadow-pop p-5 transition-all duration-200 hover:-translate-y-1"
-            >
-              <div
-                className={`${c.color} w-11 h-11 rounded-xl border-2 border-black flex items-center justify-center mb-3`}
-              >
-                <c.icon className="w-5 h-5 text-black" />
-              </div>
-              <h3 className="font-display font-bold text-base text-ink mb-1">
-                {c.title}
-              </h3>
-              <p className="text-sm text-ink-secondary leading-relaxed">
-                {c.body}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Stats Bar ─────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          {[
-            {
-              label: 'Unique Markets',
-              value: fmtNum(totalRewardMarkets),
-              icon: BarChart3,
-              color: 'bg-neon-cyan',
-            },
-            {
-              label: 'Total $/Day Pooled',
-              value: fmt$(totalDailyRewards),
-              icon: DollarSign,
-              color: 'bg-neon-lime',
-            },
-            {
-              label: 'Break Even Before Res.',
-              value: `${breaksEvenCount}`,
-              icon: TrendingUp,
-              color: 'bg-brand-yellow',
-            },
-            {
-              label: 'Spread Violations',
-              value: `${spreadViolationCount}`,
-              icon: AlertTriangle,
-              color: spreadViolationCount > 0 ? 'bg-brand-pink' : 'bg-neon-green',
-            },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="bg-white rounded-xl border-2 border-black shadow-pop-sm p-3 flex items-center gap-3"
-            >
-              <div
-                className={`${s.color} w-9 h-9 rounded-lg border-2 border-black flex items-center justify-center flex-shrink-0`}
-              >
-                <s.icon className="w-4 h-4 text-black" />
-              </div>
-              <div>
-                <p className="font-display font-bold text-lg leading-tight">
-                  {s.value}
-                </p>
-                <p className="text-[11px] text-ink-faint">{s.label}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Toolbar ───────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowFilters((f) => !f)}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-black bg-white border-2 border-black rounded-lg px-3 py-2 shadow-pop-sm hover:-translate-y-0.5 transition-transform"
-            >
-              <Filter className="w-3.5 h-3.5" />
-              Filters
-              {(maxMinShares < 250 || minReward > 0) && (
-                <span className="w-2 h-2 rounded-full bg-neon-magenta" />
-              )}
-            </button>
-
-            <button
-              onClick={fetchMarkets}
-              disabled={loading}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-black bg-neon-cyan border-2 border-black rounded-lg px-3 py-2 shadow-pop-sm hover:-translate-y-0.5 transition-transform disabled:opacity-50"
-            >
-              <RefreshCw
-                className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`}
-              />
-              Refresh
-            </button>
-
-            <button
-              onClick={() => setHideFlagged((v) => !v)}
-              className={`inline-flex items-center gap-1.5 text-xs font-bold text-black border-2 border-black rounded-lg px-3 py-2 shadow-pop-sm hover:-translate-y-0.5 transition-transform ${
-                hideFlagged ? 'bg-neon-green' : 'bg-white'
-              }`}
-            >
-              <Shield className="w-3.5 h-3.5" />
-              {hideFlagged ? 'Hiding flagged' : 'Show flagged'}
-            </button>
-          </div>
-
-          {updatedAt && (
-            <span className="text-[11px] text-ink-faint">
-              Updated{' '}
-              {new Date(updatedAt).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </span>
-          )}
-        </div>
-
-        {/* ── Filter Panel ──────────────────────────────────────── */}
-        {showFilters && (
-          <div className="bg-white rounded-xl border-2 border-black shadow-pop p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-display font-bold text-ink mb-1">
-                Max Min Shares
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min={10}
-                  max={1000}
-                  step={10}
-                  value={maxMinShares}
-                  onChange={(e) => setMaxMinShares(Number(e.target.value))}
-                  className="flex-1 accent-brand-orange"
-                />
-                <span className="font-mono text-sm font-bold w-14 text-right">
-                  {maxMinShares}
-                </span>
-              </div>
-              <p className="text-[10px] text-ink-faint mt-0.5">
-                Only show markets where Min Shares ≤ this value
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-display font-bold text-ink mb-1">
-                Min Daily Reward ($)
-              </label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min={0}
-                  max={500}
-                  step={5}
-                  value={minReward}
-                  onChange={(e) => setMinReward(Number(e.target.value))}
-                  className="flex-1 accent-brand-orange"
-                />
-                <span className="font-mono text-sm font-bold w-14 text-right">
-                  ${minReward}
-                </span>
-              </div>
-              <p className="text-[10px] text-ink-faint mt-0.5">
-                Only show markets paying at least this much per day
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* ── Markets Table ─────────────────────────────────────── */}
-        {loading && markets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-brand-orange mb-3" />
-            <p className="text-ink-faint text-sm">
-              Scanning Polymarket for reward opportunities…
-            </p>
-          </div>
-        ) : error ? (
-          <div className="bg-white rounded-xl border-2 border-black shadow-pop p-8 text-center">
-            <AlertTriangle className="w-8 h-8 text-brand-orange mx-auto mb-2" />
-            <p className="text-ink-secondary">{error}</p>
-            <button
-              onClick={fetchMarkets}
-              className="mt-3 text-sm font-bold text-black bg-neon-cyan border-2 border-black rounded-lg px-4 py-2 shadow-pop-sm hover:-translate-y-0.5 transition-transform"
-            >
-              Retry
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="overflow-x-auto rounded-2xl border-2 border-black shadow-pop bg-white">
-              <table className="w-full text-sm min-w-[900px]">
-                <thead>
-                  <tr className="bg-black text-white text-left">
-                    <th className="px-3 py-3 font-display text-xs w-8" />
-                    <th className="px-3 py-3 font-display text-xs min-w-[220px]">
-                      Market
-                    </th>
-                    <th className="px-3 py-3">
-                      <SortButton
-                        label="Reward/Day"
-                        sortKey="rewardPerDay"
-                        currentSort={sortKey}
-                        currentDir={sortDir}
-                        onClick={handleSort}
-                      />
-                    </th>
-                    <th className="px-3 py-3">
-                      <SortButton
-                        label="Min Shares"
-                        sortKey="minShares"
-                        currentSort={sortKey}
-                        currentDir={sortDir}
-                        onClick={handleSort}
-                      />
-                    </th>
-                    <th className="px-3 py-3">
-                      <SortButton
-                        label="Competition"
-                        sortKey="competition"
-                        currentSort={sortKey}
-                        currentDir={sortDir}
-                        onClick={handleSort}
-                      />
-                    </th>
-                    <th className="px-3 py-3">
-                      <SortButton
-                        label="Spread"
-                        sortKey="currentSpread"
-                        currentSort={sortKey}
-                        currentDir={sortDir}
-                        onClick={handleSort}
-                      />
-                    </th>
-                    <th className="px-3 py-3">
-                      <SortButton
-                        label="Entry Cost"
-                        sortKey="entryCost"
-                        currentSort={sortKey}
-                        currentDir={sortDir}
-                        onClick={handleSort}
-                      />
-                    </th>
-                    <th className="px-3 py-3">
-                      <SortButton
-                        label="Score"
-                        sortKey="opportunityScore"
-                        currentSort={sortKey}
-                        currentDir={sortDir}
-                        onClick={handleSort}
-                      />
-                    </th>
-                    <th className="px-3 py-3">
-                      <SortButton
-                        label="APR"
-                        sortKey="aprPct"
-                        currentSort={sortKey}
-                        currentDir={sortDir}
-                        onClick={handleSort}
-                      />
-                    </th>
-                    <th className="px-3 py-3 font-display text-xs">Prices</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={9}
-                        className="px-4 py-12 text-center text-ink-faint"
-                      >
-                        No markets match your filters. Try increasing Max Min
-                        Shares or lowering Min Daily Reward.
-                      </td>
-                    </tr>
-                  ) : (
-                    filtered.map((m, i) => {
-                      const isExpanded = expanded.has(m.conditionId);
-                      const comp = competitionLabel(m.competition);
-                      const spr = spreadLabel(m.currentSpread, m.maxSpread);
-
-                      return (
-                        <Fragment key={m.conditionId}>
-                          <tr
-                            className={`${
-                              i % 2 === 0 ? 'bg-white' : 'bg-black/[0.03]'
-                            } hover:bg-neon-lime/10 cursor-pointer transition-colors`}
-                            onClick={() => toggleExpand(m.conditionId)}
-                          >
-                            {/* Expand icon */}
-                            <td className="px-3 py-3 text-ink-faint">
-                              {isExpanded ? (
-                                <ChevronDown className="w-4 h-4" />
-                              ) : (
-                                <ChevronRight className="w-4 h-4" />
-                              )}
-                            </td>
-
-                            {/* Market name */}
-                            <td className="px-3 py-3">
-                              <div className="flex items-center gap-2">
-                                {m.image && (
-                                  /* eslint-disable-next-line @next/next/no-img-element */
-                                  <img
-                                    src={m.image}
-                                    alt=""
-                                    className="w-7 h-7 rounded-lg border border-black/10 flex-shrink-0 object-cover"
-                                  />
-                                )}
-                                <span className="font-display font-semibold text-xs leading-tight line-clamp-2">
-                                  {m.question}
-                                </span>
-                              </div>
-                            </td>
-
-                            {/* Reward/Day */}
-                            <td className="px-3 py-3">
-                              <span className="font-mono font-bold text-sm">
-                                {m.rewardPerDay > 0 ? fmt$(m.rewardPerDay) : '—'}
-                              </span>
-                            </td>
-
-                            {/* Min Shares */}
-                            <td className="px-3 py-3">
-                              <span className="font-mono text-sm">
-                                {fmtNum(m.minShares)}
-                              </span>
-                            </td>
-
-                            {/* Competition */}
-                            <td className="px-3 py-3">
-                              <span
-                                className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border border-black ${comp.color}`}
-                              >
-                                {comp.text}
-                              </span>
-                              <span className="block text-[10px] text-ink-faint font-mono mt-0.5">
-                                {fmtNum(m.competition, 1)}
-                              </span>
-                            </td>
-
-                            {/* Spread — Qualifying max */}
-                            <td className="px-3 py-3">
-                              {m.spreadViolation ? (
-                                <div>
-                                  <span className="inline-block text-[10px] font-bold text-white bg-brand-pink rounded px-1.5 py-0.5 border border-black">
-                                    {(m.currentSpread * 100).toFixed(1)}¢ EXCEEDS
-                                  </span>
-                                  <span className="block text-[10px] font-bold text-brand-pink mt-0.5">
-                                    max {(m.maxSpread * 100).toFixed(1)}¢
-                                  </span>
-                                </div>
-                              ) : (
-                                <div>
-                                  <span className={`text-sm ${spr.color}`}>
-                                    {(m.currentSpread * 100).toFixed(1)}¢
-                                  </span>
-                                  <span className="block text-[10px] text-ink-faint">
-                                    max {(m.maxSpread * 100).toFixed(1)}¢
-                                  </span>
-                                </div>
-                              )}
-                            </td>
-
-                            {/* Entry Cost */}
-                            <td className="px-3 py-3">
-                              <span className="font-mono text-sm font-semibold">
-                                {fmt$(m.entryCost)}
-                              </span>
-                            </td>
-
-                            {/* Score */}
-                            <td className="px-3 py-3">
-                              {m.opportunityScore > 0 ? (
-                                <span
-                                  className={`inline-flex items-center justify-center w-7 h-7 font-mono font-bold text-sm rounded-lg border-2 ${gradeBadge(m.opportunityScore).color}`}
-                                >
-                                  {gradeBadge(m.opportunityScore).grade}
-                                </span>
-                              ) : (
-                                <span className="text-ink-faint text-xs">—</span>
-                              )}
-                            </td>
-
-                            {/* APR — Realistic */}
-                            <td className="px-3 py-3">
-                              {m.spreadViolation ? (
-                                <div>
-                                  <span className="font-mono text-sm font-bold text-brand-pink">
-                                    $0
-                                  </span>
-                                  <span className="block text-[10px] font-bold text-brand-pink mt-0.5">
-                                    SPREAD VIOLATION
-                                  </span>
-                                </div>
-                              ) : (
-                                <div>
-                                  <span className="font-mono text-sm font-semibold">
-                                    {m.realisticAprPct > 0 ? fmtApr(m.realisticAprPct) : '—'}
-                                  </span>
-                                  <span className="block text-[10px] text-ink-faint mt-0.5">
-                                    realistic
-                                  </span>
-                                </div>
-                              )}
-                              {m.anomalies.length > 0 && (
-                                <span
-                                  className="block text-[10px] font-bold text-brand-pink mt-0.5"
-                                  title={m.anomalies.map((a) => a.message).join('\n')}
-                                >
-                                  ⚠ {m.anomalies.length}
-                                </span>
-                              )}
-                            </td>
-
-                            {/* Prices — labeled bid/ask */}
-                            <td className="px-3 py-3">
-                              <div className="flex gap-1.5">
-                                <span className="text-[11px] font-mono bg-neon-green/20 text-neon-green rounded px-1.5 py-0.5 border border-neon-green/30">
-                                  Y {m.yesPrice.toFixed(2)}
-                                </span>
-                                <span className="text-[11px] font-mono bg-brand-pink/15 text-brand-pink rounded px-1.5 py-0.5 border border-brand-pink/30">
-                                  N {m.noPrice.toFixed(2)}
-                                </span>
-                              </div>
-                              <span className="block text-[10px] text-ink-faint mt-0.5">
-                                mid · {(m.yesPrice * 100).toFixed(0)}¢/{((1 - m.noPrice) * 100).toFixed(0)}¢
-                              </span>
-                            </td>
-                          </tr>
-
-                          {/* Expanded detail row */}
-                          {isExpanded && (
-                            <tr>
-                              <td colSpan={9} className="px-3 py-3 bg-white">
-                                <OrderBookPanel market={m} />
-                                {m.lpScoring && <LPScoringPanel scoring={m.lpScoring} market={m} />}
-                              </td>
-                            </tr>
-                          )}
-                        </Fragment>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <p className="text-[11px] text-ink-faint mt-3 text-center">
-              Data sourced from Polymarket&apos;s public API. Refreshed every 5
-              minutes. Not financial advice.
-            </p>
-          </>
-        )}
-
-        {/* ── Strategy Guide ────────────────────────────────────── */}
-        <div className="mt-14 space-y-8">
+      <main>
+        {/* Opening: thesis + featured match */}
+        <section className="s2-open-grid">
           <div>
-            <h2 className="font-display font-bold text-2xl sm:text-3xl text-ink mb-2">
-              How to Farm Polymarket LP Rewards
-            </h2>
-            <p className="text-ink-secondary max-w-3xl">
-              A step-by-step guide to using this scanner for liquidity-provider
-              reward farming on Polymarket. This strategy lets you earn daily USDC
-              rewards by providing liquidity — without necessarily taking
-              directional bets.
+            <p className="s2-kicker">The esports LP thesis</p>
+            <h1 className="s2-h1">
+              Wait for the<br />
+              <span className="s2-yel">second half.</span>
+            </h1>
+            <p className="s2-lede">
+              Political markets lock capital for weeks. Esports markets die in three hours — and every one of them runs the same lifecycle: <b>a crowded opening book, a halftime exodus, and a second half where the reward pool keeps paying but most of the competition has already left.</b> The opportunity isn&apos;t a mispricing you find once. It&apos;s a rhythm that happens on schedule, in every league, every day.
             </p>
-          </div>
-
-          {/* Step 1 */}
-          <div className="bg-white rounded-2xl border-2 border-black shadow-pop p-6 sm:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-neon-lime border-2 border-black flex items-center justify-center font-display font-bold text-lg">
-                1
-              </span>
-              <h3 className="font-display font-bold text-xl text-ink">
-                Find Low-Capital, High-Reward Markets
-              </h3>
+            <div className="s2-stat-chips">
+              <span className="s2-schip"><b>−71%</b> makers by round 20</span>
+              <span className="s2-schip">pool pays <b>flat</b> through the match</span>
+              <span className="s2-schip">capital rotates <b>6×/day</b></span>
             </div>
-            <div className="space-y-3 text-ink-secondary">
-              <p>
-                Use the scanner above to filter for markets where{' '}
-                <strong className="text-ink">Min Shares ≤ 250</strong> and{' '}
-                <strong className="text-ink">Daily Reward is meaningful</strong>{' '}
-                (at least $10–$20/day). Sort by <strong className="text-ink">Score</strong>{' '}
-                to see the best bang-for-buck opportunities first.
-              </p>
-              <div className="bg-surface/30 rounded-xl p-4 text-sm">
-                <p className="font-display font-bold text-ink mb-1">
-                  💡 Why Min Shares matters
-                </p>
-                <p>
-                  If Min Shares is 100 and the price is $0.50, you only need 100 ×
-                  $0.50 = <strong>$50</strong> to place a qualifying order. Under
-                  250 Min Shares, you can typically farm with $25–$250 depending on
-                  the price.
-                </p>
+          </div>
+          <div>
+            {/* Featured match */}
+            {featured && (
+              <div className="s2-feat" onClick={() => setDrawerId(featured.id)} style={{ cursor: 'pointer' }}>
+                <div className="s2-feat-top">
+                  <span className="s2-gametag" style={{ background: GAMES[featured.game]?.color }}>
+                    {GAMES[featured.game]?.label} · BO3{((featured.map ?? 1) > 1 ? ' · MAP ' + featured.map : '')}
+                  </span>
+                  <span className="s2-league s2-mono">{featured.league}</span>
+                  <span className="s2-livebug" style={{ marginLeft: 'auto' }}>
+                    <i />
+                    {featured.state === 'LIVE' ? 'LIVE' : featured.state === 'HT' ? 'BREAK' : featured.state === 'DONE' ? 'SETTLED' : 'PRE'}
+                  </span>
+                </div>
+                <div className="s2-sb">
+                  <div className="s2-team" style={{ color: featured.colorA }}>
+                    <span className="s2-t-mark" style={{ background: featured.colorA }}><span>{featured.a[0]}</span></span>
+                    <div>
+                      <div className="s2-t-name">{featured.a}</div>
+                      <div className="s2-t-score">{featured.sA ?? 0}</div>
+                    </div>
+                  </div>
+                  <div className="s2-sb-mid">
+                    <div className="s2-mono s2-sb-round">
+                      ROUND {featured.round} · {(featured.half ?? 0) === 1 ? '1ST' : '2ND'} HALF · MAP {(featured.map ?? 1)}
+                    </div>
+                    <div className="s2-mono s2-sb-clock">
+                      {featured.state === 'DONE' ? (featured.winner ?? '') + ' WINS' : fmtT(featured.clock ?? 0)}
+                    </div>
+                  </div>
+                  <div className="s2-team s2-right" style={{ color: featured.colorB }}>
+                    <span className="s2-t-mark" style={{ background: featured.colorB }}><span>{featured.b[0]}</span></span>
+                    <div>
+                      <div className="s2-t-name">{featured.b}</div>
+                      <div className="s2-t-score">{featured.sB ?? 0}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="s2-phasebar">
+                  <i style={{ width: Math.min(1, ((featured.sA ?? 0) + (featured.sB ?? 0)) / 25) * 100 + '%' }} />
+                  <em />
+                </div>
+                <div className="s2-feat-grid">
+                  <div className="s2-fcell">
+                    <span className="s2-flab">Mid · {featured.mid >= 0.5 ? featured.a : featured.b} favored</span>
+                    <span className="s2-fval s2-mono">{(featured.mid * 100).toFixed(1)}¢</span>
+                  </div>
+                  <div className="s2-fcell">
+                    <span className="s2-flab">Makers open → now</span>
+                    <span className="s2-fval s2-mono">{featured.mOpen} → <b className="s2-amb">{featured.mNow}</b></span>
+                    <div className="s2-decay"><i style={{ width: (1 - featured.decay) * 100 + '%' }} /></div>
+                  </div>
+                  <div className="s2-fcell">
+                    <span className="s2-flab">Pool / day</span>
+                    <span className="s2-fval s2-mono s2-amb">${featured.pool}</span>
+                  </div>
+                  <div className="s2-fcell">
+                    <span className="s2-flab">Est $/day · $1k</span>
+                    <span className="s2-fval s2-mono s2-grn">${featured.est1k.toFixed(2)}</span>
+                  </div>
+                  <div className="s2-fcell">
+                    <span className="s2-flab">Window</span>
+                    {winTag(featured)}
+                  </div>
+                </div>
               </div>
+            )}
+
+            {/* Feed */}
+            <div className="s2-feed">
+              {feed.slice(0, 5).map((f, i) => (
+                <div className={'s2-fi' + (i === 0 ? ' s2-new' : '')} key={i}>
+                  <span className="s2-fi-t s2-mono">{f.t}</span>
+                  <span className="s2-fi-tag">{f.tag}</span>
+                  <span>{f.txt}</span>
+                </div>
+              ))}
+              {feed.length === 0 && (
+                <div className="s2-fi">
+                  <span className="s2-fi-tag">DESK</span>
+                  <span>Feed warming up…</span>
+                </div>
+              )}
+            </div>
+
+            {/* Up next */}
+            <div className="s2-upnext">
+              {matches.filter((m) => m.state === 'PRE').sort((a, b) => (a.pre ?? 0) - (b.pre ?? 0)).length > 0 ? (
+                <>
+                  <span className="s2-un-lab">UP NEXT ▸</span>
+                  {matches.filter((m) => m.state === 'PRE').sort((a, b) => (a.pre ?? 0) - (b.pre ?? 0)).map((m) => (
+                    <span className="s2-un" key={m.id}>
+                      <b>{m.a} v {m.b}</b>
+                      <span className="s2-mono s2-amb">T-{fmtT(m.pre ?? 0)}</span>
+                      <span className="dim s2-mono">{GAMES[m.game]?.label} · ${m.pool}/d</span>
+                    </span>
+                  ))}
+                </>
+              ) : (
+                <span className="s2-un-lab">▸ ALL DESKS LIVE</span>
+              )}
             </div>
           </div>
+        </section>
 
-          {/* Step 2 */}
-          <div className="bg-white rounded-2xl border-2 border-black shadow-pop p-6 sm:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-neon-cyan border-2 border-black flex items-center justify-center font-display font-bold text-lg">
-                2
-              </span>
-              <h3 className="font-display font-bold text-xl text-ink">
-                Check the Competition
-              </h3>
-            </div>
-            <div className="space-y-3 text-ink-secondary">
-              <p>
-                Low competition means you get a <strong className="text-ink">larger slice of the reward pool</strong>.
-                Click any row in the scanner to expand the order book and look for:
-              </p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>
-                  <strong className="text-ink">Thin order sizes</strong> — if most
-                  existing orders are below Min Shares, they don&apos;t qualify for
-                  rewards
-                </li>
-                <li>
-                  <strong className="text-ink">Wide spread</strong> — a gap of
-                  5–10+ cents between best bid and ask signals low liquidity and
-                  opportunity
-                </li>
-                <li>
-                  <strong className="text-ink">Few qualifying orders</strong> near
-                  the midpoint — less competition for your rewards
-                </li>
-              </ul>
-              <p className="text-sm">
-                The <strong className="text-ink">Competition</strong> column gives
-                you a quick read: &quot;Very Low&quot; and &quot;Low&quot; are your sweet spots.
-              </p>
+        {/* Live Window Board */}
+        <section className="s2-board">
+          <div className="s2-console-head">
+            <h2 className="s2-h2">Live Window Board</h2>
+            <div className="s2-head-meta">
+              <span>{filtered.length} markets</span>
+              <span>SCAN {clock} UTC</span>
             </div>
           </div>
-
-          {/* Step 3 */}
-          <div className="bg-white rounded-2xl border-2 border-black shadow-pop p-6 sm:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-brand-yellow border-2 border-black flex items-center justify-center font-display font-bold text-lg">
-                3
-              </span>
-              <h3 className="font-display font-bold text-xl text-ink">
-                Place Your Qualifying Limit Order
-              </h3>
+          <div className="s2-filters">
+            <input
+              type="search"
+              placeholder="▸ team / league…"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="s2-search"
+            />
+            <div className="s2-chips">
+              {['ALL', ...Object.keys(GAMES)].map((g) => (
+                <button
+                  key={g}
+                  className={'s2-fchip' + (selGame === g ? ' s2-on' : '')}
+                  onClick={() => setSelGame(g)}
+                >
+                  {g === 'ALL' ? 'ALL' : GAMES[g]?.label}
+                </button>
+              ))}
             </div>
-            <div className="space-y-3 text-ink-secondary">
-              <p>
-                The strategy: place a limit order with at least the minimum shares,{' '}
-                <strong className="text-ink">
-                  1 tick (1 cent) below the highest bid
-                </strong>
-                . The expanded row in the scanner shows you the suggested entry
-                price and confirms whether it&apos;s within Max Spread.
-              </p>
-              <div className="bg-surface/30 rounded-xl p-4 text-sm">
-                <p className="font-display font-bold text-ink mb-1">
-                  ⚡ Why 1 tick below?
-                </p>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li>Keeps you near the inside of the book (good for rewards)</li>
-                  <li>
-                    Slightly reduces the chance your order gets immediately filled
-                  </li>
-                  <li>
-                    As long as your price is within Max Spread and size ≥ Min
-                    Shares, you qualify for rewards
-                  </li>
-                </ul>
-              </div>
-            </div>
+            <label className="s2-wl-t">
+              <input type="checkbox" checked={winOnly} onChange={(e) => setWinOnly(e.target.checked)} />
+              window open only
+            </label>
           </div>
-
-          {/* Step 4 */}
-          <div className="bg-white rounded-2xl border-2 border-black shadow-pop p-6 sm:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-brand-orange border-2 border-black flex items-center justify-center font-display font-bold text-lg text-white">
-                4
-              </span>
-              <h3 className="font-display font-bold text-xl text-ink flex items-center gap-2">
-                Monitor for Unwanted Fills
-                <Eye className="w-5 h-5 text-ink-faint" />
-              </h3>
-            </div>
-            <div className="space-y-3 text-ink-secondary">
-              <p>
-                You&apos;re earning LP rewards while your order rests on the book, <strong className="text-ink">but you still have directional risk</strong>.
-                If you get filled and the market moves against you, the loss can exceed months of rewards.
-              </p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>
-                  If the <strong className="text-ink">mid price moves toward your order</strong>,
-                  the chance of getting filled increases — consider canceling
-                </li>
-                <li>
-                  If <strong className="text-ink">liquidity vanishes</strong> on the other side,
-                  you could become the only liquidity and get filled fast
-                </li>
-                <li>
-                  This is <strong className="text-ink">not set-and-forget</strong> — check frequently
-                </li>
-              </ul>
-              <div className="bg-brand-orange/10 border border-brand-orange/30 rounded-xl p-4 text-sm">
-                <p className="font-display font-bold text-ink mb-1 flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-brand-orange" />
-                  Important
-                </p>
-                <p>
-                  If you see sudden price moves or aggressive volume hitting your
-                  side, cancel immediately. Losing rewards is better than getting
-                  filled at a bad time.
-                </p>
-              </div>
-            </div>
+          <div className="s2-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Match</th>
+                  <th>Phase</th>
+                  <th>Score</th>
+                  <th onClick={() => handleSort('pool')}>Pool/day {sortKey === 'pool' ? (sortDir < 0 ? '▼' : '▲') : ''}</th>
+                  <th onClick={() => handleSort('mNow')}>Makers {sortKey === 'mNow' ? (sortDir < 0 ? '▼' : '▲') : ''}</th>
+                  <th onClick={() => handleSort('spread')}>Spread {sortKey === 'spread' ? (sortDir < 0 ? '▼' : '▲') : ''}</th>
+                  <th onClick={() => handleSort('est1k')}>Est $/d · $1k {sortKey === 'est1k' ? (sortDir < 0 ? '▼' : '▲') : ''}</th>
+                  <th>Window</th>
+                  <th onClick={() => handleSort('edge')}>Edge {sortKey === 'edge' ? (sortDir < 0 ? '▼' : '▲') : ''}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((m) => {
+                  const g = GAMES[m.game];
+                  return (
+                    <tr key={m.id} onClick={() => setDrawerId(m.id)}>
+                      <td>
+                        <div className="s2-m-match">
+                          <span className="s2-gchip" style={{ background: g?.color }}>{g?.label}</span>
+                          <b>{m.a} <span className="dim">vs</span> {m.b}</b>
+                        </div>
+                        <div className="dim s2-mono s2-m-league">{m.league}</div>
+                      </td>
+                      <td>{phaseCell(m)}</td>
+                      <td className="s2-mono s2-sc">{scoreCell(m)}</td>
+                      <td className="s2-mono s2-c-pool">${m.pool}</td>
+                      <td>
+                        <div className="s2-mono">{m.mOpen}→<b className={m.decay > 0.5 ? 's2-amb' : ''}>{m.mNow}</b></div>
+                        <div className="s2-dmini"><i style={{ width: (1 - m.decay) * 100 + '%' }} /></div>
+                      </td>
+                      <td className="s2-mono">{m.spread.toFixed(1)}¢</td>
+                      <td className="s2-mono s2-c-est s2-grn">${m.est1k.toFixed(2)}</td>
+                      <td>{winTag(m)}</td>
+                      <td>{edgeBar(m)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+          <p className="s2-footnote">
+            SIM ENGINE — scores, clocks and maker counts are simulated to demonstrate the liquidity lifecycle; structure mirrors Polymarket esports format (CS2/VAL MR12, LoL/Dota BO3). Maker counts marked ~ are modeled. Not financial advice.
+          </p>
+        </section>
 
-          {/* Step 5 */}
-          <div className="bg-white rounded-2xl border-2 border-black shadow-pop p-6 sm:p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-neon-magenta border-2 border-black flex items-center justify-center font-display font-bold text-lg text-white">
-                5
-              </span>
-              <h3 className="font-display font-bold text-xl text-ink flex items-center gap-2">
-                If You Get Filled: Exit Options
-                <LogOut className="w-5 h-5 text-ink-faint" />
-              </h3>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="bg-neon-green/10 border border-neon-green/30 rounded-xl p-4">
-                <h4 className="font-display font-bold text-sm text-ink mb-2 flex items-center gap-1.5">
-                  <Shield className="w-4 h-4 text-neon-green" />
-                  Option A: Quick Exit (Safer)
-                </h4>
-                <p className="text-sm text-ink-secondary">
-                  Sell immediately 1¢ below your buy price. You accept a tiny loss
-                  (~1¢ per share + fees) but keep whatever LP rewards you earned
-                  while your order sat on the book.
-                </p>
-              </div>
-              <div className="bg-brand-orange/10 border border-brand-orange/30 rounded-xl p-4">
-                <h4 className="font-display font-bold text-sm text-ink mb-2 flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-brand-orange" />
-                  Option B: Hold &amp; Farm More (Riskier)
-                </h4>
-                <p className="text-sm text-ink-secondary">
-                  Place a sell order 1¢ above your buy. You earn LP rewards on the
-                  sell side too, and if filled you exit with +1¢ profit. But if the
-                  market moves against you, you&apos;re stuck holding a losing
-                  position.
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 bg-brand-pink/10 border border-brand-pink/30 rounded-xl p-4">
-              <p className="text-sm text-ink-secondary">
-                <strong className="text-ink">⚠️ Where the real risk lives:</strong>{' '}
-                In volatile or news-driven markets, you can get &quot;cooked&quot; — tiny LP
-                rewards won&apos;t offset a big directional loss. Always understand the
-                event you&apos;re providing liquidity to.
-              </p>
-            </div>
+        {/* Decay Chart */}
+        <section className="s2-sec" id="decay">
+          <div className="s2-sec-head">
+            <p className="s2-kicker" style={{ margin: 0 }}>Why the second half pays</p>
+            <h2 className="s2-h2">Makers leave. The pool doesn&apos;t.</h2>
           </div>
+          <p style={{ color: 'var(--s2-mut)', maxWidth: '70ch', marginBottom: 18 }}>
+            One CS2 playoff market, tracked from open to match point. The cyan line is competition; the amber line is your share of a flat pool per $1,000 deployed. Hover the phases.
+          </p>
+          <DecayChart />
+        </section>
 
-          {/* Disclaimer */}
-          <div className="bg-black/5 rounded-2xl border border-black/10 p-6 text-center">
-            <p className="text-xs text-ink-faint leading-relaxed max-w-2xl mx-auto">
-              <strong>Disclaimer:</strong> This tool is for educational and
-              informational purposes only. It is not financial advice. LP reward
-              farming involves risk of loss. Past reward rates do not guarantee
-              future returns. Always do your own research before placing any
-              orders. Data is sourced from Polymarket&apos;s public API and may be
-              delayed or inaccurate.
+        {/* Velocity Calculator */}
+        <section className="s2-sec s2-velo">
+          <div>
+            <p className="s2-kicker">The turnover multiplier</p>
+            <h2 className="s2-h2" style={{ marginBottom: 10 }}>Same $1,000. Six lives a day.</h2>
+            <p style={{ color: 'var(--s2-mut)', lineHeight: 1.7, maxWidth: '52ch' }}>
+              Static farming camps one book and takes whatever share the crowd leaves. The esports rotation re-enters at every halftime with fresh capital against a decayed book — the pool share resets in your favor, over and over. This is what makes the &quot;$100 a day&quot; math a process instead of a lottery ticket.
             </p>
+            <div className={'s2-verdict' + (vDaily >= 100 ? ' s2-v-grn' : vDaily >= 60 ? ' s2-v-amb' : ' s2-v-red')}>
+              <div className="s2-vt">
+                {vDaily >= 100 ? `TARGET CLEARED — $${vDaily.toFixed(0)}/day modeled`
+                  : vDaily >= 60 ? `IN RANGE — $${vDaily.toFixed(0)}/day modeled`
+                  : `NOT YET — $${vDaily.toFixed(0)}/day modeled`}
+              </div>
+              <p>
+                {vDaily >= 100
+                  ? `The article's $100/day math works — via turnover, not one magic market. ${vN} second-half entries at ${(vShare * 100).toFixed(0)}% average pool share. Now subtract the bill: adverse selection, fills, delay.`
+                  : vDaily >= 60
+                  ? `$${(100 - vDaily).toFixed(0)} short of the target. Add ${Math.ceil(100 / vPerMatch) - vN} more entries or move entry timing later into the half.`
+                  : `At this rotation the target needs ~${vPerMatch > 0 ? Math.ceil(100 / vPerMatch) : '—'} entries or a larger bankroll. This is why $100→$10/day is a stretch but $1,000→$100/day is a process.`}
+              </p>
+            </div>
           </div>
+          <div className="s2-velo-panel">
+            <div className="s2-vrow">
+              <div className="s2-vlab"><span>Bankroll</span><b>${vCap.toLocaleString()}</b></div>
+              <input type="range" min={100} max={5000} step={100} value={vCap} onChange={(e) => setVCap(+e.target.value)} />
+            </div>
+            <div className="s2-vrow">
+              <div className="s2-vlab"><span>Second-half entries / day</span><b>{vN}</b></div>
+              <input type="range" min={1} max={10} step={1} value={vN} onChange={(e) => setVN(+e.target.value)} />
+            </div>
+            <div className="s2-vrow">
+              <div className="s2-vlab"><span>Avg pool size</span><b>${vPool}/day</b></div>
+              <input type="range" min={40} max={200} step={5} value={vPool} onChange={(e) => setVPool(+e.target.value)} />
+            </div>
+            <div className="s2-vrow">
+              <div className="s2-vlab"><span>Entry timing</span></div>
+              <select value={vPhase} onChange={(e) => setVPhase(+e.target.value)}>
+                <option value={1}>Opener — full book (×1.0 share)</option>
+                <option value={1.9}>Halftime break (×1.9 share)</option>
+                <option value={2.8}>Second half (×2.8 share)</option>
+                <option value={4.2}>Match point — clutch (×4.2 share)</option>
+              </select>
+            </div>
+            <div className="s2-vout">
+              <div><span className="s2-flab">Pool share / entry</span><div className="s2-big s2-mono" style={{ color: 'var(--s2-cyn)' }}>{(vShare * 100).toFixed(1)}%</div></div>
+              <div><span className="s2-flab">Per match</span><div className="s2-big s2-mono">${vPerMatch.toFixed(2)}</div></div>
+              <div><span className="s2-flab">Entries to $100/d</span><div className="s2-big s2-mono s2-amb">{vPerMatch > 0 ? Math.ceil(100 / vPerMatch) : '—'}</div></div>
+            </div>
+            <VelBar label="ONE STATIC MARKET" value={vStaticD} max={Math.max(vDaily, vStaticD, 100) * 1.12} colorClass="dim-b" />
+            <VelBar label="ESPORTS ROTATION" value={vDaily} max={Math.max(vDaily, vStaticD, 100) * 1.12} colorClass="rot-b" />
+            <div className="s2-vb-row">
+              <span className="s2-vb-lab s2-mono">$100/DAY TARGET</span>
+              <div className="s2-vb-track">
+                <div className="s2-vb tgt-b" style={{ width: (100 / (Math.max(vDaily, vStaticD, 100) * 1.12)) * 100 + '%' }} />
+              </div>
+              <span className="s2-vb-v s2-mono" style={{ color: 'var(--s2-org)' }}>$100</span>
+            </div>
+          </div>
+        </section>
 
-          {/* Related content & cross-links */}
-          <ToolRelatedContent currentTool="lp-scanner" />
+        {/* Playbook */}
+        <section className="s2-sec" id="playbook">
+          <p className="s2-kicker">Second-half playbook</p>
+          <h2 className="s2-h2" style={{ marginBottom: 24 }}>Six rules for the window</h2>
+          {[
+            { n: '01', title: 'The pool doesn\'t watch the match', desc: <>Rewards accrue per epoch whether it&apos;s round 1 or round 24. You&apos;re not timing the event — <b>you&apos;re timing the competition</b>. The scoreboard is noise; the maker count is the signal.</> },
+            { n: '02', title: 'Makers flee volatility', desc: <>Every clutch round is pure adverse selection for a market maker, so the book thins exactly when the match gets loud. <b>Their fear is your yield.</b> A 34-maker opener becomes a 9-maker second half without the pool losing a cent.</> },
+            { n: '03', title: 'Enter at the break, not the rally', desc: <>Halftime and between-map pauses: volatility stops, game state is legible, and the exodus has already happened. Mid-round quoting against live kill feeds makes you <b>exit liquidity for someone with a data feed</b>.</> },
+            { n: '04', title: 'Watch the game or don\'t quote', desc: <>Your edge in the window is live context — eco, momentum, tilt, the paused round. Broadcast delay runs 30–120 seconds, which means <b>attention is the moat</b>: if you can&apos;t watch, you&apos;re the slowest person in the room.</> },
+            { n: '05', title: 'Velocity beats yield', desc: <>$1,000 rotating through six second halves beats $1,000 camped in one book for a month. <b>Capital turnover is the compounding engine</b> — the per-match yield can be modest and the day still clears.</> },
+            { n: '06', title: 'Tier-1 only. Cap inventory.', desc: <>The window pays because it&apos;s risky: match-point swings, picked-off quotes, tail events. IEM, Majors, LCK/LEC/LCS, VCT, Riyadh — <b>nothing you&apos;ve never heard of</b> — and size to survive being right only 60% of the time.</> },
+          ].map((r, i) => (
+            <div className="s2-rule" key={i}>
+              <div className="s2-num">{r.n}</div>
+              <div>
+                <h3>{r.title}</h3>
+                <p>{r.desc}</p>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        {/* Risk Section */}
+        <section className="s2-sec" id="risks">
+          <div className="s2-bill">
+            <h3>▮ The bill — what the window charges</h3>
+            {[
+              { n: '01', title: 'Adverse selection is the real cost.', desc: 'A kill happens, price moves in two seconds, and your stale quote gets filled by someone faster. The second-half yield is compensation for that risk — not a loophole.' },
+              { n: '02', title: 'You are slower than you think.', desc: 'Streams delay 30–120s. Real in-play makers sit on direct game-state feeds. This is why rule 03 exists: the break is the only moment where your latency doesn\'t matter.' },
+              { n: '03', title: 'Rotation has friction.', desc: 'Six entries a day is twelve-plus fills — spread costs, epoch boundaries, and the occasional bad exit all eat the model. Track your realized number, not the modeled one.' },
+              { n: '04', title: 'It\'s not only esports.', desc: 'Any event market with a live phase runs this lifecycle — traditional sports in-play, debate nights, award shows. Esports is just the purest case: short, dense, 24/7, across timezones.' },
+            ].map((item, i) => (
+              <div className="s2-bill-item" key={i}>
+                <i>{item.n}</i>
+                <div>
+                  <b>{item.title}</b>
+                  <span>{item.desc}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* API Wire Section */}
+        <section className="s2-sec s2-wire">
+          <div>
+            <p className="s2-kicker">Wire it to reality</p>
+            <h2 className="s2-h2">From sim to live desk</h2>
+            <p className="s2-body-copy">
+              This page runs a self-contained simulation of the match lifecycle so the strategy is visible. To make it a production desk you need two feeds:
+            </p>
+            <ul className="s2-wire-list">
+              <li><b>Reward pools</b> — Polymarket&apos;s Gamma API, keyless: <code>rewards</code>, <code>rewardsMinSize</code>, <code>rewardsMaxSpread</code> per market.</li>
+              <li><b>Game state</b> — an esports data provider (PandaScore, GRID, Abios) over websocket for round wins, halves and match point.</li>
+              <li><b>Maker counts</b> — poll the CLOB order book per token; count distinct resting makers inside max spread.</li>
+              <li><b>The alert</b> — fire when phase ≥ halftime AND maker decay &gt; 50%. That&apos;s the whole product.</li>
+            </ul>
+          </div>
+          <pre className="s2-pre"><code>{`// 1 · pools — Gamma API (free, keyless)
+const pools = await fetch(
+  "https://gamma-api.polymarket.com/markets?closed=false&active=true"
+).then(r => r.json());  // filter to esports tags client-side
+
+// 2 · live game state — provider websocket (PandaScore / GRID)
+provider.on("round_win", ({ match }) => {
+  const book  = orderbook(match.polymarketTokenId); // CLOB API
+  const decay = 1 - book.makers / book.makersAtOpen;
+  const phase = match.half === 2 ? "SECOND_HALF" : "FIRST_HALF";
+
+  if (phase === "SECOND_HALF" && decay > 0.5)
+    alert(\`WINDOW OPEN · \${match.name} · makers \${book.makers}\`);
+});`}</code></pre>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="s2-footer">
+        <div className="s2-f-in">
+          <div>
+            <div className="s2-brand" style={{ fontSize: 17, marginBottom: 10 }}>◢ SIDE·<b>TWO</b></div>
+            <p>Companion desk to the LP Scanner — built on the esports second-half thesis. All match data on this page is simulated to demonstrate the liquidity lifecycle; reward mechanics mirror Polymarket&apos;s published LP program. Nothing here is financial advice — qualifying orders carry inventory risk, and modeled yields are not realized yields.</p>
+          </div>
+          <div className="s2-f-links">
+            <a href="https://polymarket.com" target="_blank" rel="noopener noreferrer">Polymarket ↗</a>
+            <a href="https://docs.polymarket.com" target="_blank" rel="noopener noreferrer">API docs ↗</a>
+            <a href="#velocity">Velocity model ↑</a>
+          </div>
         </div>
-      </div>
+      </footer>
+
+      {/* Scrim + Drawer */}
+      <div className={'s2-scrim' + (drawer !== null ? ' s2-open' : '')} onClick={() => setDrawerId(null)} />
+      {sel && (
+        <aside className="s2-drawer s2-open">
+          <button className="s2-dw-close" onClick={() => setDrawerId(null)}>✕</button>
+          <span className="s2-gchip" style={{ background: GAMES[sel.game]?.color }}>{GAMES[sel.game]?.label}</span>
+          <div className="s2-dw-teams">{sel.a} <span className="dim" style={{ fontSize: 16 }}>vs</span> {sel.b}</div>
+          <div className="s2-dw-sub">{sel.league} · pool ${sel.pool}/day</div>
+          <h4 className="s2-dw-h">Maker decay · live</h4>
+          <div className="s2-hsvg">
+            <svg viewBox="0 0 280 52" preserveAspectRatio="none">
+              {sel.hist.length > 1 && (
+                <path
+                  d={sel.hist.map((v, i) => {
+                    const mx = Math.max(...sel.hist);
+                    const mn = Math.min(...sel.hist);
+                    const r = mx - mn || 1;
+                    return (i ? 'L' : 'M') + ((i / (sel.hist.length - 1)) * 280).toFixed(1) + ',' + (52 - 4 - ((v - mn) / r) * 42).toFixed(1);
+                  }).join('')}
+                  fill="none"
+                  stroke="var(--s2-cyn)"
+                  strokeWidth="1.6"
+                />
+              )}
+            </svg>
+          </div>
+          <div className="s2-mono dim" style={{ fontSize: 10.5, marginTop: 6 }}>
+            {sel.mOpen} at open → {sel.mNow} now (−{(sel.decay * 100).toFixed(0)}%)
+          </div>
+          <h4 className="s2-dw-h">Position model</h4>
+          <div className="s2-dw-cap">
+            Capital
+            <input
+              type="number"
+              value={posCap}
+              min={10}
+              step={10}
+              onChange={(e) => setPosCap(Math.max(0, +e.target.value || 0))}
+            />
+          </div>
+          <div className="s2-dw-grid" style={{ marginTop: 14 }}>
+            <div>
+              <span className="s2-flab">Pool share</span>
+              <span className="s2-mono" style={{ color: 'var(--s2-cyn)' }}>
+                {(Math.min(0.85, posCap / (sel.makerCap + posCap)) * 100).toFixed(1)}%
+              </span>
+            </div>
+            <div>
+              <span className="s2-flab">This match</span>
+              <span className="s2-mono s2-grn">
+                ${(sel.pool * Math.min(0.85, posCap / (sel.makerCap + posCap))).toFixed(2)}
+              </span>
+            </div>
+            <div>
+              <span className="s2-flab">× 6 rotations</span>
+              <span className="s2-mono s2-amb">
+                ${(sel.pool * Math.min(0.85, posCap / (sel.makerCap + posCap)) * 6).toFixed(0)}/d
+              </span>
+            </div>
+            <div>
+              <span className="s2-flab">Spread</span>
+              <span className="s2-mono">{sel.spread.toFixed(1)}¢</span>
+            </div>
+          </div>
+          <h4 className="s2-dw-h">Desk read</h4>
+          {isMatchPoint(sel) && (
+            <div className="s2-flag s2-bad"><i>▮</i><div><b>Match point</b><span>Maximum adverse selection — every round is decisive. Size down or sit out.</span></div></div>
+          )}
+          {sel.state === 'PRE' && (
+            <div className="s2-flag"><i>▮</i><div><b>Window not open yet</b><span>Set an alert for halftime. Entering at the opener means paying full competition.</span></div></div>
+          )}
+          {sel.mNow < 5 && (
+            <div className="s2-flag s2-bad"><i>▮</i><div><b>Skeleton book</b><span>Under 5 makers — your own fills move the mid. Quote minimum size only.</span></div></div>
+          )}
+          {sel.winOpen && (
+            <div className="s2-flag s2-ok"><i>▮</i><div><b>Window open</b><span>Maker decay {(sel.decay * 100).toFixed(0)}% with the pool still paying flat. This is the setup.</span></div></div>
+          )}
+          {!isMatchPoint(sel) && sel.state !== 'PRE' && sel.mNow >= 5 && !sel.winOpen && (
+            <div className="s2-flag"><i>▮</i><div><b>No major flags</b><span>Standard book for this phase.</span></div></div>
+          )}
+          <a className="s2-dw-link" href="https://polymarket.com/markets" target="_blank" rel="noopener noreferrer">
+            OPEN ON POLYMARKET ↗
+          </a>
+          <p className="s2-dw-note">
+            Simulated lifecycle. Real deployment needs Gamma API pools + a live game-state provider + CLOB maker counts.
+          </p>
+        </aside>
+      )}
     </div>
   );
 }
 
-/* ── Fragment import (React) ──────────────────────────────────────── */
-import { Fragment } from 'react';
+/* ── Sub-components ─────────────────────────────────────────────────── */
+
+function VelBar({ label, value, max, colorClass }: { label: string; value: number; max: number; colorClass: string }) {
+  return (
+    <div className="s2-vb-row">
+      <span className="s2-vb-lab s2-mono">{label}</span>
+      <div className="s2-vb-track">
+        <div className={'s2-vb ' + colorClass} style={{ width: (value / max * 100) + '%' }} />
+      </div>
+      <span className={'s2-vb-v s2-mono ' + (colorClass === 'rot-b' ? 's2-grn' : colorClass === 'dim-b' ? 'dim' : '')}>
+        ${value.toFixed(0)}/d
+      </span>
+    </div>
+  );
+}
+
+function DecayChart() {
+  const phases = ['PRE', 'R1–6', 'R7–12', 'HT', 'R13–18', 'R19–24', 'MP'];
+  const makers = [34, 30, 24, 15, 11, 9, 6];
+  const share = makers.map((n) => 1000 / (n * 300 + 1000) * 100);
+  const notes = [
+    'Full book. Everyone is here — worst possible time to enter.',
+    'Casual money plus bots. Competition peaks, share bottoms.',
+    'Only grinders remain. Your share quietly creeps up.',
+    'The break. Risk desks reset, first big pull happens here.',
+    'Volatility up, makers down. The window arms.',
+    'Every round decisive. Thin book, fat share — the money zone.',
+    'Maximum share, maximum adverse selection. Clutch or don\u2019t.',
+  ];
+  const [hover, setHover] = useState(5);
+
+  const W = 780, H = 300, L = 52, R = 56, T = 30, B = 46;
+  const iw = (W - L - R) / 7;
+  const yM = (n: number) => T + (1 - n / 40) * (H - T - B);
+  const yS = (p: number) => T + (1 - p / 40) * (H - T - B);
+
+  const linePath = (vals: number[], yf: (n: number) => number) =>
+    vals.map((v, i) => (i ? 'L' : 'M') + (L + iw * i + iw / 2) + ',' + yf(v)).join(' ');
+
+  return (
+    <div>
+      <div className="s2-chart-wrap">
+        <svg viewBox={`0 0 ${W} ${H}`}>
+          {/* Grid */}
+          {[0, 10, 20, 30, 40].map((v) => (
+            <g key={v}>
+              <line x1={L} y1={yM(v)} x2={W - R} y2={yM(v)} stroke="rgba(139,151,173,.12)" />
+              <text x={L - 8} y={yM(v) + 3} fill="var(--s2-dim)" fontSize="9" textAnchor="end" fontFamily="var(--s2-mono)">{v}</text>
+            </g>
+          ))}
+          {/* Window highlight */}
+          <rect x={L + iw * 3} y={T} width={W - R - (L + iw * 3)} height={H - T - B} fill="rgba(255,214,10,.055)" />
+          <line x1={L + iw * 3} y1={T} x2={L + iw * 3} y2={H - B} stroke="rgba(255,214,10,.5)" strokeDasharray="4 4" />
+          <text x={L + iw * 3 + 10} y={T + 16} fill="var(--s2-yel)" fontSize="10" fontFamily="var(--s2-mono)" letterSpacing="2">THE SECOND-HALF WINDOW</text>
+          {/* Lines */}
+          <path d={linePath(makers, yM)} fill="none" stroke="var(--s2-cyn)" strokeWidth="2.2" />
+          <path d={linePath(share, yS)} fill="none" stroke="var(--s2-yel)" strokeWidth="2.2" />
+          {/* Dots */}
+          {makers.map((v, i) => <circle key={'m' + i} cx={L + iw * i + iw / 2} cy={yM(v)} r="3.4" fill="var(--s2-cyn)" />)}
+          {share.map((v, i) => <circle key={'s' + i} cx={L + iw * i + iw / 2} cy={yS(v)} r="3.4" fill="var(--s2-yel)" />)}
+          {/* Labels */}
+          {phases.map((p, i) => (
+            <text key={i} x={L + iw * i + iw / 2} y={H - 18} fill="var(--s2-mut)" fontSize="10" textAnchor="middle" fontFamily="var(--s2-mono)">{p}</text>
+          ))}
+          {/* Hover bands */}
+          {phases.map((_, i) => (
+            <rect key={i} x={L + iw * i} y={T} width={iw} height={H - T - B} fill="transparent" style={{ cursor: 'crosshair' }}
+              onMouseEnter={() => setHover(i)} />
+          ))}
+          <text x={L} y={16} fill="var(--s2-cyn)" fontSize="10" fontFamily="var(--s2-mono)" letterSpacing="2">MAKERS LEFT</text>
+          <text x={W - R} y={16} fill="var(--s2-yel)" fontSize="10" textAnchor="end" fontFamily="var(--s2-mono)" letterSpacing="2">POOL SHARE / $1K</text>
+        </svg>
+      </div>
+      <div className="s2-cread">
+        <div><span className="s2-flab">Phase</span><b className="s2-mono" style={{ color: 'var(--s2-ink)' }}>{phases[hover]}</b></div>
+        <div><span className="s2-flab">Makers left</span><b className="s2-mono" style={{ color: 'var(--s2-cyn)' }}>{makers[hover]} <span style={{ color: 'var(--s2-dim)', fontSize: 11 }}>({Math.round((1 - makers[hover] / 34) * 100)}% gone)</span></b></div>
+        <div><span className="s2-flab">Share of pool / $1k</span><b className="s2-mono s2-amb">{share[hover].toFixed(0)}%</b></div>
+        <div><span className="s2-flab">Est $/day · $1k</span><b className="s2-mono s2-grn">${(120 * share[hover] / 100).toFixed(0)}</b></div>
+        <div className="s2-cnote">{notes[hover]}</div>
+      </div>
+    </div>
+  );
+}

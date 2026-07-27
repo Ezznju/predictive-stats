@@ -1,31 +1,31 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Polymarket LP Reward Scanner — Find the Best Liquidity Farming Opportunities',
+  title: 'SIDE·TWO — Esports Second-Half LP Desk',
   description:
-    'Free live scanner that finds the most profitable Polymarket liquidity-provider reward farming opportunities. See daily rewards, competition, entry costs, and order book depth — updated every 5 minutes.',
+    'Live esports LP desk: track maker decay, pool share, and the second-half window across CS2, Valorant, LoL, and Dota 2 markets. Velocity calculator, playbook, and real-time simulation.',
   alternates: { canonical: 'https://predictionsmarketfans.com/tools/lp-scanner' },
   openGraph: {
-    title: 'Polymarket LP Reward Scanner',
+    title: 'SIDE·TWO — Esports Second-Half LP Desk',
     description:
-      'Find the best Polymarket LP reward farming opportunities. Live data, sorted by profitability.',
+      'Track the esports LP lifecycle: maker decay, pool share, and the second-half window. Velocity calculator and live simulation.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Polymarket LP Reward Scanner',
+    title: 'SIDE·TWO — Esports Second-Half LP Desk',
     description:
-      'Free tool: scan every Polymarket reward market and find the best LP farming opportunities.',
+      'Live esports LP desk with maker decay tracking, velocity calculator, and second-half playbook.',
   },
 };
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
-  name: 'Polymarket LP Reward Scanner',
+  name: 'SIDE·TWO — Esports Second-Half LP Desk',
   url: 'https://predictionsmarketfans.com/tools/lp-scanner',
   description:
-    'Free live scanner that finds the most profitable Polymarket liquidity-provider reward farming opportunities.',
+    'Live esports LP desk: track maker decay, pool share, and the second-half window across CS2, Valorant, LoL, and Dota 2 markets.',
   applicationCategory: 'FinanceApplication',
   operatingSystem: 'Any',
   offers: {
