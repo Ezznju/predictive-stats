@@ -283,52 +283,52 @@ body {
    Scoped to main main (public pages only — admin has no nested main).
    ══════════════════════════════════════════════════════════════════════ */
 
-main main {
+main {
   counter-reset: h2-section;
 }
 
-main main h2 {
-  counter-increment: h2-section;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-weight: 700;
-  font-size: clamp(18px, 2.2vw, 28px);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #0b1120;
-  background: #FF7900;
-  padding: 14px 24px;
-  margin: 0 0 20px;
-  line-height: 1.2;
+main h2 {
+  counter-increment: h2-section !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  font-family: 'Space Grotesk', system-ui, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: clamp(18px, 2.2vw, 28px) !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  color: #0b1120 !important;
+  background: #FF7900 !important;
+  padding: 14px 24px !important;
+  margin: 0 0 20px !important;
+  line-height: 1.2 !important;
 }
 
-main main h2::before {
-  content: counter(h2-section, decimal-leading-zero);
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.06em;
-  color: #0b1120;
-  transform: rotate(-6deg);
-  box-shadow: 3px 3px 0 rgba(0,0,0,.25);
+main h2::before {
+  content: counter(h2-section, decimal-leading-zero) !important;
+  flex-shrink: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 44px !important;
+  height: 44px !important;
+  font-family: 'Space Grotesk', system-ui, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 15px !important;
+  letter-spacing: 0.06em !important;
+  color: #0b1120 !important;
+  transform: rotate(-6deg) !important;
+  box-shadow: 3px 3px 0 rgba(0,0,0,.25) !important;
 }
 
 /* Cycle badge colors: magenta → cyan → yellow → green → orange */
-main main h2:nth-of-type(5n+1)::before { background: #FF00B8; }
-main main h2:nth-of-type(5n+2)::before { background: #29C5F6; }
-main main h2:nth-of-type(5n+3)::before { background: #FFBF00; }
-main main h2:nth-of-type(5n+4)::before { background: #2BD96E; }
-main main h2:nth-of-type(5n+5)::before { background: #FF7900; }
+main h2:nth-of-type(5n+1)::before { background: #FF00B8 !important; }
+main h2:nth-of-type(5n+2)::before { background: #29C5F6 !important; }
+main h2:nth-of-type(5n+3)::before { background: #FFBF00 !important; }
+main h2:nth-of-type(5n+4)::before { background: #2BD96E !important; }
+main h2:nth-of-type(5n+5)::before { background: #FF7900 !important; }
 
-/* Override for s2-root pages (LP scanner) — use s2 color vars */
-.s2-root main h2::before { color: #0b1120; }
+/* s2-root overrides */
+.s2-root main h2::before { color: #0b1120 !important; }
 
 /* ══════════════════════════════════════════════════════════════════════
    SIDE·TWO — Esports Second-Half LP Desk
