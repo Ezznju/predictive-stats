@@ -7,13 +7,13 @@ export const maxDuration = 60;
 
 export async function GET() {
   try {
-    const pools = await withSharedCache('gamma-rewards', fetchGammaRewards, {
+    const result = await withSharedCache('gamma-rewards', fetchGammaRewards, {
       softTtlMs: 5 * 60_000,
       hardTtlMs: 30 * 60_000,
     });
 
     return NextResponse.json(
-      { pools, cached: false, updatedAt: Date.now() },
+      { pools: result.payload ?? [], cached: false, updatedAt: Date.now() },
       {
         headers: {
           'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',

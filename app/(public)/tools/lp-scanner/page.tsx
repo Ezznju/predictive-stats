@@ -156,7 +156,7 @@ export default function LPScannerPage() {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         if (!cancelled) {
-          setGammaPools(data.pools ?? []);
+          setGammaPools(Array.isArray(data.pools) ? data.pools : []);
           setGammaLoading(false);
         }
       } catch (err: any) {
