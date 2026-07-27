@@ -15,6 +15,24 @@ import {
   isMatchPoint,
 } from '@/lib/esports/match-engine';
 
+/* ── Gamma Types ────────────────────────────────────────────────────── */
+
+interface GammaRewardPool {
+  conditionId: string;
+  question: string;
+  slug: string;
+  image: string;
+  dailyReward: number;
+  minShares: number;
+  maxSpread: number;
+  endDate: string;
+  tokens: Array<{
+    tokenId: string;
+    outcome: string;
+    price: number;
+  }>;
+}
+
 /* ── Helpers ────────────────────────────────────────────────────────── */
 
 function clamp(v: number, a: number, b: number) { return Math.min(b, Math.max(a, v)); }
@@ -108,6 +126,11 @@ export default function LPScannerPage() {
   const [vPool, setVPool] = useState(90);
   const [vPhase, setVPhase] = useState(2.8);
 
+  // Gamma API state
+  const [gammaPools, setGammaPools] = useState<GammaRewardPool[]>([]);
+  const [gammaLoading, setGammaLoading] = useState(true);
+  const [gammaError, setGammaError] = useState<string | null>(null);
+
   const addFeed = useCallback((m: EsportsMatch, txt: string) => {
     const evt: FeedEvent = {
       t: fmtTime(),
@@ -122,6 +145,28 @@ export default function LPScannerPage() {
   useEffect(() => {
     const iv = setInterval(() => setClock(fmtTime()), 1000);
     return () => clearInterval(iv);
+  }, []);
+
+  // Fetch Gamma reward pools
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/gamma-rewards');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (!cancelled) {
+          setGammaPools(data.pools ?? []);
+          setGammaLoading(false);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setGammaError(err?.message ?? 'Failed to load');
+          setGammaLoading(false);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   // Simulation tick
@@ -421,6 +466,80 @@ export default function LPScannerPage() {
           </div>
           <p className="s2-footnote">
             SIM ENGINE — scores, clocks and maker counts are simulated to demonstrate the liquidity lifecycle; structure mirrors Polymarket esports format (CS2/VAL MR12, LoL/Dota BO3). Maker counts marked ~ are modeled. Not financial advice.
+          </p>
+        </section>
+
+        {/* Live Gamma Reward Pools */}
+        <section className="s2-sec" id="gamma">
+          <div className="s2-sec-head">
+            <p className="s2-kicker" style={{ margin: 0 }}>Live from Polymarket</p>
+            <h2 className="s2-h2">Active Reward Pools</h2>
+          </div>
+          <p style={{ color: 'var(--s2-mut)', maxWidth: '70ch', marginBottom: 18 }}>
+            Real-time reward pool data from Polymarket&apos;s Gamma API. These markets are currently paying LP rewards — sorted by daily reward.
+          </p>
+          {gammaLoading ? (
+            <div className="s2-feat" style={{ textAlign: 'center', padding: 40 }}>
+              <span className="s2-mono" style={{ color: 'var(--s2-cyn)' }}>Loading reward pools…</span>
+            </div>
+          ) : gammaError ? (
+            <div className="s2-feat" style={{ textAlign: 'center', padding: 40 }}>
+              <span className="s2-mono" style={{ color: 'var(--s2-red)' }}>Error: {gammaError}</span>
+            </div>
+          ) : gammaPools.length === 0 ? (
+            <div className="s2-feat" style={{ textAlign: 'center', padding: 40 }}>
+              <span className="s2-mono" style={{ color: 'var(--s2-mut)' }}>No active reward pools found.</span>
+            </div>
+          ) : (
+            <div className="s2-table-wrap" style={{ maxHeight: '40vh' }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Market</th>
+                    <th>Reward/Day</th>
+                    <th>Min Shares</th>
+                    <th>Max Spread</th>
+                    <th>YES Price</th>
+                    <th>NO Price</th>
+                    <th>Link</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gammaPools.map((p) => {
+                    const yesTok = p.tokens.find((t) => t.outcome === 'Yes');
+                    const noTok = p.tokens.find((t) => t.outcome === 'No');
+                    return (
+                      <tr key={p.conditionId}>
+                        <td>
+                          <div style={{ maxWidth: 400 }}>
+                            <div style={{ fontWeight: 600, fontSize: 13 }}>{p.question}</div>
+                          </div>
+                        </td>
+                        <td className="s2-mono s2-c-pool">${p.dailyReward.toFixed(2)}</td>
+                        <td className="s2-mono">{p.minShares.toLocaleString()}</td>
+                        <td className="s2-mono">{p.maxSpread}¢</td>
+                        <td className="s2-mono s2-grn">{yesTok ? (yesTok.price * 100).toFixed(1) + '¢' : '—'}</td>
+                        <td className="s2-mono" style={{ color: 'var(--s2-red)' }}>{noTok ? (noTok.price * 100).toFixed(1) + '¢' : '—'}</td>
+                        <td>
+                          <a
+                            href={`https://polymarket.com/event/${p.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="s2-dw-link"
+                            style={{ display: 'inline-block', padding: '6px 12px', fontSize: 10, marginTop: 0 }}
+                          >
+                            VIEW ↗
+                          </a>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="s2-footnote">
+            Data from Polymarket Gamma API · {gammaPools.length} active reward markets · Updated on page load
           </p>
         </section>
 
