@@ -26,6 +26,8 @@ const PUBLIC_API_PREFIXES = [
   '/api/arbitrage-scanner',
   '/api/pulse',
   '/api/gamma-rewards',
+  '/api/lp-rewards',
+  '/api/order-book',
 ];
 
 // Public POST routes (visitor-facing forms)

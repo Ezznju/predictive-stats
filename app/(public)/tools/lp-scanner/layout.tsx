@@ -1,31 +1,31 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'SIDE·TWO — Esports Second-Half LP Desk',
+  title: 'LP Scanner — Live Polymarket Reward Pools',
   description:
-    'Live esports LP desk: track maker decay, pool share, and the second-half window across CS2, Valorant, LoL, and Dota 2 markets. Velocity calculator, playbook, and real-time simulation.',
+    'Real-time Polymarket LP reward pool scanner. Sort active markets by daily reward, spread, volume, and competitiveness. Live order book depth and velocity calculator.',
   alternates: { canonical: 'https://predictionsmarketfans.com/tools/lp-scanner' },
   openGraph: {
-    title: 'SIDE·TWO — Esports Second-Half LP Desk',
+    title: 'LP Scanner — Live Polymarket Reward Pools',
     description:
-      'Track the esports LP lifecycle: maker decay, pool share, and the second-half window. Velocity calculator and live simulation.',
+      'Real-time Polymarket LP reward pool scanner with live order book data, sorting, and velocity calculator.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'SIDE·TWO — Esports Second-Half LP Desk',
+    title: 'LP Scanner — Live Polymarket Reward Pools',
     description:
-      'Live esports LP desk with maker decay tracking, velocity calculator, and second-half playbook.',
+      'Scan active Polymarket LP reward pools. Daily rewards, spreads, volume, competitiveness, and live order books.',
   },
 };
 
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
-  name: 'SIDE·TWO — Esports Second-Half LP Desk',
+  name: 'LP Scanner — Live Polymarket Reward Pools',
   url: 'https://predictionsmarketfans.com/tools/lp-scanner',
   description:
-    'Live esports LP desk: track maker decay, pool share, and the second-half window across CS2, Valorant, LoL, and Dota 2 markets.',
+    'Real-time Polymarket LP reward pool scanner with live order book data and velocity calculator.',
   applicationCategory: 'FinanceApplication',
   operatingSystem: 'Any',
   offers: {
