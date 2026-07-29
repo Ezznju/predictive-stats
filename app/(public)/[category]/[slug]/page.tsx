@@ -37,10 +37,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const author = await getAuthorById(article.authorId);
   const categorySlug = params.category;
 
+  const siteUrl = 'https://predictionsmarketfans.com';
   return {
     title: article.seoTitle || article.title,
     description: article.metaDescription || article.excerpt,
-    alternates: { canonical: `/${categorySlug}/${article.slug}` },
+    alternates: { canonical: `${siteUrl}/${categorySlug}/${article.slug}` },
     authors: author ? [{ name: author.name }] : undefined,
     openGraph: {
       type: 'article',
