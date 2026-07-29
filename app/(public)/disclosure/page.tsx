@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'Affiliate Disclosure',
   description:
     'How Predictions Market Fans earns revenue, our affiliate relationships, and how we keep reviews independent.',
-  alternates: { canonical: '/disclosure' },
+  alternates: { canonical: 'https://predictionsmarketfans.com/disclosure' },
 };
 
 export default async function DisclosurePage() {

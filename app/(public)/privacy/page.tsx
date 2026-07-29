@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description: 'How Predictions Market Fans collects, uses, and protects your data.',
-  alternates: { canonical: '/privacy' },
+  alternates: { canonical: 'https://predictionsmarketfans.com/privacy' },
 };
 
 export default async function PrivacyPage() {

@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   title: 'Free Prediction Market Tools',
   description:
     'Free tools for prediction market traders — scan LP rewards on Polymarket and find cross-platform arbitrage between Polymarket and Kalshi.',
-  alternates: { canonical: '/tools' },
+  alternates: { canonical: 'https://predictionsmarketfans.com/tools' },
 };
 
 const TOOLS = [

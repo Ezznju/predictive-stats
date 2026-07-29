@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: WalletPageProps): Promise<Met
   return {
     title: `${name} — Whale Profile`,
     description: `Whale wallet profile for ${name}. View trading history, P&L, win rate, positions, and intelligence scores.`,
-    alternates: { canonical: `/pulse/wallets/${params.address}` },
+    alternates: { canonical: `https://predictionsmarketfans.com/pulse/wallets/${params.address}` },
     openGraph: {
       type: 'profile',
       title: `${name} — Whale Profile`,

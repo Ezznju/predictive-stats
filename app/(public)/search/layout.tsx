@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: 'Search',
   description:
     'Search all Predictions Market Fans articles on prediction markets, forecasting, and probabilistic analysis.',
-  alternates: { canonical: '/search' },
+  alternates: { canonical: 'https://predictionsmarketfans.com/search' },
   robots: { index: true, follow: true },
 };
 

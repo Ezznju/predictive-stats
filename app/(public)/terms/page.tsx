@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Terms of Use',
   description: 'Terms and conditions for using Predictions Market Fans.',
-  alternates: { canonical: '/terms' },
+  alternates: { canonical: 'https://predictionsmarketfans.com/terms' },
 };
 
 export default async function TermsPage() {

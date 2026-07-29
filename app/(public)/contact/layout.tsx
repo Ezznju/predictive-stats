@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: 'Contact',
   description:
     'Get in touch with the Predictions Market Fans team — questions, pitches, corrections, and partnership inquiries.',
-  alternates: { canonical: '/contact' },
+  alternates: { canonical: 'https://predictionsmarketfans.com/contact' },
 };
 
 export default function ContactLayout({ children }: { children: React.ReactNode }) {

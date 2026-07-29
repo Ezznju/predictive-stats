@@ -15,7 +15,7 @@ import { buildHomepageContent } from '@/lib/homepage-content';
 import { DecisionLabStrip } from '@/components/golden/DecisionLabStrip';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { alternates: { canonical: '/' } };
+export const metadata = { alternates: { canonical: 'https://predictionsmarketfans.com/' } };
 
 export default async function Home() {
   const [featured, allArticles, categories, authors, settings] = await Promise.all([

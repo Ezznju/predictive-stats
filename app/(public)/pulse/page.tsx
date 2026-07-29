@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   title: 'Prediction Pulse — Live Whale Tracker',
   description:
     'Real-time whale intelligence across Polymarket and Kalshi. Track large trades, monitor top wallets, and spot market-moving activity as it happens.',
-  alternates: { canonical: '/pulse' },
+  alternates: { canonical: 'https://predictionsmarketfans.com/pulse' },
   openGraph: {
     type: 'website',
     title: 'Prediction Pulse — Live Whale Tracker',

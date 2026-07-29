@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: MarketPageProps): Promise<Met
   return {
     title: `${data.marketTitle} — Whale Activity`,
     description: `Whale trading activity for ${data.marketTitle}. Track large trades, top holders, and smart money flow.`,
-    alternates: { canonical: `/pulse/markets/${params.conditionId}` },
+    alternates: { canonical: `https://predictionsmarketfans.com/pulse/markets/${params.conditionId}` },
     openGraph: {
       type: 'website',
       title: `${data.marketTitle} — Whale Activity`,

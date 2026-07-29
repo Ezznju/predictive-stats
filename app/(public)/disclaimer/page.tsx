@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Disclaimer',
   description: 'Editorial and financial disclaimer for Predictions Market Fans content.',
-  alternates: { canonical: '/disclaimer' },
+  alternates: { canonical: 'https://predictionsmarketfans.com/disclaimer' },
 };
 
 export default async function DisclaimerPage() {

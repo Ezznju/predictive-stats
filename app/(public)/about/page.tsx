@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'About',
   description: 'Predictions Market Fans is an editorial publication covering prediction markets, forecasting, and data-driven analysis.',
-  alternates: { canonical: '/about' },
+  alternates: { canonical: 'https://predictionsmarketfans.com/about' },
 };
 
 export default async function AboutPage() {

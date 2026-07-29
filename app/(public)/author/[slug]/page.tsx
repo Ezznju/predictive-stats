@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: author.name,
     description: author.bio,
-    alternates: { canonical: `/author/${author.slug}` },
+    alternates: { canonical: `https://predictionsmarketfans.com/author/${author.slug}` },
     openGraph: { title: `${author.name} | Predictions Market Fans`, description: author.bio, images: author.avatar ? [{ url: author.avatar }] : undefined },
   };
 }

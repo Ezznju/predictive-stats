@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: 'Whale Skill Leaderboard — Prediction Pulse',
     description:
       'Top wallets ranked by skill score. Composite of win rate, P&L, and volume across prediction markets.',
-    alternates: { canonical: '/pulse/leaderboard' },
+    alternates: { canonical: 'https://predictionsmarketfans.com/pulse/leaderboard' },
     openGraph: {
       type: 'website',
       title: 'Whale Skill Leaderboard — Prediction Pulse',
