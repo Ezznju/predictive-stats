@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { submitIndexNow } from '@/lib/indexnow';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +46,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  if (data?.category_slug && data?.slug) {
+    const url = `https://predictionsmarketfans.com/${data.category_slug}/${data.slug}`;
+    submitIndexNow([url]).catch(() => {});
+  }
+
   return NextResponse.json(data);
 }
 
