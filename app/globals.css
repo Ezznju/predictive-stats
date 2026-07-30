@@ -159,34 +159,32 @@
   pointer-events: none;
 }
 
-/* ── Article body tables: brutalist style ── */
+/* ── Article body tables: card style matching lists/TOC ── */
 .prose {
   --tw-prose-th-borders: #000000;
-  --tw-prose-td-borders: rgba(0, 0, 0, 0.45);
+  --tw-prose-td-borders: rgba(0, 0, 0, 0.12);
 }
 
 .prose table {
   border-collapse: separate;
   border-spacing: 0;
   border: 2px solid #000;
-  border-radius: 0;
+  border-radius: 12px;
   overflow: hidden;
   width: 100%;
   box-shadow: 4px 4px 0 #000;
   margin: 1.5em 0;
-  font-family: 'IBM Plex Mono', 'Courier New', monospace;
-  font-size: 13px;
+  background: #FFF7E6;
 }
 
 .prose table th {
   background: #0b1120;
   color: #FFE642 !important;
   font-weight: 700;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 12px 16px;
+  padding: 12px 18px;
   border-bottom: 2px solid #000;
   text-align: left;
 }
@@ -198,9 +196,10 @@
 }
 
 .prose table td {
-  padding: 10px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-  color: #0b1120;
+  padding: 12px 18px;
+  border-bottom: 2px solid rgba(0,0,0,0.1);
+  color: #1d1606;
+  font-size: 15px;
 }
 
 .prose table td p {
@@ -212,19 +211,11 @@
 }
 
 .prose table tbody tr {
-  transition: background 0.15s;
+  transition: background 0.15s, padding-left 0.15s;
 }
 
 .prose table tbody tr:hover {
-  background: #FFE642;
-}
-
-.prose table tbody tr:nth-child(odd) td {
-  background: #FFF7E6;
-}
-
-.prose table tbody tr:nth-child(odd):hover td {
-  background: #FFE642;
+  background: #FFFDF3;
 }
 
 /* ── Mobile: wide article tables scroll inside their own container ── */
