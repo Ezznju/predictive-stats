@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Twitter, Linkedin } from 'lucide-react';
+import { Twitter, Linkedin, Youtube } from 'lucide-react';
 import { Category, SiteSettings } from '@/types';
 import {
   FlowerShape,
@@ -105,6 +105,15 @@ export function Footer({ settings, categories }: FooterProps) {
                 <Linkedin className="w-4 h-4" />
               </a>
             )}
+            <a
+              href="https://www.youtube.com/@predictionsmarketfans"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-black/50 hover:text-black transition-colors"
+              aria-label="YouTube"
+            >
+              <Youtube className="w-4 h-4" />
+            </a>
             <div className="flex items-center gap-1 ml-2">
               <div className="w-1.5 h-1.5 rounded-full bg-[#FFE642]" />
               <div className="w-1.5 h-1.5 rounded-full bg-[#00E676]" />
