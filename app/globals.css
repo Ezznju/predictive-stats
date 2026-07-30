@@ -473,14 +473,14 @@ body {
 /* ══════════════════════════════════════════════════════════════════════
    Global h2 — numbered chapter format
    Counter resets per <main> so each page starts at 01.
-   Scoped to main main (public pages only — admin has no nested main).
+   Scoped to .prose so it only affects article content, not cards.
    ══════════════════════════════════════════════════════════════════════ */
 
 main {
   counter-reset: h2-section;
 }
 
-main h2 {
+.prose h2 {
   counter-increment: h2-section !important;
   display: flex !important;
   align-items: center !important;
@@ -498,7 +498,7 @@ main h2 {
   position: relative !important;
 }
 
-main h2::before {
+.prose h2::before {
   content: counter(h2-section, decimal-leading-zero) !important;
   flex-shrink: 0 !important;
   display: grid !important;
@@ -516,14 +516,14 @@ main h2::before {
 }
 
 /* Cycle badge colors: magenta → cyan → yellow → green → orange */
-main h2:nth-of-type(5n+1)::before { background: #FF00B8 !important; color: #fff !important; }
-main h2:nth-of-type(5n+2)::before { background: #29C5F6 !important; }
-main h2:nth-of-type(5n+3)::before { background: #FFE642 !important; }
-main h2:nth-of-type(5n+4)::before { background: #2BD96E !important; color: #fff !important; }
-main h2:nth-of-type(5n+5)::before { background: #FF7900 !important; color: #fff !important; }
+.prose h2:nth-of-type(5n+1)::before { background: #FF00B8 !important; color: #fff !important; }
+.prose h2:nth-of-type(5n+2)::before { background: #29C5F6 !important; }
+.prose h2:nth-of-type(5n+3)::before { background: #FFE642 !important; }
+.prose h2:nth-of-type(5n+4)::before { background: #2BD96E !important; color: #fff !important; }
+.prose h2:nth-of-type(5n+5)::before { background: #FF7900 !important; color: #fff !important; }
 
 /* Colored left accent bar */
-main h2::after {
+.prose h2::after {
   content: "" !important;
   position: absolute !important;
   left: -22px !important;
@@ -533,19 +533,19 @@ main h2::after {
   border-radius: 4px !important;
 }
 
-main h2:nth-of-type(5n+1)::after { background: #FF00B8 !important; }
-main h2:nth-of-type(5n+2)::after { background: #29C5F6 !important; }
-main h2:nth-of-type(5n+3)::after { background: #FFE642 !important; }
-main h2:nth-of-type(5n+4)::after { background: #2BD96E !important; }
-main h2:nth-of-type(5n+5)::after { background: #FF7900 !important; }
+.prose h2:nth-of-type(5n+1)::after { background: #FF00B8 !important; }
+.prose h2:nth-of-type(5n+2)::after { background: #29C5F6 !important; }
+.prose h2:nth-of-type(5n+3)::after { background: #FFE642 !important; }
+.prose h2:nth-of-type(5n+4)::after { background: #2BD96E !important; }
+.prose h2:nth-of-type(5n+5)::after { background: #FF7900 !important; }
 
 @media (max-width: 520px) {
-  main h2::after { display: none !important; }
-  main h2 { padding-left: 0 !important; }
+  .prose h2::after { display: none !important; }
+  .prose h2 { padding-left: 0 !important; }
 }
 
 /* s2-root overrides */
-.s2-root main h2::before { color: #0b1120 !important; }
+.s2-root .prose h2::before { color: #0b1120 !important; }
 
 /* ══════════════════════════════════════════════════════════════════════
    SIDE·TWO — Esports Second-Half LP Desk
