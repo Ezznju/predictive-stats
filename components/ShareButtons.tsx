@@ -38,10 +38,19 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
       </a>
       <button
         onClick={handleCopy}
-        className="p-2 bg-white/15 rounded-lg text-ink-secondary hover:text-black hover:bg-surface-border transition-all"
-        title={copied ? 'Copied!' : 'Copy link'}
+        className="ml-auto flex items-center gap-2 px-4 py-2 bg-[#29C5F6] text-black font-mono font-bold text-xs tracking-widest uppercase border-2 border-black shadow-[3px_3px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0_#000] transition-all"
       >
-        {copied ? <Check className="w-4 h-4 text-green-600" /> : <Link2 className="w-4 h-4" />}
+        {copied ? (
+          <>
+            <Check className="w-3.5 h-3.5" />
+            COPIED ✓
+          </>
+        ) : (
+          <>
+            <Link2 className="w-3.5 h-3.5" />
+            COPY LINK
+          </>
+        )}
       </button>
     </div>
   );

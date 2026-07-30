@@ -244,8 +244,10 @@ export default async function CategoryArticlePage({ params }: Props) {
 
         {/* Pull Quote */}
         {article.pullQuote && (
-          <blockquote className="border-l-4 border-black pl-6 py-2 my-8 text-xl font-display text-ink/80 italic">
-            {article.pullQuote}
+          <blockquote className="my-10 pl-6 border-l-[10px] border-black">
+            <p className="font-display font-bold text-[clamp(20px,3vw,30px)] leading-[1.3] uppercase text-ink m-0">
+              {article.pullQuote}
+            </p>
           </blockquote>
         )}
 
@@ -318,6 +320,36 @@ export default async function CategoryArticlePage({ params }: Props) {
           <p className="text-xs text-ink-muted leading-relaxed">
             <strong className="text-ink-secondary">Disclaimer:</strong> This content is for informational and educational purposes only. It does not constitute financial advice, investment recommendations, or trading guidance. Prediction market participation involves risk of loss. Always conduct your own research before making any financial decisions.
           </p>
+        </div>
+
+        {/* CTA Cards */}
+        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <Link
+            href="/tools/lp-scanner"
+            className="group relative block border-2 border-black bg-[#C6F23A] p-6 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_#000] transition-all"
+          >
+            <span className="inline-block font-mono font-bold text-[10px] tracking-[0.12em] uppercase bg-white border-2 border-black px-2 py-0.5 mb-3">
+              See the numbers
+            </span>
+            <h3 className="font-display font-bold text-2xl uppercase text-black mb-2">LP Scanner</h3>
+            <p className="text-sm text-black/70 leading-relaxed">Rank every live Polymarket reward pool by competition, minimum capital, and yield per $1,000.</p>
+            <span className="absolute top-5 right-5 w-8 h-8 bg-black text-[#C6F23A] rounded-full flex items-center justify-center font-mono font-bold text-sm group-hover:translate-x-1 group-hover:-rotate-8 transition-transform">
+              →
+            </span>
+          </Link>
+          <Link
+            href="/tools/arbitrage-scanner"
+            className="group relative block border-2 border-black bg-[#29C5F6] p-6 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_#000] transition-all"
+          >
+            <span className="inline-block font-mono font-bold text-[10px] tracking-[0.12em] uppercase bg-white border-2 border-black px-2 py-0.5 mb-3">
+              Find the spread
+            </span>
+            <h3 className="font-display font-bold text-2xl uppercase text-black mb-2">Arbitrage Scanner</h3>
+            <p className="text-sm text-black/70 leading-relaxed">Compare odds across Polymarket, Kalshi, and Metaculus to find mispriced markets in real time.</p>
+            <span className="absolute top-5 right-5 w-8 h-8 bg-black text-[#29C5F6] rounded-full flex items-center justify-center font-mono font-bold text-sm group-hover:translate-x-1 group-hover:-rotate-8 transition-transform">
+              →
+            </span>
+          </Link>
         </div>
 
         {/* Comments */}

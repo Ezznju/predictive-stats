@@ -7,15 +7,9 @@ export function ReadingProgressBar() {
 
   useEffect(() => {
     function handleScroll() {
-      const article = document.querySelector('article');
-      if (!article) return;
-
-      const rect = article.getBoundingClientRect();
-      const articleTop = window.scrollY + rect.top;
-      const articleHeight = rect.height;
-      const scrolled = window.scrollY - articleTop;
-      const pct = Math.min(100, Math.max(0, (scrolled / (articleHeight - window.innerHeight)) * 100));
-      setProgress(pct);
+      const h = document.documentElement;
+      const pct = (h.scrollTop / (h.scrollHeight - h.clientHeight || 1)) * 100;
+      setProgress(Math.min(100, Math.max(0, pct)));
     }
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -23,9 +17,9 @@ export function ReadingProgressBar() {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 w-full h-1 z-50 bg-transparent">
+    <div className="fixed top-0 left-0 right-0 h-[6px] z-[120]">
       <div
-        className="h-full bg-black transition-[width] duration-75 ease-out"
+        className="h-full bg-gradient-to-r from-[#FF00B8] via-[#FF7900] to-[#FFBF00] transition-[width] duration-75 ease-out"
         style={{ width: `${progress}%` }}
       />
     </div>
