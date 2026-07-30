@@ -6,6 +6,7 @@ interface TocItem {
   id: string;
   text: string;
   level: number;
+  num: number;
 }
 
 const DOT_COLORS = ['#FF00B8', '#29C5F6', '#FFE642', '#2BD96E', '#9D5CFF', '#FF6B00'];
@@ -19,7 +20,7 @@ export function TableOfContents() {
     const prose = document.querySelector('.prose');
     if (!prose) return;
 
-    const headings = prose.querySelectorAll('h2, h3');
+    const headings = prose.querySelectorAll('h2');
     const tocItems: TocItem[] = [];
 
     headings.forEach((h, i) => {
@@ -29,6 +30,7 @@ export function TableOfContents() {
         id,
         text: h.textContent || '',
         level: h.tagName === 'H2' ? 2 : 3,
+        num: i + 1,
       });
     });
 
@@ -45,7 +47,7 @@ export function TableOfContents() {
           setActiveId(visible[0].target.id);
         }
       },
-      { rootMargin: '-80px 0px -70% 0px', threshold: 0 }
+      { rootMargin: '-30% 0px -55% 0px', threshold: 0 }
     );
 
     items.forEach((item) => {
@@ -64,7 +66,7 @@ export function TableOfContents() {
       <nav className="article-layout-toc hidden xl:block">
         <div className="toc-card">
           <span className="toc-label">IN THIS PIECE</span>
-          <div className="mt-3 space-y-0.5">
+          <div className="mt-3">
             {items.map((item, i) => (
               <a
                 key={item.id}
@@ -73,19 +75,17 @@ export function TableOfContents() {
                   e.preventDefault();
                   document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
-                className={`group flex items-center gap-2 text-[11px] rounded px-2 py-1 transition-all duration-150 ${
-                  item.level === 3 ? 'ml-4' : 'ml-0'
-                } ${
-                  activeId === item.id
-                    ? 'toc-active'
-                    : 'hover:text-[#FF00B8]'
-                }`}
+                className={`toc-link ${activeId === item.id ? 'toc-active' : ''}`}
               >
                 <span
                   className="w-2 h-2 rounded-full border border-black shrink-0"
                   style={{ backgroundColor: DOT_COLORS[i % DOT_COLORS.length] }}
                 />
-                <span className="truncate">{item.text}</span>
+                <span className="truncate">
+                  <span className="font-bold">{String(item.num).padStart(2, '0')}</span>
+                  {' · '}
+                  {item.text}
+                </span>
               </a>
             ))}
           </div>
@@ -117,8 +117,6 @@ export function TableOfContents() {
                     document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }}
                   className={`group flex items-center gap-2.5 text-sm rounded-lg px-2 py-1.5 transition-all duration-150 ${
-                    item.level === 3 ? 'ml-5' : 'ml-0'
-                  } ${
                     activeId === item.id
                       ? 'bg-black text-[#C6F23A] font-bold border-2 border-black shadow-[2px_2px_0_#000]'
                       : 'text-black font-medium hover:bg-white hover:border-2 hover:border-black hover:shadow-[2px_2px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5'
@@ -128,7 +126,11 @@ export function TableOfContents() {
                     className="w-2.5 h-2.5 rounded-full border-2 border-black shrink-0"
                     style={{ backgroundColor: DOT_COLORS[i % DOT_COLORS.length] }}
                   />
-                  {item.text}
+                  <span>
+                    <span className="font-bold">{String(item.num).padStart(2, '0')}</span>
+                    {' · '}
+                    {item.text}
+                  </span>
                 </a>
               </li>
             ))}
