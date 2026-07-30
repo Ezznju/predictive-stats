@@ -49,7 +49,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
             {category && (
               <span
                 className="category-badge mb-3 border-2 border-black shadow-pop-sm"
-                style={{ backgroundColor: category.color, color: '#fff' }}
+                style={{ backgroundColor: '#FFE642', color: '#0b1120' }}
               >
                 {category.name}
               </span>
