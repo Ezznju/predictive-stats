@@ -176,7 +176,7 @@
 
 .prose table th {
   background: #0b1120;
-  color: #FFE642 !important;
+  color: #FF00B8 !important;
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.1em;
@@ -188,7 +188,7 @@
 
 .prose table th strong,
 .prose table th p {
-  color: #FFE642;
+  color: #FF00B8;
   margin: 0;
 }
 
@@ -447,7 +447,7 @@
 }
 
 .article-title .hl-yellow {
-  color: #FFE642;
+  color: #FF00B8;
   text-shadow: 1px 1px 0 rgba(0,0,0,0.15);
 }
 
