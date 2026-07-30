@@ -48,7 +48,7 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
           <div className="relative z-10 w-full p-5 sm:p-6">
             {category && (
               <span
-                className="category-badge mb-3 border-2 border-black shadow-pop-sm"
+                className="inline-block px-4 py-1.5 mb-3 text-xs font-bold uppercase tracking-wider border-2 border-black shadow-[3px_3px_0_#000]"
                 style={{ backgroundColor: '#FFE642', color: '#0b1120' }}
               >
                 {category.name}
