@@ -200,9 +200,10 @@ export default async function CategoryArticlePage({ params }: Props) {
               {category.name}
             </span>
           )}
-          <h1 className="font-display font-bold text-3xl md:text-4xl lg:text-5xl text-ink leading-tight">
-            {article.title}
-          </h1>
+          <h1
+            className="article-title font-display font-bold text-3xl md:text-4xl lg:text-5xl leading-[0.95] uppercase tracking-tight"
+            dangerouslySetInnerHTML={{ __html: article.title }}
+          />
           <p className="text-lg text-ink-secondary mt-4 leading-relaxed">{article.excerpt}</p>
 
           {/* Meta */}

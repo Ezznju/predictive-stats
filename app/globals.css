@@ -423,6 +423,21 @@
   }
 }
 
+/* ── Article title — bold condensed uppercase ── */
+.article-title {
+  color: #0b1120;
+  text-transform: uppercase;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+
+.article-title .hl-yellow {
+  color: #FFE642;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.15);
+}
+
 /* ── Highlight marker effect ── */
 .prose .hl {
   background: linear-gradient(transparent 58%, var(--sw, #29C5F6) 58%);
