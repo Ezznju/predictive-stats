@@ -505,6 +505,77 @@
   box-shadow: 4px 4px 0 #000;
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   Mascot creature animations
+   ══════════════════════════════════════════════════════════════════════ */
+
+.mascot-creature {
+  cursor: pointer;
+  transition: transform .28s cubic-bezier(.34, 1.56, .64, 1);
+}
+.mascot-creature:hover {
+  transform: translateY(-6px);
+}
+
+.mascot-neck {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: mascot-sway var(--sway, 6s) ease-in-out infinite;
+}
+
+.mascot-lid {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: mascot-blink var(--blink, 5s) ease-in-out infinite;
+}
+
+.mascot-foot {
+  transform-box: fill-box;
+  transform-origin: 88% 0%;
+  animation: mascot-tail var(--tail, 4s) ease-in-out infinite;
+}
+
+.mascot-bubble {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .2s ease, transform .2s ease;
+  pointer-events: none;
+}
+.mascot-creature:hover .mascot-bubble {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes mascot-sway {
+  0%, 100% { transform: rotate(-2.5deg); }
+  50% { transform: rotate(2.5deg); }
+}
+
+@keyframes mascot-blink {
+  0%, 90%, 100% { transform: scaleY(0); }
+  94%, 97% { transform: scaleY(1); }
+}
+
+@keyframes mascot-tail {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(10deg); }
+}
+
+/* Hide scrollbar on mascot band */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-neck, .mascot-lid, .mascot-foot {
+    animation: none;
+  }
+}
+
 /* Safety net: decorative shapes / stray wide elements never cause sideways scroll */
 html,
 body {

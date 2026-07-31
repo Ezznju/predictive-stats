@@ -4,8 +4,8 @@ import { ArrowRight, TrendingUp, Zap, BarChart3, Activity } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
 import {
-  FlowerShape, DaisyShape, UShape, BoldCircle, HalfCircle,
-  DiamondShape, ZigzagLine, ConcentricArches, PinwheelTile,
+  FlowerShape, UShape, BoldCircle, HalfCircle,
+  DiamondShape, ConcentricArches, PinwheelTile,
   QuatrefoilFlower, CornerDotSquare, ArrowBanner,
 } from '@/components/GeometricShapes';
 import {
@@ -14,6 +14,7 @@ import {
 } from '@/lib/db';
 import { buildHomepageContent } from '@/lib/homepage-content';
 import { DecisionLabStrip } from '@/components/golden/DecisionLabStrip';
+import { MascotBand } from '@/components/MascotBand';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { alternates: { canonical: 'https://predictionsmarketfans.com/' } };
@@ -39,30 +40,7 @@ export default async function Home() {
       {/* ── HERO ────────────────────────────────────────────────────── */}
       {heroArticle && (
         <section className="border-b border-surface-border relative overflow-hidden">
-          {/* Shape band: normal-flow visible strip (NOT a background layer).
-              pointer-events-none so it never intercepts clicks. */}
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 relative z-10 pointer-events-none" aria-hidden="true">
-            <div className="flex items-center justify-between gap-4 overflow-hidden h-[88px] sm:h-[104px]">
-              <div className="relative flex-shrink-0 w-[120px] h-full">
-                <CornerDotSquare size={88} color="#2BD96E" dotColor="#9D5CFF" className="absolute top-1 left-0 -rotate-3" />
-                <DiamondShape size={36} color="#D9F24B" className="absolute bottom-0 right-0" />
-              </div>
-              <div className="relative flex-shrink-0 w-[150px] h-full hidden sm:block">
-                <UShape size={96} color="#4845F0" strokeWidth={24} className="absolute top-1 left-2" />
-                <QuatrefoilFlower size={64} petalColor="#C9B8F5" holeColor="#FF8C00" className="absolute top-6 right-0" />
-              </div>
-              <div className="relative flex-shrink-0 w-[130px] h-full hidden md:block">
-                <PinwheelTile size={86} bladeColor="#9D5CFF" className="absolute top-2 left-0 rotate-6" />
-                <DaisyShape size={48} petalColor="#29C5F6" centerColor="#FFE642" className="absolute bottom-0 right-0" />
-              </div>
-              <div className="relative flex-shrink-0 w-[160px] h-full hidden lg:block">
-                <ArrowBanner width={150} height={58} barColor="#29C5F6" className="absolute top-1/2 -translate-y-1/2 left-0" />
-              </div>
-              <div className="relative flex-shrink-0 w-[200px] h-full hidden lg:block">
-                <ConcentricArches size={150} colors={['#FF00B8', '#FF6B00', '#FF00B8']} className="absolute top-1/2 -translate-y-1/2 right-0" />
-              </div>
-            </div>
-          </div>
+          <MascotBand />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
