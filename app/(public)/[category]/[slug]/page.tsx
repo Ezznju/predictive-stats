@@ -51,13 +51,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       modifiedTime: article.updatedDate,
       authors: author ? [author.name] : undefined,
       tags: article.tags,
-      images: [{ url: `${siteUrl}/${categorySlug}/${article.slug}/og`, width: 1200, height: 630, type: 'image/png' }],
+      images: [{ url: `${siteUrl}/${categorySlug}/${article.slug}/og?v=2`, width: 1200, height: 630, type: 'image/png' }],
     },
     twitter: {
       card: 'summary_large_image',
       title: article.seoTitle || article.title,
       description: article.metaDescription || article.excerpt,
-      images: [{ url: `${siteUrl}/${categorySlug}/${article.slug}/og`, width: 1200, height: 630, type: 'image/png' }],
+      images: [{ url: `${siteUrl}/${categorySlug}/${article.slug}/og?v=2`, width: 1200, height: 630, type: 'image/png' }],
     },
   };
 }
