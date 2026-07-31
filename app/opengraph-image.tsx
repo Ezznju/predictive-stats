@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { ogSize, loadOgFonts, OgCard } from '@/lib/og-template';
 
+export const dynamic = 'force-dynamic';
 export const size = ogSize;
 export const contentType = 'image/png';
 export const alt = 'Predictions Market Fans — Sharp analysis for uncertain markets';

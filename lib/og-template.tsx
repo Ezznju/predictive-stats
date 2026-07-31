@@ -15,9 +15,12 @@ export async function loadOgFonts() {
     readFile(join(process.cwd(), 'assets', 'SpaceGrotesk-Bold.woff')),
     readFile(join(process.cwd(), 'assets', 'SpaceGrotesk-Medium.woff')),
   ]);
+  // Convert Node.js Buffer to clean ArrayBuffer for @vercel/og
+  const boldData = bold.buffer.slice(bold.byteOffset, bold.byteOffset + bold.byteLength);
+  const mediumData = medium.buffer.slice(medium.byteOffset, medium.byteOffset + medium.byteLength);
   return [
-    { name: 'Space Grotesk', data: bold, weight: 700 as const, style: 'normal' as const },
-    { name: 'Space Grotesk', data: medium, weight: 500 as const, style: 'normal' as const },
+    { name: 'Space Grotesk', data: boldData, weight: 700 as const, style: 'normal' as const },
+    { name: 'Space Grotesk', data: mediumData, weight: 500 as const, style: 'normal' as const },
   ];
 }
 

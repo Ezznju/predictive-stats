@@ -39,11 +39,20 @@ export const metadata: Metadata = {
     siteName: 'Predictions Market Fans',
     title: 'PMF — Sharp analysis for uncertain markets',
     description: 'Sharp analysis for prediction markets. Covering Polymarket, Kalshi, Metaculus, and more.',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'Predictions Market Fans — Sharp analysis for uncertain markets',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'PMF — Sharp analysis for uncertain markets',
     description: 'Sharp analysis for prediction markets. Covering Polymarket, Kalshi, Metaculus, and more.',
+    images: ['/twitter-image'],
   },
   robots: {
     index: true,
