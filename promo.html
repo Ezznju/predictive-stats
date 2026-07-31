@@ -11,12 +11,12 @@
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
+    --org: #FF7900;
     --mag: #FF00B8;
     --cyn: #29C5F6;
     --yel: #FFE642;
     --grn: #2BD96E;
     --vio: #9D5CFF;
-    --org: #FF7900;
     --dark: #0b1120;
   }
 
@@ -27,37 +27,35 @@
     font-family: 'Sora', system-ui, sans-serif;
   }
 
-  /* ── Canvas ──────────────────────────────────────── */
   #canvas {
     position: fixed;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--dark);
+    background: #000;
   }
 
   .phone {
     position: relative;
     width: min(100vw, calc(100vh * 9 / 16));
     height: min(100vh, calc(100vw * 16 / 9));
-    background: var(--dark);
+    background: var(--org);
     overflow: hidden;
   }
 
-  /* ── Geometric shapes ────────────────────────────── */
-  .shape {
+  /* ── Geometric decorations ───────────────────────── */
+  .geo {
     position: absolute;
-    border-radius: 50%;
     pointer-events: none;
+    border-radius: 50%;
     opacity: 0;
   }
-  .shape-1 { width: 200px; height: 200px; background: var(--mag); top: -60px; left: -40px; }
-  .shape-2 { width: 140px; height: 140px; background: var(--cyn); bottom: 10%; right: -30px; }
-  .shape-3 { width: 100px; height: 100px; background: var(--yel); top: 30%; left: -20px; border-radius: 12px; transform: rotate(15deg); }
-  .shape-4 { width: 160px; height: 160px; background: var(--grn); bottom: -40px; left: 20%; border-radius: 50%; }
-  .shape-5 { width: 120px; height: 120px; background: var(--vio); top: 15%; right: -20px; border-radius: 16px; transform: rotate(-20deg); }
-  .shape-6 { width: 80px;  height: 80px;  background: var(--org); top: 55%; left: 10%; border-radius: 50%; }
+  .geo-1 { width: 180px; height: 180px; background: var(--mag); top: -50px; right: -40px; }
+  .geo-2 { width: 120px; height: 120px; background: var(--yel); bottom: 8%; left: -30px; }
+  .geo-3 { width: 90px;  height: 90px;  background: var(--cyn); top: 25%; left: 10%; border-radius: 14px; transform: rotate(12deg); }
+  .geo-4 { width: 140px; height: 140px; background: var(--vio); bottom: -30px; right: 15%; }
+  .geo-5 { width: 70px;  height: 70px;  background: var(--grn); top: 50%; right: 8%; border-radius: 12px; transform: rotate(-18deg); }
 
   /* ── Scene base ──────────────────────────────────── */
   .scene {
@@ -67,106 +65,113 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 8% 7%;
+    padding: 10% 8%;
     opacity: 0;
     pointer-events: none;
+    text-align: center;
   }
   .scene.active { opacity: 1; pointer-events: auto; }
 
-  .scene h1 {
+  /* ── S1: Hook ────────────────────────────────────── */
+  #s1 h1 {
+    font-size: clamp(38px, 11vw, 76px);
     font-weight: 800;
     text-transform: uppercase;
-    line-height: 0.95;
-    letter-spacing: -0.03em;
-    text-align: center;
-  }
-  .scene p {
-    font-weight: 400;
-    line-height: 1.5;
-    text-align: center;
-  }
-
-  /* ── Scene 1: Hook ───────────────────────────────── */
-  #s1 h1 {
-    font-size: clamp(42px, 10vw, 80px);
-    color: #fff;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    color: var(--dark);
     opacity: 0;
     transform: scale(2.5);
   }
-  #s1 .flash {
-    position: absolute;
-    inset: 0;
-    background: var(--mag);
+  #s1 .sub {
+    font-size: clamp(14px, 3.5vw, 20px);
+    font-weight: 700;
+    color: var(--dark);
     opacity: 0;
-    pointer-events: none;
+    margin-top: 18px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
-  /* ── Scene 2: Problem ────────────────────────────── */
+  /* ── S2: Problem ─────────────────────────────────── */
+  #s2 .card-inner {
+    background: var(--dark);
+    border-radius: 20px;
+    padding: clamp(24px, 6vw, 40px);
+    width: 88%;
+    opacity: 0;
+    transform: translateY(60px);
+  }
   #s2 h1 {
-    font-size: clamp(28px, 6.5vw, 52px);
+    font-size: clamp(24px, 6.5vw, 46px);
     color: #fff;
-    max-width: 85%;
+    line-height: 1.0;
+    text-transform: uppercase;
   }
   #s2 .strike {
     position: relative;
-    display: inline-block;
+    display: inline;
   }
-  #s2 .strike::after {
-    content: '';
+  #s2 .strike-line {
     position: absolute;
-    left: -4%; right: -4%;
-    top: 48%;
-    height: 6px;
+    left: -2%; right: -2%;
+    top: 45%;
+    height: 5px;
     background: var(--mag);
     transform: scaleX(0);
     transform-origin: left;
   }
 
-  /* ── Scene 3: Stats flash ────────────────────────── */
+  /* ── S3: Stats ───────────────────────────────────── */
   #s3 .stats {
     display: flex;
     flex-direction: column;
-    gap: 28px;
-    width: 100%;
+    gap: 0;
+    width: 88%;
+    background: var(--dark);
+    border-radius: 20px;
+    overflow: hidden;
   }
   #s3 .stat-row {
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: 16px;
+    padding: clamp(16px, 4vw, 28px) clamp(18px, 5vw, 32px);
     opacity: 0;
-    transform: translateX(-60px);
+    transform: translateX(-50px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  #s3 .stat-row:last-child { border-bottom: none; }
+  #s3 .stat-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    flex-shrink: 0;
   }
   #s3 .stat-num {
-    font-size: clamp(32px, 8vw, 64px);
+    font-size: clamp(28px, 8vw, 56px);
     font-weight: 800;
     color: var(--yel);
     white-space: nowrap;
   }
   #s3 .stat-label {
-    font-size: clamp(13px, 3vw, 18px);
+    font-size: clamp(11px, 2.8vw, 15px);
     font-weight: 400;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255,255,255,0.5);
     text-transform: uppercase;
     letter-spacing: 0.12em;
   }
-  #s3 .divider {
-    width: 100%;
-    height: 2px;
-    background: rgba(255,255,255,0.08);
-  }
 
-  /* ── Scene 4: LP Scanner ─────────────────────────── */
-  #s4 .card {
-    background: rgba(255,255,255,0.04);
-    border: 2px solid rgba(255,255,255,0.12);
-    border-radius: 16px;
-    padding: 28px 24px;
+  /* ── S4: LP Scanner ──────────────────────────────── */
+  #s4 .card-inner {
+    background: var(--dark);
+    border-radius: 20px;
+    padding: clamp(24px, 6vw, 40px);
     width: 88%;
-    max-width: 400px;
     opacity: 0;
-    transform: translateY(80px);
+    transform: translateY(70px);
   }
-  #s4 .card-tag {
+  #s4 .tag {
     display: inline-block;
     font-size: 10px;
     font-weight: 700;
@@ -174,52 +179,53 @@
     text-transform: uppercase;
     color: var(--dark);
     background: var(--grn);
-    padding: 5px 12px;
+    padding: 5px 14px;
     border-radius: 6px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
-  #s4 .card h2 {
-    font-size: clamp(22px, 5.5vw, 36px);
+  #s4 h2 {
+    font-size: clamp(20px, 5.5vw, 38px);
     font-weight: 800;
     color: #fff;
     text-transform: uppercase;
-    margin-bottom: 12px;
+    line-height: 1.0;
+    margin-bottom: 14px;
   }
   #s4 .apr-row {
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    margin-bottom: 6px;
+    gap: 10px;
   }
   #s4 .apr-num {
-    font-size: clamp(36px, 9vw, 68px);
+    font-size: clamp(40px, 11vw, 80px);
     font-weight: 800;
     color: var(--grn);
+    line-height: 1;
   }
   #s4 .apr-label {
-    font-size: 14px;
-    color: rgba(255,255,255,0.4);
+    font-size: clamp(11px, 2.5vw, 14px);
+    color: rgba(255,255,255,0.35);
     text-transform: uppercase;
     letter-spacing: 0.1em;
   }
   #s4 .apr-sub {
-    font-size: 13px;
-    color: rgba(255,255,255,0.35);
+    display: block;
+    font-size: clamp(11px, 2.5vw, 13px);
+    color: rgba(255,255,255,0.25);
+    margin-top: 8px;
   }
 
-  /* ── Scene 5: Arbitrage ──────────────────────────── */
+  /* ── S5: Arbitrage ───────────────────────────────── */
   #s5 .split {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 14px;
     width: 88%;
-    max-width: 400px;
   }
   #s5 .platform {
-    background: rgba(255,255,255,0.04);
-    border: 2px solid rgba(255,255,255,0.1);
-    border-radius: 12px;
-    padding: 18px 20px;
+    background: var(--dark);
+    border-radius: 14px;
+    padding: clamp(14px, 3.5vw, 22px) clamp(16px, 4vw, 26px);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -227,101 +233,110 @@
     transform: translateY(40px);
   }
   #s5 .plat-name {
-    font-size: clamp(14px, 3.5vw, 20px);
+    font-size: clamp(14px, 3.8vw, 22px);
     font-weight: 700;
     color: #fff;
     text-transform: uppercase;
   }
   #s5 .plat-price {
-    font-size: clamp(18px, 4.5vw, 28px);
+    font-size: clamp(20px, 5vw, 32px);
     font-weight: 800;
   }
   #s5 .spread-badge {
-    margin-top: 10px;
+    margin-top: 14px;
     text-align: center;
     opacity: 0;
     transform: scale(0.5);
   }
-  #s5 .spread-badge span {
-    display: inline-block;
-    font-size: clamp(28px, 7vw, 52px);
+  #s5 .spread-num {
+    font-size: clamp(26px, 7vw, 48px);
     font-weight: 800;
     color: var(--cyn);
-    text-transform: uppercase;
   }
   #s5 .spread-label {
-    font-size: 12px;
+    font-size: clamp(10px, 2.2vw, 12px);
     color: rgba(255,255,255,0.4);
     text-transform: uppercase;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.12em;
     margin-top: 4px;
   }
 
-  /* ── Scene 6: Pulse ──────────────────────────────── */
+  /* ── S6: Pulse ───────────────────────────────────── */
   #s6 h1 {
-    font-size: clamp(30px, 7vw, 56px);
-    color: #fff;
-    margin-bottom: 28px;
+    font-size: clamp(28px, 7.5vw, 54px);
+    color: var(--dark);
+    text-transform: uppercase;
+    line-height: 0.95;
+    margin-bottom: clamp(20px, 5vw, 36px);
     opacity: 0;
     transform: translateY(30px);
   }
-  #s6 .whale-ring {
-    width: clamp(180px, 45vw, 300px);
-    height: clamp(180px, 45vw, 300px);
+  #s6 .ring {
+    width: clamp(140px, 38vw, 240px);
+    height: clamp(140px, 38vw, 240px);
     border-radius: 50%;
-    border: 3px solid var(--vio);
+    border: 4px solid var(--vio);
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     opacity: 0;
     transform: scale(0.3);
+    background: rgba(11,17,32,0.85);
   }
-  #s6 .whale-ring::before {
+  #s6 .ring::before {
     content: '';
     position: absolute;
-    inset: -16px;
+    inset: -18px;
     border-radius: 50%;
-    border: 2px solid rgba(157,92,255,0.25);
+    border: 2px solid rgba(157,92,255,0.3);
     animation: pulse-ring 2s ease-out infinite;
   }
-  #s6 .whale-inner {
-    font-size: clamp(48px, 12vw, 88px);
-  }
+  #s6 .whale { font-size: clamp(44px, 12vw, 80px); }
   @keyframes pulse-ring {
     0%   { transform: scale(1); opacity: 0.6; }
-    100% { transform: scale(1.4); opacity: 0; }
+    100% { transform: scale(1.5); opacity: 0; }
   }
   #s6 .wallets {
     display: flex;
-    gap: 12px;
-    margin-top: 28px;
+    gap: 10px;
+    margin-top: clamp(18px, 4vw, 28px);
     opacity: 0;
+    flex-wrap: wrap;
+    justify-content: center;
   }
-  #s6 .wallet-chip {
-    font-size: 11px;
+  #s6 .chip {
+    font-size: clamp(9px, 2.2vw, 12px);
     font-weight: 700;
-    letter-spacing: 0.08em;
-    padding: 8px 14px;
+    letter-spacing: 0.06em;
+    padding: 7px 12px;
     border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.15);
-    color: rgba(255,255,255,0.6);
-    background: rgba(255,255,255,0.04);
+    border: 2px solid var(--dark);
+    color: var(--dark);
+    background: var(--yel);
   }
 
-  /* ── Scene 7: CTA ────────────────────────────────── */
+  /* ── S7: CTA ─────────────────────────────────────── */
   #s7 h1 {
-    font-size: clamp(22px, 5.5vw, 38px);
-    color: #fff;
-    margin-bottom: 14px;
+    font-size: clamp(22px, 6vw, 40px);
+    color: var(--dark);
+    text-transform: uppercase;
+    line-height: 1.0;
+    margin-bottom: 16px;
     opacity: 0;
   }
-  #s7 .url {
-    font-size: clamp(16px, 4vw, 26px);
-    font-weight: 700;
-    color: var(--mag);
-    letter-spacing: 0.02em;
+  #s7 .url-box {
+    background: var(--dark);
+    border-radius: 14px;
+    padding: clamp(14px, 3.5vw, 22px) clamp(20px, 5vw, 32px);
     opacity: 0;
+    transform: translateY(30px);
+  }
+  #s7 .url {
+    font-size: clamp(14px, 3.8vw, 24px);
+    font-weight: 800;
+    color: var(--mag);
+    letter-spacing: 0.01em;
   }
   #s7 .url .cursor {
     display: inline-block;
@@ -334,46 +349,46 @@
   }
   @keyframes blink { 50% { opacity: 0; } }
   #s7 .arrow {
-    margin-top: 32px;
+    margin-top: clamp(24px, 6vw, 40px);
     opacity: 0;
     transform: translateY(20px);
   }
-  #s7 .arrow svg { width: 48px; height: 48px; }
+  #s7 .arrow svg { width: clamp(36px, 9vw, 56px); height: clamp(36px, 9vw, 56px); }
 
-  /* ── Scene 8: End card ───────────────────────────── */
-  #s8 .logo-text {
-    font-size: clamp(36px, 9vw, 72px);
+  /* ── S8: End card ────────────────────────────────── */
+  #s8 .logo {
+    font-size: clamp(52px, 14vw, 100px);
     font-weight: 800;
-    color: #fff;
+    color: var(--dark);
     text-transform: uppercase;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
+    line-height: 0.9;
     opacity: 0;
-    transform: scale(0.7);
+    transform: scale(0.6);
   }
   #s8 .tagline {
     font-size: clamp(16px, 4vw, 24px);
     font-weight: 400;
-    color: rgba(255,255,255,0.5);
+    color: rgba(11,17,32,0.55);
     margin-top: 12px;
     opacity: 0;
   }
-  #s8 .highlight-bar {
+  #s8 .bar {
     width: 0;
     height: 8px;
     background: var(--yel);
     border-radius: 4px;
-    margin-top: 20px;
+    margin-top: 22px;
   }
 
-  /* ── Progress bar ────────────────────────────────── */
+  /* ── Progress ────────────────────────────────────── */
   #progress {
     position: absolute;
     bottom: 0; left: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--mag), var(--cyn), var(--yel));
+    height: 5px;
+    background: linear-gradient(90deg, var(--mag), var(--yel), var(--cyn));
     width: 0%;
     z-index: 100;
-    transition: none;
   }
 
   /* ── Controls ────────────────────────────────────── */
@@ -383,14 +398,14 @@
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 12px;
+    gap: 10px;
     z-index: 200;
   }
   #controls button {
     font-family: 'Sora', system-ui, sans-serif;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
-    padding: 10px 22px;
+    padding: 9px 20px;
     border: 2px solid #fff;
     border-radius: 8px;
     background: rgba(255,255,255,0.08);
@@ -398,16 +413,16 @@
     cursor: pointer;
     transition: all 0.15s;
   }
-  #controls button:hover { background: rgba(255,255,255,0.18); }
-  #controls button.primary { background: var(--mag); border-color: var(--mag); }
-  #controls button.primary:hover { background: #e600a3; }
+  #controls button:hover { background: rgba(255,255,255,0.2); }
+  #controls button.primary { background: var(--org); border-color: var(--org); color: #fff; }
+  #controls button.primary:hover { background: #e66d00; }
 
   #timer {
     position: fixed;
-    top: 16px; right: 16px;
-    font-size: 13px;
+    top: 14px; right: 14px;
+    font-size: 12px;
     font-weight: 700;
-    color: rgba(255,255,255,0.35);
+    color: rgba(255,255,255,0.3);
     z-index: 200;
     font-variant-numeric: tabular-nums;
   }
@@ -416,7 +431,6 @@
 <body>
 
 <div id="timer">0.0s / 30s</div>
-
 <div id="controls">
   <button class="primary" onclick="play()">▶ Play</button>
   <button onclick="restart()">↻ Restart</button>
@@ -424,41 +438,50 @@
 
 <div id="canvas">
   <div class="phone">
-
-    <!-- Geometric shapes -->
-    <div class="shape shape-1"></div>
-    <div class="shape shape-2"></div>
-    <div class="shape shape-3"></div>
-    <div class="shape shape-4"></div>
-    <div class="shape shape-5"></div>
-    <div class="shape shape-6"></div>
+    <div class="geo geo-1"></div>
+    <div class="geo geo-2"></div>
+    <div class="geo geo-3"></div>
+    <div class="geo geo-4"></div>
+    <div class="geo geo-5"></div>
 
     <!-- S1: Hook -->
     <div class="scene" id="s1">
-      <div class="flash"></div>
       <h1>STOP<br>SCROLLING</h1>
+      <div class="sub">Your money is on the line</div>
     </div>
 
     <!-- S2: Problem -->
     <div class="scene" id="s2">
-      <h1>Most prediction market traders are <span class="strike">guessing</span></h1>
+      <div class="card-inner">
+        <h1>Most traders are <span class="strike">guessing<span class="strike-line" id="strike-line"></span></span></h1>
+      </div>
     </div>
 
     <!-- S3: Stats -->
     <div class="scene" id="s3">
       <div class="stats">
-        <div class="stat-row"><span class="stat-num">$2B+</span><span class="stat-label">Traded monthly</span></div>
-        <div class="divider"></div>
-        <div class="stat-row"><span class="stat-num">1000+</span><span class="stat-label">Live markets</span></div>
-        <div class="divider"></div>
-        <div class="stat-row"><span class="stat-num">24/7</span><span class="stat-label">Real-time data</span></div>
+        <div class="stat-row">
+          <span class="stat-dot" style="background:var(--mag)"></span>
+          <span class="stat-num">$2B+</span>
+          <span class="stat-label">Traded monthly</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-dot" style="background:var(--cyn)"></span>
+          <span class="stat-num">1000+</span>
+          <span class="stat-label">Live markets</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-dot" style="background:var(--grn)"></span>
+          <span class="stat-num">24/7</span>
+          <span class="stat-label">Real-time data</span>
+        </div>
       </div>
     </div>
 
     <!-- S4: LP Scanner -->
     <div class="scene" id="s4">
-      <div class="card">
-        <span class="card-tag">Free Tool</span>
+      <div class="card-inner">
+        <span class="tag">Free Tool</span>
         <h2>LP Reward<br>Scanner</h2>
         <div class="apr-row">
           <span class="apr-num" id="apr-counter">0%</span>
@@ -480,8 +503,8 @@
           <span class="plat-price" style="color:var(--mag)">51.8¢</span>
         </div>
         <div class="spread-badge" id="spread-badge">
-          <span>2.4¢ SPREAD</span>
-          <div class="spread-label">Net of fees &middot; Executable profit</div>
+          <span class="spread-num">2.4¢ SPREAD</span>
+          <div class="spread-label">Net of fees · Executable profit</div>
         </div>
       </div>
     </div>
@@ -489,30 +512,32 @@
     <!-- S6: Pulse -->
     <div class="scene" id="s6">
       <h1>FOLLOW<br>THE WHALES</h1>
-      <div class="whale-ring">
-        <span class="whale-inner">🐋</span>
+      <div class="ring">
+        <span class="whale">🐋</span>
       </div>
       <div class="wallets">
-        <span class="wallet-chip">0x7a3…f21</span>
-        <span class="wallet-chip">0xde4…8c9</span>
-        <span class="wallet-chip">0x1b8…a37</span>
+        <span class="chip">0x7a3…f21</span>
+        <span class="chip">0xde4…8c9</span>
+        <span class="chip">0x1b8…a37</span>
       </div>
     </div>
 
     <!-- S7: CTA -->
     <div class="scene" id="s7">
       <h1>Your edge starts here</h1>
-      <div class="url" id="url-text"></div>
+      <div class="url-box" id="url-box">
+        <span class="url" id="url-text"></span>
+      </div>
       <div class="arrow">
-        <svg viewBox="0 0 48 48" fill="none"><path d="M24 4v36m0 0l-14-14m14 14l14-14" stroke="#FF00B8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <svg viewBox="0 0 48 48" fill="none"><path d="M24 4v36m0 0l-14-14m14 14l14-14" stroke="#FF00B8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
     </div>
 
     <!-- S8: End card -->
     <div class="scene" id="s8">
-      <div class="logo-text">PMF</div>
+      <div class="logo">PMF</div>
       <div class="tagline">Start winning.</div>
-      <div class="highlight-bar"></div>
+      <div class="bar"></div>
     </div>
 
     <div id="progress"></div>
@@ -520,13 +545,13 @@
 </div>
 
 <script>
-const TOTAL = 30000; // 30 seconds
+const TOTAL = 30000;
 const scenes = [
-  { id: 's1', start: 0,    dur: 2500  },
-  { id: 's2', start: 2500, dur: 3000  },
-  { id: 's3', start: 5500, dur: 3000  },
-  { id: 's4', start: 8500, dur: 4500  },
-  { id: 's5', start: 13000, dur: 5000 },
+  { id: 's1', start: 0,     dur: 2800 },
+  { id: 's2', start: 2800,  dur: 3200 },
+  { id: 's3', start: 6000,  dur: 3000 },
+  { id: 's4', start: 9000,  dur: 4500 },
+  { id: 's5', start: 13500, dur: 4500 },
   { id: 's6', start: 18000, dur: 4000 },
   { id: 's7', start: 22000, dur: 5500 },
   { id: 's8', start: 27500, dur: 2500 },
@@ -534,179 +559,136 @@ const scenes = [
 
 let raf, startTime = null, playing = false;
 
-function $(sel) { return document.querySelector(sel); }
+function $(s) { return document.querySelector(s); }
 function show(el) { el.classList.add('active'); }
 function hide(el) { el.classList.remove('active'); }
 
-/* ── Scene animators ──────────────────────────────── */
-
 function animS1(t) {
-  const flash = $('#s1 .flash');
   const h1 = $('#s1 h1');
-  // Flash in 0-200ms
-  flash.style.transition = 'none';
-  flash.style.opacity = t < 200 ? (t / 200) * 0.7 : (t < 400 ? 0.7 - ((t - 200) / 200) * 0.7 : 0);
-  // Title slam
-  const p = Math.min(1, t / 400);
+  const sub = $('#s1 .sub');
+  const p = Math.min(1, t / 450);
   const ease = 1 - Math.pow(1 - p, 3);
   h1.style.opacity = ease;
   h1.style.transform = `scale(${2.5 - ease * 1.5})`;
+  const s = Math.min(1, Math.max(0, (t - 500) / 400));
+  sub.style.opacity = s;
 }
 
 function animS2(t) {
-  const h1 = $('#s2 h1');
-  const strike = $('#s2 .strike::after') || document.querySelector('#s2 .strike');
-  const p = Math.min(1, t / 600);
-  h1.style.opacity = p;
-  h1.style.transform = `translateY(${(1 - p) * 30}px)`;
-  // Strike at 1.5s into scene
-  const strikeEl = document.querySelector('#s2 .strike');
-  if (strikeEl && strikeEl.querySelector('::after') === null) {
-    // Use the pseudo-element via class
-  }
-  if (t > 1200) {
-    const sp = Math.min(1, (t - 1200) / 400);
-    document.documentElement.style.setProperty('--strike-scale', sp);
-    const sheet = document.styleSheets[0];
-    // We'll handle strike via inline style on a real element
+  const card = $('#s2 .card-inner');
+  const p = Math.min(1, t / 500);
+  const ease = 1 - Math.pow(1 - p, 3);
+  card.style.opacity = ease;
+  card.style.transform = `translateY(${(1 - ease) * 60}px)`;
+  const line = $('#strike-line');
+  if (t > 1400) {
+    const sp = Math.min(1, (t - 1400) / 350);
+    line.style.transform = `scaleX(${sp})`;
   }
 }
 
 function animS3(t) {
   const rows = document.querySelectorAll('#s3 .stat-row');
   rows.forEach((row, i) => {
-    const delay = i * 500;
-    const p = Math.max(0, Math.min(1, (t - delay) / 400));
+    const d = i * 500;
+    const p = Math.max(0, Math.min(1, (t - d) / 400));
     const ease = 1 - Math.pow(1 - p, 3);
     row.style.opacity = ease;
-    row.style.transform = `translateX(${(1 - ease) * -60}px)`;
+    row.style.transform = `translateX(${(1 - ease) * -50}px)`;
   });
 }
 
 function animS4(t) {
-  const card = $('#s4 .card');
-  const p = Math.min(1, t / 600);
+  const card = $('#s4 .card-inner');
+  const p = Math.min(1, t / 550);
   const ease = 1 - Math.pow(1 - p, 3);
   card.style.opacity = ease;
-  card.style.transform = `translateY(${(1 - ease) * 80}px)`;
-
-  // Counter
+  card.style.transform = `translateY(${(1 - ease) * 70}px)`;
   const counter = $('#apr-counter');
   const target = 34.7;
-  const countP = Math.min(1, Math.max(0, (t - 400) / 1200));
-  const val = (target * countP).toFixed(1);
-  counter.textContent = val + '%';
+  const cp = Math.min(1, Math.max(0, (t - 400) / 1200));
+  counter.textContent = (target * cp).toFixed(1) + '%';
 }
 
 function animS5(t) {
-  const pa = $('#plat-a');
-  const pb = $('#plat-b');
-  const badge = $('#spread-badge');
-  const p1 = Math.min(1, t / 500);
+  const pa = $('#plat-a'), pb = $('#plat-b'), badge = $('#spread-badge');
+  const p1 = Math.min(1, t / 450);
   pa.style.opacity = p1;
   pa.style.transform = `translateY(${(1 - p1) * 40}px)`;
-  const p2 = Math.min(1, Math.max(0, (t - 300) / 500));
+  const p2 = Math.min(1, Math.max(0, (t - 300) / 450));
   pb.style.opacity = p2;
   pb.style.transform = `translateY(${(1 - p2) * 40}px)`;
-  const p3 = Math.min(1, Math.max(0, (t - 1200) / 500));
+  const p3 = Math.min(1, Math.max(0, (t - 1100) / 450));
   badge.style.opacity = p3;
   badge.style.transform = `scale(${0.5 + p3 * 0.5})`;
 }
 
 function animS6(t) {
-  const h1 = $('#s6 h1');
-  const ring = $('#s6 .whale-ring');
-  const wallets = $('#s6 .wallets');
-  const p1 = Math.min(1, t / 500);
+  const h1 = $('#s6 h1'), ring = $('#s6 .ring'), wallets = $('#s6 .wallets');
+  const p1 = Math.min(1, t / 450);
   h1.style.opacity = p1;
   h1.style.transform = `translateY(${(1 - p1) * 30}px)`;
-  const p2 = Math.min(1, Math.max(0, (t - 300) / 600));
+  const p2 = Math.min(1, Math.max(0, (t - 250) / 550));
   ring.style.opacity = p2;
   ring.style.transform = `scale(${0.3 + p2 * 0.7})`;
-  const p3 = Math.min(1, Math.max(0, (t - 900) / 400));
+  const p3 = Math.min(1, Math.max(0, (t - 850) / 400));
   wallets.style.opacity = p3;
 }
 
 function animS7(t) {
-  const h1 = $('#s7 h1');
-  const url = $('#url-text');
-  const arrow = $('#s7 .arrow');
-  const p1 = Math.min(1, t / 500);
+  const h1 = $('#s7 h1'), box = $('#url-box'), url = $('#url-text'), arrow = $('#s7 .arrow');
+  const p1 = Math.min(1, t / 450);
   h1.style.opacity = p1;
-
-  // Typewriter
+  const p2 = Math.min(1, Math.max(0, (t - 350) / 400));
+  box.style.opacity = p2;
+  box.style.transform = `translateY(${(1 - p2) * 30}px)`;
   const full = 'predictionsmarketfans.com';
-  const typeStart = 600;
-  const typeDur = 1500;
-  const tp = Math.min(1, Math.max(0, (t - typeStart) / typeDur));
+  const tp = Math.min(1, Math.max(0, (t - 600) / 1400));
   const chars = Math.floor(full.length * tp);
-  url.style.opacity = '1';
   url.innerHTML = full.substring(0, chars) + '<span class="cursor"></span>';
-
-  const p3 = Math.min(1, Math.max(0, (t - 2400) / 400));
-  arrow.style.opacity = p3;
-  arrow.style.transform = `translateY(${(1 - p3) * 20}px)`;
+  const p4 = Math.min(1, Math.max(0, (t - 2400) / 400));
+  arrow.style.opacity = p4;
+  arrow.style.transform = `translateY(${(1 - p4) * 20}px)`;
 }
 
 function animS8(t) {
-  const logo = $('#s8 .logo-text');
-  const tag = $('#s8 .tagline');
-  const bar = $('#s8 .highlight-bar');
+  const logo = $('#s8 .logo'), tag = $('#s8 .tagline'), bar = $('#s8 .bar');
   const p1 = Math.min(1, t / 500);
   const ease = 1 - Math.pow(1 - p1, 3);
   logo.style.opacity = ease;
-  logo.style.transform = `scale(${0.7 + ease * 0.3})`;
-
-  const p2 = Math.min(1, Math.max(0, (t - 400) / 400));
+  logo.style.transform = `scale(${0.6 + ease * 0.4})`;
+  const p2 = Math.min(1, Math.max(0, (t - 400) / 350));
   tag.style.opacity = p2;
-
-  const p3 = Math.min(1, Math.max(0, (t - 700) / 500));
-  bar.style.width = `${p3 * 120}px`;
+  const p3 = Math.min(1, Math.max(0, (t - 650) / 450));
+  bar.style.width = `${p3 * 100}px`;
 }
 
-const animators = { s1: animS1, s2: animS2, s3: animS3, s4: animS4, s5: animS5, s6: animS6, s7: animS7, s8: animS8 };
+const anim = { s1: animS1, s2: animS2, s3: animS3, s4: animS4, s5: animS5, s6: animS6, s7: animS7, s8: animS8 };
 
-/* ── Shape animation ──────────────────────────────── */
-function animShapes(elapsed) {
-  const shapes = document.querySelectorAll('.shape');
-  shapes.forEach((s, i) => {
-    const phase = elapsed / TOTAL;
-    const drift = Math.sin((phase + i * 0.15) * Math.PI * 2) * 20;
-    const opacity = 0.06 + Math.sin((phase + i * 0.1) * Math.PI * 2) * 0.04;
-    s.style.opacity = opacity;
-    s.style.transform += ` translateY(${drift}px)`;
-  });
-}
-
-/* ── Main loop ────────────────────────────────────── */
 function tick(now) {
   if (!playing) return;
   const elapsed = now - startTime;
   const clamped = Math.min(elapsed, TOTAL);
-
-  // Progress bar
   $('#progress').style.width = `${(clamped / TOTAL) * 100}%`;
   $('#timer').textContent = `${(clamped / 1000).toFixed(1)}s / 30s`;
 
-  // Scene visibility
   scenes.forEach(sc => {
     const el = $(`#${sc.id}`);
     if (clamped >= sc.start && clamped < sc.start + sc.dur) {
       show(el);
-      animators[sc.id](clamped - sc.start);
+      anim[sc.id](clamped - sc.start);
     } else {
       hide(el);
     }
   });
 
-  // Shapes
-  const shapes = document.querySelectorAll('.shape');
-  shapes.forEach((s, i) => {
+  const geos = document.querySelectorAll('.geo');
+  geos.forEach((g, i) => {
     const phase = clamped / TOTAL;
-    const drift = Math.sin((phase + i * 0.15) * Math.PI * 2) * 15;
-    const baseOp = [0.07, 0.05, 0.06, 0.04, 0.05, 0.03][i];
-    s.style.opacity = baseOp + Math.sin((phase + i * 0.1) * Math.PI * 2) * 0.03;
-    s.style.transform = `translate(${drift * 0.5}px, ${drift}px)`;
+    const drift = Math.sin((phase + i * 0.15) * Math.PI * 2) * 12;
+    const baseOp = [0.12, 0.08, 0.10, 0.07, 0.09][i];
+    g.style.opacity = baseOp + Math.sin((phase + i * 0.1) * Math.PI * 2) * 0.04;
+    g.style.transform = `translate(${drift * 0.4}px, ${drift}px)`;
   });
 
   if (clamped < TOTAL) {
@@ -719,44 +701,40 @@ function tick(now) {
 function play() {
   if (playing) return;
   playing = true;
-  startTime = performance.now() - (window._resumeAt || 0);
+  startTime = performance.now();
   raf = requestAnimationFrame(tick);
 }
 
 function restart() {
   playing = false;
   cancelAnimationFrame(raf);
-  window._resumeAt = 0;
   startTime = null;
   $('#progress').style.width = '0%';
   $('#timer').textContent = '0.0s / 30s';
   document.querySelectorAll('.scene').forEach(s => hide(s));
-  // Reset animated elements
-  $('#s1 h1').style.opacity = 0;
-  $('#s1 h1').style.transform = 'scale(2.5)';
-  $('#s1 .flash').style.opacity = 0;
-  $('#s2 h1').style.opacity = 0;
-  document.querySelectorAll('#s3 .stat-row').forEach(r => { r.style.opacity = 0; r.style.transform = 'translateX(-60px)'; });
-  $('#s4 .card').style.opacity = 0;
-  $('#s4 .card').style.transform = 'translateY(80px)';
+  $('#s1 h1').style.cssText = 'opacity:0;transform:scale(2.5)';
+  $('#s1 .sub').style.opacity = 0;
+  $('#s2 .card-inner').style.cssText = 'opacity:0;transform:translateY(60px)';
+  $('#strike-line').style.transform = 'scaleX(0)';
+  document.querySelectorAll('#s3 .stat-row').forEach(r => { r.style.opacity = 0; r.style.transform = 'translateX(-50px)'; });
+  $('#s4 .card-inner').style.cssText = 'opacity:0;transform:translateY(70px)';
   $('#apr-counter').textContent = '0%';
-  ['#plat-a','#plat-b'].forEach(s => { $(s).style.opacity = 0; $(s).style.transform = 'translateY(40px)'; });
-  $('#spread-badge').style.opacity = 0;
-  $('#spread-badge').style.transform = 'scale(0.5)';
-  $('#s6 h1').style.opacity = 0;
-  $('#s6 .whale-ring').style.opacity = 0;
+  ['#plat-a','#plat-b'].forEach(s => { $(s).style.cssText = 'opacity:0;transform:translateY(40px)'; });
+  $('#spread-badge').style.cssText = 'opacity:0;transform:scale(0.5)';
+  $('#s6 h1').style.cssText = 'opacity:0;transform:translateY(30px)';
+  $('#s6 .ring').style.cssText = 'opacity:0;transform:scale(0.3)';
   $('#s6 .wallets').style.opacity = 0;
   $('#s7 h1').style.opacity = 0;
+  $('#url-box').style.cssText = 'opacity:0;transform:translateY(30px)';
   $('#url-text').innerHTML = '';
-  $('#s7 .arrow').style.opacity = 0;
-  $('#s8 .logo-text').style.opacity = 0;
+  $('#s7 .arrow').style.cssText = 'opacity:0;transform:translateY(20px)';
+  $('#s8 .logo').style.cssText = 'opacity:0;transform:scale(0.6)';
   $('#s8 .tagline').style.opacity = 0;
-  $('#s8 .highlight-bar').style.width = '0';
+  $('#s8 .bar').style.width = '0';
 }
 
-/* Keyboard shortcuts */
 document.addEventListener('keydown', e => {
-  if (e.code === 'Space') { e.preventDefault(); playing ? null : play(); }
+  if (e.code === 'Space') { e.preventDefault(); if (!playing) play(); }
   if (e.code === 'KeyR') restart();
 });
 </script>
