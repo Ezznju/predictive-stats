@@ -62,7 +62,7 @@ const MASCOTS = [
 
 export function MascotBand() {
   return (
-    <div className="overflow-x-auto scrollbar-hide border-b-2 border-black bg-[#FF7900]">
+    <div className="overflow-x-auto scrollbar-hide border-b-2 border-black bg-[#0B132B]">
       <div className="flex items-end justify-center gap-4 sm:gap-6 px-4 sm:px-6 py-3 sm:py-4 min-w-max sm:min-w-0">
         {MASCOTS.map((m) => (
           <div key={m.seed} className="w-[70px] sm:w-[80px] lg:w-[90px] shrink-0">
