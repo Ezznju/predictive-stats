@@ -33,8 +33,8 @@ interface ArticleCardProps {
 export function ArticleCard({ article, variant = 'default', author, category }: ArticleCardProps) {
   if (variant === 'featured') {
     return (
-      <Link href={`/${article.categorySlug}/${article.slug}`} className="group block">
-        <div className="relative flex min-h-[430px] items-end overflow-hidden rounded-2xl mb-4 card-pop card-pop-hover sm:min-h-[460px] lg:aspect-[16/9] lg:min-h-0">
+      <Link href={`/${article.categorySlug}/${article.slug}`} className="group block h-full">
+        <div className="relative flex h-full min-h-[430px] items-end overflow-hidden rounded-2xl card-pop card-pop-hover sm:min-h-[460px] lg:min-h-0">
           <CardImage src={article.featuredImage} alt={article.title} sizes="(max-width: 768px) 100vw, 66vw" priority />
           {/* taller, stronger scrim so multi-line / hover-yellow titles stay legible on any image */}
           <div

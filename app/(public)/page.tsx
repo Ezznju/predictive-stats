@@ -65,7 +65,7 @@ export default async function Home() {
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
               {/* LEFT — 2 featured stories */}
               <div className="lg:col-span-3 flex flex-col gap-5">
                 <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-1">
@@ -74,7 +74,7 @@ export default async function Home() {
                 </div>
                 {subFeatured.map((article) => (
                   <Link key={article.id} href={`/${article.categorySlug}/${article.slug}`}
-                    className="group block">
+                    className="group block flex-1">
                     <div className="relative aspect-[16/10] rounded-xl overflow-hidden border-2 border-black shadow-[3px_3px_0_#000] mb-2">
                       {article.featuredImage && (
                         <Image src={article.featuredImage} alt={article.title} fill
@@ -100,7 +100,7 @@ export default async function Home() {
               </div>
 
               {/* CENTER — main featured story */}
-              <div className="lg:col-span-6">
+              <div className="lg:col-span-6 flex flex-col">
                 <ArticleCard article={heroArticle} variant="featured"
                   author={authorMap.get(heroArticle.authorId)}
                   category={categoryMap.get(heroArticle.categorySlug)} />
@@ -112,12 +112,12 @@ export default async function Home() {
                   <TrendingUp className="w-3.5 h-3.5 text-black" />
                   <span className="text-xs font-bold tracking-widest uppercase text-black">Trending Stories</span>
                 </div>
-                <div className="space-y-4">
+                <div className="flex-1 flex flex-col justify-between space-y-0">
                   {trending.slice(0, 5).map((article, i) => {
                     const cat = categoryMap.get(article.categorySlug);
                     return (
                       <Link key={article.id} href={`/${article.categorySlug}/${article.slug}`}
-                        className="group block pb-4 border-b border-black/10 last:border-b-0 last:pb-0">
+                        className="group block py-3 border-b border-black/10 last:border-b-0 flex-1">
                         <h4 className="font-display font-bold text-[13px] text-black leading-snug group-hover:text-brand-orange transition-colors line-clamp-3">
                           {article.title}
                         </h4>
