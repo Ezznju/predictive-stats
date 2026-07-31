@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, TrendingUp, Zap, BarChart3, Activity } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
@@ -64,55 +65,70 @@ export default async function Home() {
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 relative z-10">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* LEFT — 2 featured stories */}
+              <div className="lg:col-span-3 flex flex-col gap-5">
+                <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-1">
+                  <Zap className="w-3.5 h-3.5 text-black" />
+                  <span className="text-xs font-bold tracking-widest uppercase text-black">Today&apos;s Picks</span>
+                </div>
+                {subFeatured.map((article) => (
+                  <Link key={article.id} href={`/${article.categorySlug}/${article.slug}`}
+                    className="group block">
+                    <div className="relative aspect-[16/10] rounded-xl overflow-hidden border-2 border-black shadow-[3px_3px_0_#000] mb-2">
+                      {article.featuredImage && (
+                        <Image src={article.featuredImage} alt={article.title} fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          sizes="250px" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    </div>
+                    {(() => {
+                      const cat = categoryMap.get(article.categorySlug);
+                      return cat ? (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-black block mb-1">{cat.name}</span>
+                      ) : null;
+                    })()}
+                    <h3 className="font-display font-bold text-sm text-black leading-snug group-hover:text-brand-orange transition-colors line-clamp-3">
+                      {article.title}
+                    </h3>
+                    <span className="text-[11px] text-black/50 mt-1 block">
+                      {authorMap.get(article.authorId)?.name} · {article.readTime} min
+                    </span>
+                  </Link>
+                ))}
+              </div>
+
+              {/* CENTER — main featured story */}
+              <div className="lg:col-span-6">
                 <ArticleCard article={heroArticle} variant="featured"
                   author={authorMap.get(heroArticle.authorId)}
                   category={categoryMap.get(heroArticle.categorySlug)} />
               </div>
-              <div className="flex flex-col gap-6">
-                {subFeatured.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-2 border-b border-surface-border pb-2 mb-4">
-                      <Zap className="w-3.5 h-3.5 text-black" />
-                      <span className="text-xs font-bold tracking-widest uppercase text-black">Featured</span>
-                    </div>
-                    <div className="space-y-5">
-                      {subFeatured.map((article) => (
-                        <ArticleCard key={article.id} article={article} variant="horizontal"
-                          author={authorMap.get(article.authorId)}
-                          category={categoryMap.get(article.categorySlug)} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {trending.length > 0 && (
-                  <div className="mt-auto">
-                    <div className="flex items-center gap-2 border-b border-surface-border pb-2 mb-4">
-                      <TrendingUp className="w-3.5 h-3.5 text-black" />
-                      <span className="text-xs font-bold tracking-widest uppercase text-black">Trending Now</span>
-                    </div>
-                    <div className="space-y-4">
-                      {trending.slice(0, 4).map((article, i) => {
-                        const cat = categoryMap.get(article.categorySlug);
-                        return (
-                          <Link key={article.id} href={`/${article.categorySlug}/${article.slug}`}
-                            className="flex items-start gap-3 group">
-                            <span className="text-2xl font-display font-bold text-black/30 leading-none mt-0.5">
-                              {String(i + 1).padStart(2, '0')}
-                            </span>
-                            <div>
-                              {cat && <span className="text-[10px] font-bold uppercase tracking-wider block mb-0.5 text-black">{cat.name}</span>}
-                              <h4 className="text-sm font-display font-semibold text-black leading-snug group-hover:text-white transition-colors line-clamp-2">
-                                {article.title}
-                              </h4>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+
+              {/* RIGHT — trending stories */}
+              <div className="lg:col-span-3 flex flex-col">
+                <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-4">
+                  <TrendingUp className="w-3.5 h-3.5 text-black" />
+                  <span className="text-xs font-bold tracking-widest uppercase text-black">Trending Stories</span>
+                </div>
+                <div className="space-y-4">
+                  {trending.slice(0, 5).map((article, i) => {
+                    const cat = categoryMap.get(article.categorySlug);
+                    return (
+                      <Link key={article.id} href={`/${article.categorySlug}/${article.slug}`}
+                        className="group block pb-4 border-b border-black/10 last:border-b-0 last:pb-0">
+                        <h4 className="font-display font-bold text-[13px] text-black leading-snug group-hover:text-brand-orange transition-colors line-clamp-3">
+                          {article.title}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          {cat && <span className="text-[9px] font-bold uppercase tracking-wider text-black/50">{cat.name}</span>}
+                          <span className="text-[10px] text-black/40">by {authorMap.get(article.authorId)?.name}</span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
