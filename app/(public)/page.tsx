@@ -66,8 +66,8 @@ export default async function Home() {
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-              {/* LEFT — 2 featured stories */}
-              <div className="lg:col-span-3 flex flex-col gap-5">
+              {/* LEFT — 2 featured stories (hidden on mobile, shown on desktop) */}
+              <div className="hidden lg:flex lg:col-span-3 flex-col gap-5">
                 <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-1">
                   <Zap className="w-3.5 h-3.5 text-black" />
                   <span className="text-xs font-bold tracking-widest uppercase text-black">Today&apos;s Picks</span>
@@ -106,7 +106,7 @@ export default async function Home() {
                   category={categoryMap.get(heroArticle.categorySlug)} />
               </div>
 
-              {/* RIGHT — trending stories */}
+              {/* RIGHT — trending stories (2 on mobile, 5 on desktop) */}
               <div className="lg:col-span-3 flex flex-col">
                 <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-4">
                   <TrendingUp className="w-3.5 h-3.5 text-black" />
@@ -117,7 +117,7 @@ export default async function Home() {
                     const cat = categoryMap.get(article.categorySlug);
                     return (
                       <Link key={article.id} href={`/${article.categorySlug}/${article.slug}`}
-                        className="group block py-3 border-b border-black/10 last:border-b-0 flex-1">
+                        className={`group block py-3 border-b border-black/10 last:border-b-0 flex-1 ${i >= 3 ? 'hidden lg:block' : ''}`}>
                         <h4 className="font-display font-bold text-[20px] text-black leading-snug group-hover:text-brand-orange transition-colors line-clamp-3">
                           {article.title}
                         </h4>
