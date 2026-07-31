@@ -256,7 +256,7 @@
 }
 
 .prose blockquote p {
-  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-family: 'Sora', system-ui, sans-serif;
   font-weight: 700;
   font-size: clamp(20px, 3vw, 30px);
   line-height: 1.3;
@@ -440,10 +440,11 @@
 .article-title {
   color: #0b1120;
   text-transform: uppercase;
-  font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-weight: 700;
-  line-height: 0.95;
-  letter-spacing: -0.02em;
+  font-family: 'Sora', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(32px, 4vw, 56px);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
 }
 
 .article-title .hl-yellow {
@@ -462,7 +463,7 @@
 
 /* ── Drop cap for first paragraph ── */
 .prose > p:first-of-type::first-letter {
-  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-family: 'Sora', system-ui, sans-serif;
   font-weight: 700;
   font-size: 70px;
   line-height: 0.78;
@@ -513,7 +514,7 @@ main {
   display: flex !important;
   align-items: center !important;
   gap: 18px !important;
-  font-family: 'Space Grotesk', system-ui, sans-serif !important;
+  font-family: 'Sora', system-ui, sans-serif !important;
   font-weight: 700 !important;
   font-size: clamp(20px, 2.8vw, 32px) !important;
   letter-spacing: -0.01em !important;
@@ -533,7 +534,7 @@ main {
   place-items: center !important;
   width: 54px !important;
   height: 54px !important;
-  font-family: 'Space Grotesk', system-ui, sans-serif !important;
+  font-family: 'Sora', system-ui, sans-serif !important;
   font-weight: 700 !important;
   font-size: 22px !important;
   letter-spacing: 0.04em !important;
@@ -600,7 +601,7 @@ main {
   --s2-grn:  #2BD96E;
   --s2-red:  #FF4757;
   --s2-mag:  #FF00B8;
-  --s2-disp: 'Space Grotesk', var(--font-space-grotesk), system-ui, sans-serif;
+  --s2-disp: 'Space Grotesk', var(--font-sora), system-ui, sans-serif;
   --s2-body: 'Inter', var(--font-inter), system-ui, sans-serif;
   --s2-mono: 'IBM Plex Mono', 'Courier New', monospace;
 

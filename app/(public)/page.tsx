@@ -118,12 +118,12 @@ export default async function Home() {
                     return (
                       <Link key={article.id} href={`/${article.categorySlug}/${article.slug}`}
                         className="group block py-3 border-b border-black/10 last:border-b-0 flex-1">
-                        <h4 className="font-display font-bold text-[13px] text-black leading-snug group-hover:text-brand-orange transition-colors line-clamp-3">
+                        <h4 className="font-display font-bold text-[20px] text-black leading-snug group-hover:text-brand-orange transition-colors line-clamp-3">
                           {article.title}
                         </h4>
                         <div className="flex items-center gap-2 mt-1.5">
-                          {cat && <span className="text-[9px] font-bold uppercase tracking-wider text-black/50">{cat.name}</span>}
-                          <span className="text-[10px] text-black/40">by {authorMap.get(article.authorId)?.name}</span>
+                          {cat && <span className="text-[10px] font-bold uppercase tracking-wider text-black/50">{cat.name}</span>}
+                          <span className="text-[14px] font-medium text-black/40">by {authorMap.get(article.authorId)?.name}</span>
                         </div>
                       </Link>
                     );
@@ -148,7 +148,7 @@ export default async function Home() {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="heading-chip bg-neon-blue" />
-              <h2 className="font-display font-bold text-2xl text-black">Free Tools</h2>
+              <h2 className="font-display font-bold text-[28px] text-black">Free Tools</h2>
             </div>
             <Link href="/tools" className="text-sm text-black hover:text-white font-medium flex items-center gap-1 transition-colors">
               All tools <ArrowRight className="w-3.5 h-3.5" />
@@ -162,11 +162,11 @@ export default async function Home() {
                   <TrendingUp className="w-5 h-5 text-[#7B3FE4]" />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-sm text-ink group-hover:text-black transition-colors">LP Reward Scanner</h3>
-                  <p className="text-xs text-ink-muted">Polymarket</p>
+                  <h3 className="font-display font-bold text-[22px] text-ink group-hover:text-black transition-colors">LP Reward Scanner</h3>
+                  <p className="text-[14px] font-medium text-ink-muted">Polymarket</p>
                 </div>
               </div>
-              <p className="text-sm text-ink-secondary leading-relaxed">
+              <p className="text-[16px] text-ink-secondary leading-relaxed">
                 See what LP farming <em>actually</em> pays. We strip out the headline-APR fantasy and rank markets by realistic lifetime earnings — net of competition, adverse selection, and time to resolution.
               </p>
             </Link>
@@ -177,11 +177,11 @@ export default async function Home() {
                   <Zap className="w-5 h-5 text-[#00D395]" />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-sm text-ink group-hover:text-black transition-colors">Arbitrage Scanner</h3>
-                  <p className="text-xs text-ink-muted">Polymarket × Kalshi</p>
+                  <h3 className="font-display font-bold text-[22px] text-ink group-hover:text-black transition-colors">Arbitrage Scanner</h3>
+                  <p className="text-[14px] font-medium text-ink-muted">Polymarket × Kalshi</p>
                 </div>
               </div>
-              <p className="text-sm text-ink-secondary leading-relaxed">
+              <p className="text-[16px] text-ink-secondary leading-relaxed">
                 Not just price gaps — <em>executable</em> profit. Every spread is shown net of fees, slippage, and orderbook depth, with a confidence score and the exact legs to place.
               </p>
             </Link>
@@ -192,11 +192,11 @@ export default async function Home() {
                   <Activity className="w-5 h-5 text-[#D9F24B]" />
                 </div>
                 <div>
-                  <h3 className="font-display font-bold text-sm text-ink group-hover:text-black transition-colors">Prediction Pulse</h3>
-                  <p className="text-xs text-ink-muted">Whale Tracker</p>
+                  <h3 className="font-display font-bold text-[22px] text-ink group-hover:text-black transition-colors">Prediction Pulse</h3>
+                  <p className="text-[14px] font-medium text-ink-muted">Whale Tracker</p>
                 </div>
               </div>
-              <p className="text-sm text-ink-secondary leading-relaxed">
+              <p className="text-[16px] text-ink-secondary leading-relaxed">
                 Whale trades, <em>judged</em>. We aggregate each wallet&apos;s positions, score conviction by edge and track record, and grade every call against the outcome — so you can see who&apos;s actually sharp.
               </p>
             </Link>
@@ -215,7 +215,7 @@ export default async function Home() {
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <div className="heading-chip bg-neon-lime" />
-                <h2 className="font-display font-bold text-2xl text-black">Latest Analysis</h2>
+                <h2 className="font-display font-bold text-[28px] text-black">Latest Analysis</h2>
               </div>
               <Link href="/articles" className="text-sm text-black hover:text-white font-medium flex items-center gap-1 transition-colors">
                 View all <ArrowRight className="w-3.5 h-3.5" />
@@ -241,7 +241,7 @@ export default async function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="flex items-center gap-3 mb-8">
             <div className="heading-chip bg-neon-magenta" />
-            <h2 className="font-display font-bold text-2xl text-black">Browse Topics</h2>
+            <h2 className="font-display font-bold text-[28px] text-black">Browse Topics</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {categories.map((cat, i) => {
@@ -277,7 +277,7 @@ export default async function Home() {
               <div className="lg:col-span-2">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="heading-chip bg-neon-cyan" />
-                  <h2 className="font-display font-bold text-2xl text-black">Popular Reads</h2>
+                  <h2 className="font-display font-bold text-[28px] text-black">Popular Reads</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {popularReads.map((article) => (

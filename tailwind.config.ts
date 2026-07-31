@@ -49,7 +49,7 @@ const config: Config = {
         'pop-lg': '6px 6px 0 0 #000',
       },
       fontFamily: {
-        display: ['var(--font-space-grotesk)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-sora)', 'system-ui', 'sans-serif'],
         body: ['var(--font-inter)', 'system-ui', 'sans-serif'],
       },
       typography: {

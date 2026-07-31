@@ -36,7 +36,6 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
       <Link href={`/${article.categorySlug}/${article.slug}`} className="group block h-full">
         <div className="relative flex h-full min-h-[430px] items-end overflow-hidden rounded-2xl card-pop card-pop-hover sm:min-h-[460px] lg:min-h-0">
           <CardImage src={article.featuredImage} alt={article.title} sizes="(max-width: 768px) 100vw, 66vw" priority />
-          {/* taller, stronger scrim so multi-line / hover-yellow titles stay legible on any image */}
           <div
             className="absolute inset-0"
             aria-hidden="true"
@@ -54,11 +53,11 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
                 {category.name}
               </span>
             )}
-            <h2 className="font-display font-bold text-2xl sm:text-3xl text-white leading-tight group-hover:text-brand-yellow transition-colors">
+            <h2 className="font-display font-bold text-[24px] sm:text-[28px] text-white leading-[1.12] group-hover:text-brand-yellow transition-colors">
               {article.title}
             </h2>
-            <p className="text-white/80 text-sm mt-2 line-clamp-2">{article.excerpt}</p>
-            <div className="flex items-center gap-3 mt-3 text-xs text-white/60">
+            <p className="text-white/80 text-[14px] font-medium mt-2 line-clamp-2">{article.excerpt}</p>
+            <div className="flex items-center gap-3 mt-3 text-[14px] font-medium text-white/60">
               {author && <span>{author.name}</span>}
               <span>·</span>
               <span>{formatDate(article.publishDate)}</span>
@@ -79,14 +78,14 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
         </div>
         <div className="flex-1 min-w-0">
           {category && (
-            <span className="text-[10px] font-bold uppercase tracking-wider text-black">
+            <span className="text-[12px] font-bold uppercase tracking-wider text-black">
               {category.name}
             </span>
           )}
-          <h3 className="font-display font-semibold text-sm text-black leading-snug group-hover:text-white transition-colors mt-0.5">
+          <h3 className="font-display font-bold text-[16px] text-black leading-snug group-hover:text-white transition-colors mt-0.5">
             {article.title}
           </h3>
-          <span className="text-[11px] text-black/60 mt-1 block">{article.readTime} min read</span>
+          <span className="text-[14px] font-medium text-black/60 mt-1 block">{article.readTime} min read</span>
         </div>
       </Link>
     );
@@ -95,10 +94,10 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
   if (variant === 'compact') {
     return (
       <Link href={`/${article.categorySlug}/${article.slug}`} className="group block">
-        <h3 className="font-display font-semibold text-sm text-black leading-snug group-hover:text-white transition-colors">
+        <h3 className="font-display font-bold text-[14px] text-black leading-snug group-hover:text-white transition-colors">
           {article.title}
         </h3>
-        <div className="flex items-center gap-2 mt-1 text-[11px] text-black/60">
+        <div className="flex items-center gap-2 mt-1 text-[12px] text-black/60">
           {category && <span>{category.name}</span>}
           <span>·</span>
           <span>{article.readTime} min</span>
@@ -123,11 +122,11 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
           )}
         </div>
         <div className="p-5">
-          <h3 className="font-display font-bold text-lg text-black leading-snug group-hover:text-brand-orange transition-colors">
+          <h3 className="font-display font-bold text-[22px] sm:text-[26px] text-black leading-[1.12] group-hover:text-brand-orange transition-colors">
             {article.title}
           </h3>
-          <p className="text-sm text-ink-secondary mt-2 line-clamp-2 leading-relaxed">{article.excerpt}</p>
-          <div className="flex items-center justify-between mt-4 text-xs text-ink-muted">
+          <p className="text-[15px] text-ink-secondary mt-2 line-clamp-2 leading-relaxed">{article.excerpt}</p>
+          <div className="flex items-center justify-between mt-4 text-[14px] font-medium text-ink-muted">
             <div className="flex items-center gap-2">
               {author && <span className="text-ink-secondary">{author.name}</span>}
               <span>·</span>

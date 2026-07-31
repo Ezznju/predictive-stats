@@ -204,7 +204,7 @@ export default async function CategoryArticlePage({ params }: Props) {
             className="article-title font-display font-bold text-3xl md:text-4xl lg:text-5xl leading-[0.95] uppercase tracking-tight"
             dangerouslySetInnerHTML={{ __html: article.title }}
           />
-          <p className="text-lg text-ink-secondary mt-4 leading-relaxed">{article.excerpt}</p>
+          <p className="text-[16px] text-ink-secondary mt-4 leading-relaxed">{article.excerpt}</p>
 
           {/* Meta */}
           <div className="flex flex-wrap items-center gap-4 mt-6 pb-6 border-b border-white/20">
@@ -214,12 +214,12 @@ export default async function CategoryArticlePage({ params }: Props) {
                   <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-ink group-hover:text-black transition-colors">{author.name}</span>
-                  <span className="text-xs text-ink-muted block">{author.title}</span>
+                  <span className="text-[14px] font-medium text-ink group-hover:text-black transition-colors">{author.name}</span>
+                  <span className="text-[12px] text-ink-muted block">{author.title}</span>
                 </div>
               </Link>
             )}
-            <div className="flex items-center gap-4 text-xs text-ink-muted ml-auto">
+            <div className="flex items-center gap-4 text-[14px] font-medium text-ink-muted ml-auto">
               <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(article.publishDate)}</span>
               <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{article.readTime} min read</span>
             </div>
