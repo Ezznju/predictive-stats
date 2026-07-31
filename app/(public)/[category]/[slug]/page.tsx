@@ -51,11 +51,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       modifiedTime: article.updatedDate,
       authors: author ? [author.name] : undefined,
       tags: article.tags,
+      images: [`${siteUrl}/${categorySlug}/${article.slug}/opengraph-image`],
     },
     twitter: {
       card: 'summary_large_image',
       title: article.seoTitle || article.title,
       description: article.metaDescription || article.excerpt,
+      images: [`${siteUrl}/${categorySlug}/${article.slug}/opengraph-image`],
     },
   };
 }
