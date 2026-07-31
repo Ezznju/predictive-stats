@@ -285,8 +285,9 @@
   height: 100%;
 }
 
-/* ── Styled lists in article prose ── */
-.prose ul:not(.list-none):not(.timeline-list) {
+/* ── Styled lists in article prose (ul + ol) ── */
+.prose ul:not(.list-none):not(.timeline-list),
+.prose ol:not(.list-none) {
   list-style: none;
   margin: 1.5em 0;
   background: #FFF7E6;
@@ -294,9 +295,11 @@
   box-shadow: 4px 4px 0 #000;
   border-radius: 12px;
   overflow: hidden;
+  counter-reset: styled-ol;
 }
 
-.prose ul:not(.list-none):not(.timeline-list) li {
+.prose ul:not(.list-none):not(.timeline-list) li,
+.prose ol:not(.list-none) li {
   padding: 12px 18px 12px 50px;
   border-bottom: 2px solid rgba(0,0,0,0.1);
   font-size: 17px;
@@ -306,15 +309,18 @@
   transition: background 0.15s, padding-left 0.15s;
 }
 
-.prose ul:not(.list-none):not(.timeline-list) li:last-child {
+.prose ul:not(.list-none):not(.timeline-list) li:last-child,
+.prose ol:not(.list-none) li:last-child {
   border-bottom: none;
 }
 
-.prose ul:not(.list-none):not(.timeline-list) li:hover {
+.prose ul:not(.list-none):not(.timeline-list) li:hover,
+.prose ol:not(.list-none) li:hover {
   background: #FFFDF3;
   padding-left: 58px;
 }
 
+/* Colored dots for ul */
 .prose ul:not(.list-none):not(.timeline-list) li::before {
   content: "";
   position: absolute;
@@ -332,6 +338,29 @@
 .prose ul:not(.list-none):not(.timeline-list) li:nth-child(5n+3)::before { background: #FFE642; }
 .prose ul:not(.list-none):not(.timeline-list) li:nth-child(5n+4)::before { background: #2BD96E; }
 .prose ul:not(.list-none):not(.timeline-list) li:nth-child(5n+5)::before { background: #9D5CFF; }
+
+/* Colored dots for ol — same colors, ignores numbering */
+.prose ol:not(.list-none) li {
+  counter-increment: styled-ol;
+}
+
+.prose ol:not(.list-none) li::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #000;
+}
+
+.prose ol:not(.list-none) li:nth-child(5n+1)::before { background: #FF00B8; }
+.prose ol:not(.list-none) li:nth-child(5n+2)::before { background: #29C5F6; }
+.prose ol:not(.list-none) li:nth-child(5n+3)::before { background: #FFE642; }
+.prose ol:not(.list-none) li:nth-child(5n+4)::before { background: #2BD96E; }
+.prose ol:not(.list-none) li:nth-child(5n+5)::before { background: #9D5CFF; }
 
 /* ── Figure cards in article prose ── */
 .prose figure {
