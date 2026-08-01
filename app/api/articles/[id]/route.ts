@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
   if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json(data, {
-    headers: { 'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=600' },
+    headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
   });
 }
 
