@@ -144,9 +144,11 @@ export default async function Home() {
                   <p className="text-[14px] font-medium text-ink-muted">Polymarket</p>
                 </div>
               </div>
-              <p className="text-[16px] text-ink-secondary leading-relaxed">
-                See what LP farming <em>actually</em> pays. We strip out the headline-APR fantasy and rank markets by realistic lifetime earnings — net of competition, adverse selection, and time to resolution.
-              </p>
+              <div className="bg-[#C6F23A] rounded-xl border-2 border-black p-3">
+                <p className="text-sm font-bold text-black">
+                  This tool answers: &ldquo;Does providing liquidity here actually pay, once hidden costs are counted?&rdquo;
+                </p>
+              </div>
             </Link>
             <Link href="/tools/arbitrage-scanner"
               className="group bg-white rounded-2xl border-2 border-black p-5 card-pop card-pop-hover">
@@ -159,9 +161,11 @@ export default async function Home() {
                   <p className="text-[14px] font-medium text-ink-muted">Polymarket × Kalshi</p>
                 </div>
               </div>
-              <p className="text-[16px] text-ink-secondary leading-relaxed">
-                Not just price gaps — <em>executable</em> profit. Every spread is shown net of fees, slippage, and orderbook depth, with a confidence score and the exact legs to place.
-              </p>
+              <div className="bg-[#C6F23A] rounded-xl border-2 border-black p-3">
+                <p className="text-sm font-bold text-black">
+                  This tool answers: &ldquo;Is anything mispriced right now, and could I actually fill it?&rdquo;
+                </p>
+              </div>
             </Link>
             <Link href="/pulse"
               className="group bg-white rounded-2xl border-2 border-black p-5 card-pop card-pop-hover">
@@ -174,9 +178,11 @@ export default async function Home() {
                   <p className="text-[14px] font-medium text-ink-muted">Whale Tracker</p>
                 </div>
               </div>
-              <p className="text-[16px] text-ink-secondary leading-relaxed">
-                Whale trades, <em>judged</em>. We aggregate each wallet&apos;s positions, score conviction by edge and track record, and grade every call against the outcome — so you can see who&apos;s actually sharp.
-              </p>
+              <div className="bg-[#C6F23A] rounded-xl border-2 border-black p-3">
+                <p className="text-sm font-bold text-black">
+                  This tool answers: &ldquo;When a big wallet moves, is it a signal worth following or just noise?&rdquo;
+                </p>
+              </div>
             </Link>
           </div>
         </div>
