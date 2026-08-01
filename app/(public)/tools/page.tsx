@@ -5,7 +5,6 @@ import {
   ArrowLeftRight,
   ChevronRight,
   Zap,
-  BarChart3,
   Shield,
   Activity,
 } from 'lucide-react';
@@ -14,7 +13,6 @@ import {
   UShape,
   BoldCircle,
   CornerDotSquare,
-  DaisyShape,
 } from '@/components/GeometricShapes';
 
 export const metadata: Metadata = {
@@ -26,52 +24,40 @@ export const metadata: Metadata = {
 
 const TOOLS = [
   {
-    slug: 'lp-scanner',
-    href: '/tools/lp-scanner',
-    name: 'LP Reward Scanner',
-    tagline: 'Find the highest-paying liquidity provider rewards on Polymarket',
-    description:
-      'Scans every active Polymarket market in real time. See daily reward rates, annual yield estimates, and spread metrics — sorted to surface the best LP farming opportunities right now.',
-    icon: TrendingUp,
-    color: '#7B3FE4',
-    highlights: [
-      'Real-time Polymarket LP reward data',
-      'Daily & annualised yield estimates',
-      'Spread and volume metrics',
-      'Sort & filter by reward rate',
-    ],
-  },
-  {
     slug: 'arbitrage-scanner',
     href: '/tools/arbitrage-scanner',
     name: 'Arbitrage Scanner',
-    tagline: 'Spot price gaps between Polymarket and Kalshi',
+    platform: 'Polymarket × Kalshi',
+    question: 'Is anything mispriced right now, and could I actually fill it?',
     description:
-      'Compares YES/NO prices across Polymarket and Kalshi for matched events. Highlights exploitable arbitrage spreads so you can buy cheap on one platform and sell dear on another.',
+      'Not the millisecond lock—the <em>persistent</em> mispricing. Real MECE partitions live; cross-venue basis illustrated.',
     icon: ArrowLeftRight,
-    color: '#00D395',
-    highlights: [
-      'Cross-platform price comparison',
-      'Arbitrage % calculation',
-      'Match quality scoring',
-      'Links to both platforms',
-    ],
+    color: '#FF69B4',
+    ctaLabel: 'OPEN SCANNER',
+  },
+  {
+    slug: 'lp-scanner',
+    href: '/tools/lp-scanner',
+    name: 'LP Reward Scanner',
+    platform: 'Polymarket',
+    question: 'Does providing liquidity here actually pay, once hidden costs are counted?',
+    description:
+      '<em>A rate, not a gap</em>—so it doesn\'t decay. We strip the headline APR down to the honest net.',
+    icon: TrendingUp,
+    color: '#7B3FE4',
+    ctaLabel: 'OPEN SCANNER',
   },
   {
     slug: 'pulse',
     href: '/pulse',
     name: 'Prediction Pulse',
-    tagline: 'Real-time whale intelligence across prediction markets',
+    platform: 'Whale Tracker',
+    question: 'When a big wallet moves, is it a signal worth following or just noise?',
     description:
-      'Track whale trades, monitor top wallets, and spot market-moving activity across Polymarket. Live leaderboard data, wallet intelligence scores, and anomaly detection.',
+      'Whale trades, <em>judged</em>. Conviction as a five-axis radar; skill shrunk toward the average so a thin record can\'t lie.',
     icon: Activity,
-    color: '#D9F24B',
-    highlights: [
-      'Live whale trade feed',
-      'Top trader leaderboard',
-      'Wallet intelligence scores',
-      'Market whale activity',
-    ],
+    color: '#00D395',
+    ctaLabel: 'OPEN FEED',
   },
 ];
 
@@ -128,46 +114,51 @@ export default function ToolsPage() {
 
       {/* Tool Cards */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 relative">
-        <DaisyShape
-          size={60}
-          className="absolute -top-4 -right-4 opacity-40 hidden md:block"
-        />
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {TOOLS.map((tool) => (
             <Link
               key={tool.slug}
               href={tool.href}
-              className="group bg-white rounded-2xl border-2 border-black p-6 shadow-pop hover:-translate-y-1 transition-transform"
+              className="group bg-white rounded-2xl border-2 border-black p-6 shadow-pop hover:-translate-y-1 transition-transform flex flex-col"
             >
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
-                style={{ backgroundColor: `${tool.color}20` }}
-              >
-                <tool.icon className="w-6 h-6" style={{ color: tool.color }} />
+              {/* Icon + Title */}
+              <div className="flex items-center gap-4 mb-4">
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-black"
+                  style={{ backgroundColor: `${tool.color}30` }}
+                >
+                  <tool.icon className="w-7 h-7" style={{ color: tool.color }} />
+                </div>
+                <div>
+                  <h2 className="font-display font-bold text-2xl text-ink group-hover:text-black transition-colors leading-tight">
+                    {tool.name}
+                  </h2>
+                  <p className="text-sm text-ink-muted font-medium">{tool.platform}</p>
+                </div>
               </div>
-              <h2 className="font-display font-bold text-xl text-ink group-hover:text-black transition-colors mb-1">
-                {tool.name}
-              </h2>
-              <p className="text-sm text-ink-muted font-medium mb-3">
-                {tool.tagline}
-              </p>
-              <p className="text-sm text-ink-secondary leading-relaxed mb-4">
-                {tool.description}
-              </p>
-              <ul className="space-y-1.5 mb-5">
-                {tool.highlights.map((h) => (
-                  <li
-                    key={h}
-                    className="flex items-center gap-2 text-xs text-ink-secondary"
-                  >
-                    <BarChart3 className="w-3 h-3 flex-shrink-0" style={{ color: tool.color }} />
-                    {h}
-                  </li>
-                ))}
-              </ul>
-              <span className="inline-flex items-center gap-1.5 text-sm font-bold text-black">
-                Launch tool <ChevronRight className="w-4 h-4" />
+
+              {/* This tool answers */}
+              <div className="bg-[#C6F23A] rounded-xl border-2 border-black p-3 mb-4">
+                <p className="text-sm font-bold text-black">
+                  This tool answers: &ldquo;{tool.question}&rdquo;
+                </p>
+              </div>
+
+              {/* Description */}
+              <p
+                className="text-sm text-ink-secondary leading-relaxed mb-4"
+                dangerouslySetInnerHTML={{ __html: tool.description }}
+              />
+
+              {/* Dashed placeholder */}
+              <div className="flex-1 border-2 border-dashed border-black/20 rounded-xl mb-5 min-h-[80px]" />
+
+              {/* CTA */}
+              <span className="inline-flex items-center gap-2 text-sm font-bold text-black mt-auto">
+                {tool.ctaLabel}
+                <span className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center flex-shrink-0 group-hover:translate-x-1 transition-transform">
+                  <ChevronRight className="w-4 h-4" />
+                </span>
               </span>
             </Link>
           ))}
