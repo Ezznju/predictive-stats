@@ -4,7 +4,7 @@ import { Article, Author, Category, SiteSettings } from '@/types';
 /* ───── cache ───── */
 
 const cache = new Map<string, { data: any; expiry: number }>();
-const CACHE_TTL = 60 * 1000; // 1 minute
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
 function getCached<T>(key: string): T | null {
   const entry = cache.get(key);

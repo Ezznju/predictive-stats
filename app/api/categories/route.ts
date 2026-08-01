@@ -11,7 +11,7 @@ export async function GET() {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, {
-    headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+    headers: { 'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=7200' },
   });
 }
 
