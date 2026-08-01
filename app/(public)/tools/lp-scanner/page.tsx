@@ -1,7 +1,23 @@
 'use client';
 
-import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import {
+  TrendingUp,
+  ChevronRight,
+  RefreshCw,
+  Search,
+  Filter,
+  X,
+  ExternalLink,
+  ArrowUpDown,
+  ChevronUp,
+  ChevronDown,
+  DollarSign,
+  BarChart3,
+  Clock,
+  Zap,
+} from 'lucide-react';
 
 /* ── Types ──────────────────────────────────────────────────────────── */
 
@@ -38,16 +54,19 @@ interface OrderBook {
   tickSize: string;
 }
 
+/* ── Brand colors ────────────────────────────────────────────────────── */
+const BRAND = '#7B3FE4';
+const NEON_GREEN = '#2BD96E';
+const NEON_CYAN = '#29C5F6';
+const NEON_LIME = '#C6F23A';
+const YELLOW = '#FFE642';
+
 /* ── Helpers ────────────────────────────────────────────────────────── */
 
 function fmt$(n: number) {
   if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
   if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
   return '$' + n.toFixed(0);
-}
-
-function fmtCents(n: number) {
-  return (n * 100).toFixed(1) + '¢';
 }
 
 function daysUntil(dateStr: string) {
@@ -58,6 +77,8 @@ function daysUntil(dateStr: string) {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
+type SortKey = 'dailyReward' | 'spread' | 'volume24hr' | 'liquidity' | 'competitiveness' | 'minSize';
+
 /* ── Main Page ──────────────────────────────────────────────────────── */
 
 export default function LPScannerPage() {
@@ -65,11 +86,12 @@ export default function LPScannerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState('');
-  const [sortKey, setSortKey] = useState<'dailyReward' | 'spread' | 'volume24hr' | 'liquidity' | 'competitiveness' | 'minSize'>('dailyReward');
+  const [sortKey, setSortKey] = useState<SortKey>('dailyReward');
   const [sortDir, setSortDir] = useState<-1 | 1>(-1);
   const [selectedMarket, setSelectedMarket] = useState<LPRewardMarket | null>(null);
   const [orderBook, setOrderBook] = useState<OrderBook | null>(null);
   const [obLoading, setObLoading] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Velocity calculator
   const [vCap, setVCap] = useState(1000);
@@ -127,12 +149,10 @@ export default function LPScannerPage() {
       .sort((a, b) => ((a[sortKey] as number) - (b[sortKey] as number)) * sortDir);
   }, [markets, q, sortKey, sortDir]);
 
-  const handleSort = (k: typeof sortKey) => {
+  const handleSort = (k: SortKey) => {
     if (sortKey === k) setSortDir(-sortDir as -1 | 1);
     else { setSortKey(k); setSortDir(-1); }
   };
-
-  const sortArrow = (k: typeof sortKey) => sortKey === k ? (sortDir === -1 ? ' ▼' : ' ▲') : '';
 
   // Velocity calc
   const vBase = vCap / (20 * 300 + vCap);
@@ -141,326 +161,445 @@ export default function LPScannerPage() {
   const vDaily = vPerMatch * vN;
   const vStaticD = vPool * vBase;
 
+  const maxReward = markets.length > 0 ? Math.max(...markets.map(m => m.dailyReward)) : 0;
+
   return (
-    <div className="s2-root">
-      <div className="s2-bg-stripes" />
-      <div className="s2-bg-grid" />
-      <div className="s2-bg-glow s2-g1" />
-      <div className="s2-bg-glow s2-g2" />
-      <div className="s2-sweep" />
+    <div className="relative">
+      {/* ── Hero ──────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-black/5 py-14 sm:py-20">
+        <div
+          className="absolute top-8 left-8 w-16 h-16 rounded-xl border-2 border-black rotate-12 opacity-70 hidden md:block"
+          style={{ background: BRAND }}
+        />
+        <div
+          className="absolute -top-6 right-[18%] w-24 h-24 rounded-full opacity-50 hidden md:block"
+          style={{ background: NEON_CYAN }}
+        />
+        <div className="absolute bottom-2 right-10 w-14 h-14 rounded-full bg-neon-lime border-2 border-black opacity-60 hidden md:block" />
 
-      {/* Masthead */}
-      <header className="s2-masthead">
-        <div className="s2-brand">
-          ◢ <b>LP</b> <em>scanner — live reward pools</em>
-        </div>
-        <span className="s2-livebug"><i />LIVE</span>
-        <div className="s2-mast-right">
-          <span className="s2-mono dim" style={{ fontSize: 11 }}>
-            {markets.length} active reward markets
-          </span>
-        </div>
-      </header>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
+          <nav className="flex items-center gap-2 text-xs text-ink-muted mb-4">
+            <Link href="/" className="hover:text-ink transition-colors">Home</Link>
+            <ChevronRight className="w-3 h-3" />
+            <Link href="/tools" className="hover:text-ink transition-colors">Tools</Link>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-ink-secondary">LP Scanner</span>
+          </nav>
 
-      <main>
-        {/* Board */}
-        <section className="s2-board">
-          <div className="s2-console-head">
-            <h2 className="s2-h2">Active Reward Pools</h2>
-            <div className="s2-head-meta">
-              <span>Source: Polymarket CLOB + Gamma API</span>
-              <span>Sorted by daily reward</span>
-            </div>
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span className="inline-block px-3 py-1 text-xs font-bold text-black bg-neon-lime border-2 border-black rounded-full shadow-pop-sm">
+              FREE TOOL
+            </span>
+            <span className="inline-block px-3 py-1 text-xs font-bold text-black bg-neon-cyan border-2 border-black rounded-full shadow-pop-sm">
+              LIVE DATA
+            </span>
+            <span
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold text-white border-2 border-black rounded-full shadow-pop-sm"
+              style={{ background: BRAND }}
+            >
+              POLYMARKET
+              <TrendingUp className="w-3 h-3" />
+            </span>
           </div>
+          <h1 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl text-ink mb-3">
+            LP Reward Scanner
+          </h1>
+          <p className="text-lg sm:text-xl text-ink-secondary leading-relaxed max-w-3xl">
+            Scan every active Polymarket LP reward pool in real time. See daily
+            reward rates, annual yield estimates, and spread metrics — sorted to
+            surface the best farming opportunities right now.
+          </p>
+        </div>
+      </div>
 
-          {/* Filters */}
-          <div className="s2-filters">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        {/* ── How it works ───────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {[
+            { icon: DollarSign, color: BRAND, title: '1. Daily rewards', body: 'Each active LP reward pool shows its daily USD payout, spread requirements, and minimum size.' },
+            { icon: BarChart3, color: NEON_CYAN, title: '2. Compare yields', body: 'Sort by daily reward, spread, volume, or competitiveness to find the pools that match your capital.' },
+            { icon: Zap, color: NEON_LIME, title: '3. Go deeper', body: 'Click any row for live order book depth, reward configuration, and a direct link to trade on Polymarket.' },
+          ].map((c) => (
+            <div key={c.title} className="bg-white rounded-2xl border-2 border-black shadow-pop p-5 transition-all duration-200 hover:-translate-y-1">
+              <div className="w-11 h-11 rounded-xl border-2 border-black flex items-center justify-center mb-3" style={{ background: c.color }}>
+                <c.icon className="w-5 h-5" style={{ color: c.color === YELLOW ? '#000' : '#fff' }} />
+              </div>
+              <h3 className="font-display font-bold text-base text-ink mb-1">{c.title}</h3>
+              <p className="text-sm text-ink-secondary leading-relaxed">{c.body}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Stats bar ─────────────────────────────────── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {[
+            { label: 'Active Pools', value: `${markets.length}`, icon: BarChart3, color: 'bg-neon-cyan' },
+            { label: 'Top Daily Reward', value: markets.length > 0 ? `$${maxReward.toFixed(2)}` : '—', icon: DollarSign, color: 'bg-neon-lime' },
+            { label: 'Avg Spread', value: markets.length > 0 ? `${(markets.reduce((s, m) => s + m.spread, 0) / markets.length * 100).toFixed(1)}¢` : '—', icon: ArrowUpDown, color: 'bg-brand-yellow' },
+            { label: 'Markets Shown', value: `${filtered.length}`, icon: TrendingUp, color: 'bg-neon-green' },
+          ].map((s) => (
+            <div key={s.label} className="bg-white rounded-xl border-2 border-black shadow-pop-sm p-3 flex items-center gap-3">
+              <div className={`${s.color} w-9 h-9 rounded-lg border-2 border-black flex items-center justify-center flex-shrink-0`}>
+                <s.icon className="w-4 h-4 text-black" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-display font-bold text-lg leading-tight truncate">{s.value}</p>
+                <p className="text-[11px] text-ink-faint">{s.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Controls ──────────────────────────────────── */}
+        <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
             <input
-              className="s2-search"
+              className="w-full pl-9 pr-3 py-2 border-2 border-black rounded-lg text-sm font-display bg-white shadow-pop-sm focus:outline-none focus:ring-2 focus:ring-brand-magenta/30"
               placeholder="Search markets…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
-            <div className="s2-chips">
-              {([
-                ['dailyReward', 'Daily Reward'],
-                ['spread', 'Spread'],
-                ['volume24hr', '24h Volume'],
-                ['liquidity', 'Liquidity'],
-                ['competitiveness', 'Competitiveness'],
-                ['minSize', 'Min Size'],
-              ] as const).map(([k, label]) => (
-                <button
-                  key={k}
-                  className={'s2-fchip' + (sortKey === k ? ' s2-on' : '')}
-                  onClick={() => handleSort(k)}
-                >
-                  {label}{sortArrow(k)}
-                </button>
-              ))}
-            </div>
           </div>
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-black bg-white border-2 border-black rounded-lg px-3 py-2 shadow-pop-sm hover:-translate-y-0.5 transition-transform"
+          >
+            <Filter className="w-4 h-4" />
+            Sort
+          </button>
+          <span className="text-xs text-ink-faint">{filtered.length} markets</span>
+        </div>
 
-          {/* Table */}
-          <div className="s2-table-wrap" style={{ maxHeight: '65vh' }}>
-            {loading ? (
-              <div style={{ textAlign: 'center', padding: 60 }}>
-                <span className="s2-mono" style={{ color: 'var(--s2-cyn)' }}>Loading reward pools…</span>
-              </div>
-            ) : error ? (
-              <div style={{ textAlign: 'center', padding: 60 }}>
-                <span className="s2-mono" style={{ color: 'var(--s2-red)' }}>Error: {error}</span>
-              </div>
-            ) : filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 60 }}>
-                <span className="s2-mono" style={{ color: 'var(--s2-mut)' }}>No markets found.</span>
-              </div>
-            ) : (
-              <table>
+        {/* ── Filter chips ─────────────────────────────── */}
+        {showFilters && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {([
+              ['dailyReward', 'Daily Reward'],
+              ['spread', 'Spread'],
+              ['volume24hr', '24h Volume'],
+              ['liquidity', 'Liquidity'],
+              ['competitiveness', 'Competitiveness'],
+              ['minSize', 'Min Size'],
+            ] as const).map(([k, label]) => (
+              <button
+                key={k}
+                onClick={() => handleSort(k)}
+                className={`inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-full border-2 border-black transition-colors ${
+                  sortKey === k
+                    ? 'bg-black text-white'
+                    : 'bg-white text-ink hover:bg-black/5'
+                }`}
+              >
+                {label}
+                {sortKey === k && (sortDir === -1 ? ' ▼' : ' ▲')}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ── Loading / Error ───────────────────────────── */}
+        {loading && (
+          <div className="bg-white rounded-xl border-2 border-black shadow-pop p-12 flex flex-col items-center justify-center">
+            <RefreshCw className="w-8 h-8 animate-spin text-brand-orange mb-3" />
+            <p className="text-ink-muted font-display">Scanning Polymarket LP reward pools…</p>
+            <p className="text-xs text-ink-faint mt-1">This may take a few seconds</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-white rounded-xl border-2 border-black shadow-pop p-8 text-center">
+            <p className="text-ink-muted">{error}</p>
+          </div>
+        )}
+
+        {/* ── Results Table ─────────────────────────────── */}
+        {!loading && !error && filtered.length > 0 && (
+          <div className="bg-white rounded-2xl border-2 border-black shadow-pop overflow-hidden">
+            {/* Desktop Table */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr>
-                    <th style={{ minWidth: 280 }}>Market</th>
-                    <th onClick={() => handleSort('dailyReward')}>$/Day{sortArrow('dailyReward')}</th>
-                    <th onClick={() => handleSort('spread')}>Spread{sortArrow('spread')}</th>
-                    <th onClick={() => handleSort('minSize')}>Min Size{sortArrow('minSize')}</th>
-                    <th onClick={() => handleSort('volume24hr')}>24h Vol{sortArrow('volume24hr')}</th>
-                    <th onClick={() => handleSort('liquidity')}>Liquidity{sortArrow('liquidity')}</th>
-                    <th onClick={() => handleSort('competitiveness')}>Compete{sortArrow('competitiveness')}</th>
-                    <th>Ends</th>
-                    <th>Prices</th>
+                  <tr className="bg-black text-white">
+                    <th className="px-4 py-3 text-left font-display text-xs uppercase tracking-wider" style={{ minWidth: 280 }}>Market</th>
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none" onClick={() => handleSort('dailyReward')}>
+                      <span className="flex items-center justify-center gap-1">$/Day {sortKey === 'dailyReward' && (sortDir === -1 ? '▼' : '▲')}</span>
+                    </th>
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none" onClick={() => handleSort('spread')}>
+                      <span className="flex items-center justify-center gap-1">Spread {sortKey === 'spread' && (sortDir === -1 ? '▼' : '▲')}</span>
+                    </th>
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none" onClick={() => handleSort('minSize')}>
+                      <span className="flex items-center justify-center gap-1">Min {sortKey === 'minSize' && (sortDir === -1 ? '▼' : '▲')}</span>
+                    </th>
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none" onClick={() => handleSort('volume24hr')}>
+                      <span className="flex items-center justify-center gap-1">24h Vol {sortKey === 'volume24hr' && (sortDir === -1 ? '▼' : '▲')}</span>
+                    </th>
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none" onClick={() => handleSort('liquidity')}>
+                      <span className="flex items-center justify-center gap-1">Liquidity {sortKey === 'liquidity' && (sortDir === -1 ? '▼' : '▲')}</span>
+                    </th>
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none" onClick={() => handleSort('competitiveness')}>
+                      <span className="flex items-center justify-center gap-1">Compete {sortKey === 'competitiveness' && (sortDir === -1 ? '▼' : '▲')}</span>
+                    </th>
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider">Ends</th>
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider">Prices</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {filtered.map((m) => {
                     const days = daysUntil(m.endDate);
                     return (
-                      <tr key={m.conditionId} onClick={() => setSelectedMarket(m)}>
-                        <td>
-                          <div style={{ fontWeight: 600, fontSize: 13.5, lineHeight: 1.35 }}>
-                            {m.question}
-                          </div>
-                          <div className="s2-mono dim" style={{ fontSize: 10, marginTop: 3 }}>
-                            {m.slug}
-                          </div>
+                      <tr key={m.conditionId} className="hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => setSelectedMarket(m)}>
+                        <td className="px-4 py-3 max-w-xs">
+                          <div className="font-display font-semibold text-sm leading-tight truncate">{m.question}</div>
+                          <div className="text-xs text-ink-faint mt-0.5">{m.slug}</div>
                         </td>
-                        <td className="s2-mono s2-c-pool" style={{ fontSize: 15, fontWeight: 700 }}>
-                          ${m.dailyReward.toFixed(2)}
+                        <td className="px-3 py-3 text-center">
+                          <span className="font-mono text-sm font-bold" style={{ color: BRAND }}>${m.dailyReward.toFixed(2)}</span>
                         </td>
-                        <td className="s2-mono">
-                          <span style={{ color: m.spread <= 0.02 ? 'var(--s2-grn)' : m.spread <= 0.05 ? 'var(--s2-yel)' : 'var(--s2-red)' }}>
+                        <td className="px-3 py-3 text-center">
+                          <span className={`font-mono text-sm font-bold ${m.spread <= 0.02 ? 'text-neon-green' : m.spread <= 0.05 ? 'text-brand-yellow' : 'text-brand-pink'}`}>
                             {(m.spread * 100).toFixed(1)}¢
                           </span>
                         </td>
-                        <td className="s2-mono">{m.minSize > 0 ? m.minSize : '—'}</td>
-                        <td className="s2-mono">{fmt$(m.volume24hr)}</td>
-                        <td className="s2-mono">{fmt$(m.liquidity)}</td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <div style={{ width: 50, height: 5, background: 'var(--s2-panel2)', borderRadius: 2 }}>
-                              <div style={{
-                                width: (m.competitiveness * 100) + '%',
-                                height: '100%',
-                                background: m.competitiveness > 0.7 ? 'var(--s2-grn)' : m.competitiveness > 0.4 ? 'var(--s2-yel)' : 'var(--s2-red)',
-                                borderRadius: 2,
-                              }} />
+                        <td className="px-3 py-3 text-center font-mono text-sm">{m.minSize > 0 ? m.minSize : '—'}</td>
+                        <td className="px-3 py-3 text-center font-mono text-sm">{fmt$(m.volume24hr)}</td>
+                        <td className="px-3 py-3 text-center font-mono text-sm">{fmt$(m.liquidity)}</td>
+                        <td className="px-3 py-3 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="w-12 h-1.5 rounded-full bg-black/5">
+                              <div className={`h-full rounded-full ${m.competitiveness > 0.7 ? 'bg-neon-green' : m.competitiveness > 0.4 ? 'bg-brand-yellow' : 'bg-brand-pink'}`} style={{ width: `${m.competitiveness * 100}%` }} />
                             </div>
-                            <span className="s2-mono dim" style={{ fontSize: 11 }}>
-                              {(m.competitiveness * 100).toFixed(0)}%
-                            </span>
+                            <span className="text-xs text-ink-faint font-mono">{(m.competitiveness * 100).toFixed(0)}%</span>
                           </div>
                         </td>
-                        <td className="s2-mono" style={{ fontSize: 12, color: days !== null && days < 7 ? 'var(--s2-red)' : 'var(--s2-mut)' }}>
-                          {days !== null ? (days < 0 ? 'Ended' : days + 'd') : '—'}
+                        <td className="px-3 py-3 text-center">
+                          <span className={`text-xs font-mono ${days !== null && days < 7 ? 'text-brand-pink font-bold' : 'text-ink-faint'}`}>
+                            {days !== null ? (days < 0 ? 'Ended' : days + 'd') : '—'}
+                          </span>
                         </td>
-                        <td className="s2-mono" style={{ fontSize: 12 }}>
-                          <span className="s2-grn">{(m.yesPrice * 100).toFixed(0)}¢</span>
-                          <span className="dim"> / </span>
-                          <span style={{ color: 'var(--s2-red)' }}>{(m.noPrice * 100).toFixed(0)}¢</span>
+                        <td className="px-3 py-3 text-center font-mono text-xs">
+                          <span className="text-neon-green">{(m.yesPrice * 100).toFixed(0)}¢</span>
+                          <span className="text-ink-faint"> / </span>
+                          <span className="text-brand-pink">{(m.noPrice * 100).toFixed(0)}¢</span>
                         </td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
-            )}
-          </div>
-          <p className="s2-footnote">
-            Data from Polymarket CLOB Rewards API + Gamma API · {filtered.length} markets with active LP rewards · Click any row for order book details
-          </p>
-        </section>
+            </div>
 
-        {/* Velocity Calculator */}
-        <section className="s2-sec s2-velo" id="velocity">
-          <div>
-            <p className="s2-kicker">Model your returns</p>
-            <h2 className="s2-h2" style={{ marginBottom: 10 }}>Same $1,000. Six lives a day.</h2>
-            <p style={{ color: 'var(--s2-mut)', lineHeight: 1.7, maxWidth: '52ch' }}>
-              Static farming camps one book and takes whatever share the crowd leaves. The rotation re-enters at every opportunity with fresh capital against a decayed book — the pool share resets in your favor, over and over.
-            </p>
-            <div className={'s2-verdict' + (vDaily >= 100 ? ' s2-v-grn' : vDaily >= 60 ? ' s2-v-amb' : ' s2-v-red')}>
-              <div className="s2-vt">
-                {vDaily >= 100 ? `TARGET CLEARED — $${vDaily.toFixed(0)}/day modeled`
-                  : vDaily >= 60 ? `IN RANGE — $${vDaily.toFixed(0)}/day modeled`
-                  : `NOT YET — $${vDaily.toFixed(0)}/day modeled`}
-              </div>
-              <p>
-                {vDaily >= 100
-                  ? `The $100/day math works — via turnover, not one magic market. ${vN} entries at ${(vShare * 100).toFixed(0)}% average pool share. Subtract adverse selection, fills, delay.`
-                  : vDaily >= 60
-                  ? `$${(100 - vDaily).toFixed(0)} short of the target. Add ${Math.ceil(100 / vPerMatch) - vN} more entries or move entry timing later.`
-                  : `At this rotation the target needs ~${vPerMatch > 0 ? Math.ceil(100 / vPerMatch) : '—'} entries or a larger bankroll.`}
+            {/* Mobile Cards */}
+            <div className="lg:hidden divide-y divide-gray-100">
+              {filtered.map((m) => {
+                const days = daysUntil(m.endDate);
+                return (
+                  <div key={m.conditionId} className="p-4 hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => setSelectedMarket(m)}>
+                    <div className="font-display font-semibold text-sm leading-tight mb-1">{m.question}</div>
+                    <div className="flex flex-wrap items-center gap-3 text-xs">
+                      <span className="font-mono font-bold" style={{ color: BRAND }}>${m.dailyReward.toFixed(2)}/day</span>
+                      <span className={`font-mono ${m.spread <= 0.02 ? 'text-neon-green' : m.spread <= 0.05 ? 'text-brand-yellow' : 'text-brand-pink'}`}>
+                        {(m.spread * 100).toFixed(1)}¢ spread
+                      </span>
+                      <span className="font-mono text-ink-faint">{fmt$(m.volume24hr)} vol</span>
+                      {days !== null && days < 7 && <span className="text-brand-pink font-bold">{days}d left</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <p className="text-xs text-ink-faint mt-3">
+          Data from Polymarket CLOB Rewards API + Gamma API · {filtered.length} markets with active LP rewards · Click any row for order book details
+        </p>
+
+        {/* ── Velocity Calculator ───────────────── */}
+        <div className="mt-14 bg-white rounded-2xl border-2 border-black shadow-pop p-6 sm:p-8">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="flex-shrink-0 w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center" style={{ background: BRAND }}>
+              <TrendingUp className="w-5 h-5 text-white" />
+            </span>
+            <div>
+              <p className="text-xs font-bold text-ink-faint uppercase tracking-wide">Model your returns</p>
+              <h2 className="font-display font-bold text-xl text-ink">Same $1,000. Six lives a day.</h2>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Description */}
+            <div>
+              <p className="text-ink-secondary leading-relaxed mb-4">
+                Static farming camps one book and takes whatever share the crowd leaves. The rotation re-enters at every opportunity with fresh capital against a decayed book — the pool share resets in your favor, over and over.
               </p>
-            </div>
-          </div>
-          <div className="s2-velo-panel">
-            <div className="s2-vrow">
-              <div className="s2-vlab"><span>Bankroll</span><b>${vCap.toLocaleString()}</b></div>
-              <input type="range" min={100} max={5000} step={100} value={vCap} onChange={(e) => setVCap(+e.target.value)} />
-            </div>
-            <div className="s2-vrow">
-              <div className="s2-vlab"><span>Entries / day</span><b>{vN}</b></div>
-              <input type="range" min={1} max={10} step={1} value={vN} onChange={(e) => setVN(+e.target.value)} />
-            </div>
-            <div className="s2-vrow">
-              <div className="s2-vlab"><span>Avg pool size</span><b>${vPool}/day</b></div>
-              <input type="range" min={40} max={200} step={5} value={vPool} onChange={(e) => setVPool(+e.target.value)} />
-            </div>
-            <div className="s2-vrow">
-              <div className="s2-vlab"><span>Entry timing</span></div>
-              <select value={vPhase} onChange={(e) => setVPhase(+e.target.value)}>
-                <option value={1}>Opener — full book (×1.0 share)</option>
-                <option value={1.9}>Halftime break (×1.9 share)</option>
-                <option value={2.8}>Second half (×2.8 share)</option>
-                <option value={4.2}>Match point — clutch (×4.2 share)</option>
-              </select>
-            </div>
-            <div className="s2-vout">
-              <div><span className="s2-flab">Pool share / entry</span><div className="s2-big s2-mono" style={{ color: 'var(--s2-cyn)' }}>{(vShare * 100).toFixed(1)}%</div></div>
-              <div><span className="s2-flab">Per match</span><div className="s2-big s2-mono">${vPerMatch.toFixed(2)}</div></div>
-              <div><span className="s2-flab">Entries to $100/d</span><div className="s2-big s2-mono s2-amb">{vPerMatch > 0 ? Math.ceil(100 / vPerMatch) : '—'}</div></div>
-            </div>
-            <VelBar label="ONE STATIC MARKET" value={vStaticD} max={Math.max(vDaily, vStaticD, 100) * 1.12} colorClass="dim-b" />
-            <VelBar label="ROTATION STRATEGY" value={vDaily} max={Math.max(vDaily, vStaticD, 100) * 1.12} colorClass="rot-b" />
-            <div className="s2-vb-row">
-              <span className="s2-vb-lab s2-mono">$100/DAY TARGET</span>
-              <div className="s2-vb-track">
-                <div className="s2-vb tgt-b" style={{ width: (100 / (Math.max(vDaily, vStaticD, 100) * 1.12)) * 100 + '%' }} />
+              <div className={`rounded-xl border-2 border-black p-4 ${vDaily >= 100 ? 'bg-neon-green/10' : vDaily >= 60 ? 'bg-brand-yellow/10' : 'bg-brand-pink/10'}`}>
+                <p className={`font-display font-bold text-sm ${vDaily >= 100 ? 'text-neon-green' : vDaily >= 60 ? 'text-brand-yellow' : 'text-brand-pink'}`}>
+                  {vDaily >= 100 ? `TARGET CLEARED — $${vDaily.toFixed(0)}/day modeled`
+                    : vDaily >= 60 ? `IN RANGE — $${vDaily.toFixed(0)}/day modeled`
+                    : `NOT YET — $${vDaily.toFixed(0)}/day modeled`}
+                </p>
+                <p className="text-xs text-ink-secondary mt-1">
+                  {vDaily >= 100
+                    ? `The $100/day math works — via turnover, not one magic market. ${vN} entries at ${(vShare * 100).toFixed(0)}% average pool share.`
+                    : vDaily >= 60
+                    ? `$${(100 - vDaily).toFixed(0)} short of the target. Add ${Math.ceil(100 / vPerMatch) - vN} more entries or move entry timing later.`
+                    : `At this rotation the target needs ~${vPerMatch > 0 ? Math.ceil(100 / vPerMatch) : '—'} entries or a larger bankroll.`}
+                </p>
               </div>
-              <span className="s2-vb-v s2-mono" style={{ color: 'var(--s2-org)' }}>$100</span>
+            </div>
+
+            {/* Controls */}
+            <div className="space-y-4">
+              {[
+                { label: 'Bankroll', value: `$${vCap.toLocaleString()}`, input: <input type="range" min={100} max={5000} step={100} value={vCap} onChange={(e) => setVCap(+e.target.value)} className="w-full accent-black" /> },
+                { label: 'Entries / day', value: `${vN}`, input: <input type="range" min={1} max={10} step={1} value={vN} onChange={(e) => setVN(+e.target.value)} className="w-full accent-black" /> },
+                { label: 'Avg pool size', value: `$${vPool}/day`, input: <input type="range" min={40} max={200} step={5} value={vPool} onChange={(e) => setVPool(+e.target.value)} className="w-full accent-black" /> },
+              ].map((r) => (
+                <div key={r.label}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-ink-faint uppercase">{r.label}</span>
+                    <span className="font-mono font-bold text-sm text-ink">{r.value}</span>
+                  </div>
+                  {r.input}
+                </div>
+              ))}
+              <div>
+                <span className="text-xs font-bold text-ink-faint uppercase mb-1 block">Entry timing</span>
+                <select value={vPhase} onChange={(e) => setVPhase(+e.target.value)} className="w-full px-3 py-2 border-2 border-black rounded-lg text-sm font-display bg-white">
+                  <option value={1}>Opener — full book (×1.0 share)</option>
+                  <option value={1.9}>Halftime break (×1.9 share)</option>
+                  <option value={2.8}>Second half (×2.8 share)</option>
+                  <option value={4.2}>Match point — clutch (×4.2 share)</option>
+                </select>
+              </div>
             </div>
           </div>
-        </section>
-      </main>
 
-      {/* Footer */}
-      <footer className="s2-footer">
-        <div className="s2-f-in">
-          <div>
-            <div className="s2-brand" style={{ fontSize: 17, marginBottom: 10 }}>◢ <b>LP</b> Scanner</div>
-            <p>Real-time Polymarket LP reward pool data. Sources: CLOB Rewards API, Gamma API. Click any market for live order book depth. Nothing here is financial advice.</p>
+          {/* Output */}
+          <div className="grid grid-cols-3 gap-3 mt-6">
+            <div className="bg-black/5 rounded-xl p-3 text-center">
+              <p className="text-[10px] font-bold text-ink-faint uppercase">Pool share / entry</p>
+              <p className="font-mono font-bold text-lg" style={{ color: NEON_CYAN }}>{(vShare * 100).toFixed(1)}%</p>
+            </div>
+            <div className="bg-black/5 rounded-xl p-3 text-center">
+              <p className="text-[10px] font-bold text-ink-faint uppercase">Per match</p>
+              <p className="font-mono font-bold text-lg text-ink">${vPerMatch.toFixed(2)}</p>
+            </div>
+            <div className="bg-black/5 rounded-xl p-3 text-center">
+              <p className="text-[10px] font-bold text-ink-faint uppercase">Entries to $100/d</p>
+              <p className="font-mono font-bold text-lg text-brand-yellow">{vPerMatch > 0 ? Math.ceil(100 / vPerMatch) : '—'}</p>
+            </div>
           </div>
-          <div className="s2-f-links">
-            <a href="https://polymarket.com" target="_blank" rel="noopener noreferrer">Polymarket ↗</a>
-            <a href="https://docs.polymarket.com" target="_blank" rel="noopener noreferrer">API docs ↗</a>
-            <a href="#velocity">Velocity model ↑</a>
+
+          {/* Bars */}
+          <div className="mt-6 space-y-2">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-mono text-ink-faint w-36 text-right">ONE STATIC MARKET</span>
+              <div className="flex-1 h-3 rounded-full bg-black/5">
+                <div className="h-full rounded-full bg-ink-faint/30" style={{ width: `${(vStaticD / (Math.max(vDaily, vStaticD, 100) * 1.12)) * 100}%` }} />
+              </div>
+              <span className="font-mono text-xs text-ink-faint w-16">${vStaticD.toFixed(0)}/d</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-mono text-ink-faint w-36 text-right">ROTATION STRATEGY</span>
+              <div className="flex-1 h-3 rounded-full bg-black/5">
+                <div className="h-full rounded-full bg-neon-green" style={{ width: `${(vDaily / (Math.max(vDaily, vStaticD, 100) * 1.12)) * 100}%` }} />
+              </div>
+              <span className="font-mono text-xs text-neon-green font-bold w-16">${vDaily.toFixed(0)}/d</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-mono text-ink-faint w-36 text-right">$100/DAY TARGET</span>
+              <div className="flex-1 h-3 rounded-full bg-black/5">
+                <div className="h-full rounded-full bg-brand-orange" style={{ width: `${(100 / (Math.max(vDaily, vStaticD, 100) * 1.12)) * 100}%` }} />
+              </div>
+              <span className="font-mono text-xs font-bold w-16" style={{ color: '#FF6B00' }}>$100</span>
+            </div>
           </div>
         </div>
-      </footer>
+      </div>
 
-      {/* Scrim + Drawer */}
-      <div className={'s2-scrim' + (selectedMarket ? ' s2-open' : '')} onClick={() => setSelectedMarket(null)} />
+      {/* ── Scrim + Drawer ────────────────────────────────── */}
+      <div className={`fixed inset-0 bg-black/40 z-40 transition-opacity ${selectedMarket ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSelectedMarket(null)} />
       {selectedMarket && (
-        <aside className="s2-drawer s2-open">
-          <button className="s2-dw-close" onClick={() => setSelectedMarket(null)}>✕</button>
-          <div className="s2-dw-sub">{selectedMarket.slug}</div>
-          <div style={{ fontFamily: 'var(--s2-disp)', fontSize: 22, textTransform: 'uppercase', margin: '8px 0 4px', letterSpacing: '.02em', color: 'var(--s2-ink)', lineHeight: 1.3 }}>
-            {selectedMarket.question}
-          </div>
+        <aside className="fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 shadow-2xl overflow-y-auto p-6 animate-in slide-in-from-right">
+          <button className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/5 flex items-center justify-center hover:bg-black/10 transition-colors" onClick={() => setSelectedMarket(null)}>
+            <X className="w-4 h-4" />
+          </button>
+
+          <p className="text-xs text-ink-faint font-mono mb-1">{selectedMarket.slug}</p>
+          <h2 className="font-display font-bold text-xl text-ink uppercase tracking-tight mb-4 pr-8">{selectedMarket.question}</h2>
 
           {/* Key metrics */}
-          <div className="s2-dw-grid" style={{ marginTop: 18 }}>
-            <div>
-              <span className="s2-flab">Daily Reward</span>
-              <span className="s2-mono" style={{ color: 'var(--s2-yel)', fontSize: 18, fontWeight: 700 }}>${selectedMarket.dailyReward.toFixed(2)}</span>
-            </div>
-            <div>
-              <span className="s2-flab">Spread</span>
-              <span className="s2-mono" style={{ fontSize: 15 }}>{(selectedMarket.spread * 100).toFixed(1)}¢</span>
-            </div>
-            <div>
-              <span className="s2-flab">24h Volume</span>
-              <span className="s2-mono s2-grn" style={{ fontSize: 15 }}>{fmt$(selectedMarket.volume24hr)}</span>
-            </div>
-            <div>
-              <span className="s2-flab">Liquidity</span>
-              <span className="s2-mono" style={{ fontSize: 15 }}>{fmt$(selectedMarket.liquidity)}</span>
-            </div>
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            {[
+              { label: 'Daily Reward', value: `$${selectedMarket.dailyReward.toFixed(2)}`, color: 'text-brand-yellow' },
+              { label: 'Spread', value: `${(selectedMarket.spread * 100).toFixed(1)}¢`, color: 'text-ink' },
+              { label: '24h Volume', value: fmt$(selectedMarket.volume24hr), color: 'text-neon-green' },
+              { label: 'Liquidity', value: fmt$(selectedMarket.liquidity), color: 'text-ink' },
+            ].map((item) => (
+              <div key={item.label} className="bg-black/5 rounded-xl p-3">
+                <p className="text-[10px] font-bold text-ink-faint uppercase">{item.label}</p>
+                <p className={`font-mono font-bold text-lg ${item.color}`}>{item.value}</p>
+              </div>
+            ))}
           </div>
 
           {/* Reward config */}
-          <h4 className="s2-dw-h">Reward Configuration</h4>
-          <div style={{ fontSize: 13, color: 'var(--s2-mut)', lineHeight: 1.8 }}>
-            <div>Min size: <b style={{ color: 'var(--s2-ink)' }}>{selectedMarket.minSize || 'None'}</b></div>
-            <div>Max spread: <b style={{ color: 'var(--s2-ink)' }}>{selectedMarket.maxSpread ? selectedMarket.maxSpread + '¢' : 'None'}</b></div>
-            <div>Competitiveness: <b style={{ color: 'var(--s2-ink)' }}>{(selectedMarket.competitiveness * 100).toFixed(0)}%</b></div>
-            <div>24h price change: <b style={{ color: selectedMarket.priceChange24h >= 0 ? 'var(--s2-grn)' : 'var(--s2-red)' }}>
+          <h3 className="font-display font-bold text-sm text-ink mb-2">Reward Configuration</h3>
+          <div className="text-sm text-ink-secondary space-y-1 mb-6">
+            <div>Min size: <span className="font-bold text-ink">{selectedMarket.minSize || 'None'}</span></div>
+            <div>Max spread: <span className="font-bold text-ink">{selectedMarket.maxSpread ? selectedMarket.maxSpread + '¢' : 'None'}</span></div>
+            <div>Competitiveness: <span className="font-bold text-ink">{(selectedMarket.competitiveness * 100).toFixed(0)}%</span></div>
+            <div>24h price change: <span className={`font-bold ${selectedMarket.priceChange24h >= 0 ? 'text-neon-green' : 'text-brand-pink'}`}>
               {selectedMarket.priceChange24h >= 0 ? '+' : ''}{(selectedMarket.priceChange24h * 100).toFixed(1)}%
-            </b></div>
+            </span></div>
             {selectedMarket.endDate && (
-              <div>Ends: <b style={{ color: 'var(--s2-ink)' }}>{new Date(selectedMarket.endDate).toLocaleDateString()}</b>
-                <span className="dim"> ({daysUntil(selectedMarket.endDate)} days)</span>
+              <div>Ends: <span className="font-bold text-ink">{new Date(selectedMarket.endDate).toLocaleDateString()}</span>
+                <span className="text-ink-faint"> ({daysUntil(selectedMarket.endDate)} days)</span>
               </div>
             )}
           </div>
 
           {/* Order book */}
-          <h4 className="s2-dw-h">Live Order Book</h4>
+          <h3 className="font-display font-bold text-sm text-ink mb-2">Live Order Book</h3>
           {obLoading ? (
-            <div className="s2-mono dim" style={{ fontSize: 12, padding: '12px 0' }}>Loading order book…</div>
+            <p className="text-sm text-ink-faint font-mono py-4">Loading order book…</p>
           ) : orderBook ? (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-                <div style={{ background: 'var(--s2-panel2)', padding: 12, border: '1px solid var(--s2-line)' }}>
-                  <div className="s2-flab">Bids ({orderBook.bidCount})</div>
-                  <div className="s2-mono s2-grn" style={{ fontSize: 15, fontWeight: 600 }}>${orderBook.bidDepth.toFixed(0)}</div>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="bg-neon-green/10 rounded-xl p-3 border border-neon-green/30">
+                  <p className="text-[10px] font-bold text-ink-faint uppercase">Bids ({orderBook.bidCount})</p>
+                  <p className="font-mono font-bold text-lg text-neon-green">${orderBook.bidDepth.toFixed(0)}</p>
                 </div>
-                <div style={{ background: 'var(--s2-panel2)', padding: 12, border: '1px solid var(--s2-line)' }}>
-                  <div className="s2-flab">Asks ({orderBook.askCount})</div>
-                  <div className="s2-mono" style={{ fontSize: 15, fontWeight: 600, color: 'var(--s2-red)' }}>${orderBook.askDepth.toFixed(0)}</div>
+                <div className="bg-brand-pink/10 rounded-xl p-3 border border-brand-pink/30">
+                  <p className="text-[10px] font-bold text-ink-faint uppercase">Asks ({orderBook.askCount})</p>
+                  <p className="font-mono font-bold text-lg text-brand-pink">${orderBook.askDepth.toFixed(0)}</p>
                 </div>
               </div>
               {orderBook.spread && (
-                <div style={{ fontSize: 12, color: 'var(--s2-mut)', marginBottom: 10 }}>
-                  Spread: <b style={{ color: 'var(--s2-ink)' }}>{(parseFloat(orderBook.spread) * 100).toFixed(1)}¢</b>
-                  <span className="dim"> · Last: </span>
-                  <b style={{ color: 'var(--s2-ink)' }}>{(parseFloat(orderBook.lastPrice) * 100).toFixed(1)}¢</b>
-                </div>
+                <p className="text-xs text-ink-faint mb-3">
+                  Spread: <span className="font-bold text-ink">{(parseFloat(orderBook.spread) * 100).toFixed(1)}¢</span>
+                  {' · '}Last: <span className="font-bold text-ink">{(parseFloat(orderBook.lastPrice) * 100).toFixed(1)}¢</span>
+                </p>
               )}
-              <div style={{ maxHeight: 200, overflow: 'auto' }}>
-                <table style={{ width: '100%', fontSize: 11, fontFamily: 'var(--s2-mono)' }}>
+              <div className="max-h-48 overflow-auto rounded-xl border border-black/10">
+                <table className="w-full text-xs font-mono">
                   <thead>
-                    <tr>
-                      <th style={{ textAlign: 'left', color: 'var(--s2-grn)', padding: '4px 8px', borderBottom: '1px solid var(--s2-line)' }}>BID</th>
-                      <th style={{ textAlign: 'right', color: 'var(--s2-grn)', padding: '4px 8px', borderBottom: '1px solid var(--s2-line)' }}>Size</th>
-                      <th style={{ textAlign: 'left', color: 'var(--s2-red)', padding: '4px 8px', borderBottom: '1px solid var(--s2-line)' }}>ASK</th>
-                      <th style={{ textAlign: 'right', color: 'var(--s2-red)', padding: '4px 8px', borderBottom: '1px solid var(--s2-line)' }}>Size</th>
+                    <tr className="bg-black/5">
+                      <th className="text-left px-3 py-1.5 text-neon-green">BID</th>
+                      <th className="text-right px-3 py-1.5 text-neon-green">Size</th>
+                      <th className="text-left px-3 py-1.5 text-brand-pink">ASK</th>
+                      <th className="text-right px-3 py-1.5 text-brand-pink">Size</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Array.from({ length: Math.max(orderBook.bids.length, orderBook.asks.length) }).map((_, i) => (
-                      <tr key={i}>
-                        <td style={{ padding: '3px 8px', color: 'var(--s2-grn)' }}>
-                          {orderBook.bids[i] ? (parseFloat(orderBook.bids[i].price) * 100).toFixed(1) + '¢' : ''}
-                        </td>
-                        <td style={{ padding: '3px 8px', textAlign: 'right', color: 'var(--s2-mut)' }}>
-                          {orderBook.bids[i] ? '$' + parseFloat(orderBook.bids[i].size).toFixed(0) : ''}
-                        </td>
-                        <td style={{ padding: '3px 8px', color: 'var(--s2-red)' }}>
-                          {orderBook.asks[i] ? (parseFloat(orderBook.asks[i].price) * 100).toFixed(1) + '¢' : ''}
-                        </td>
-                        <td style={{ padding: '3px 8px', textAlign: 'right', color: 'var(--s2-mut)' }}>
-                          {orderBook.asks[i] ? '$' + parseFloat(orderBook.asks[i].size).toFixed(0) : ''}
-                        </td>
+                      <tr key={i} className="border-t border-black/5">
+                        <td className="px-3 py-1 text-neon-green">{orderBook.bids[i] ? (parseFloat(orderBook.bids[i].price) * 100).toFixed(1) + '¢' : ''}</td>
+                        <td className="px-3 py-1 text-right text-ink-faint">{orderBook.bids[i] ? '$' + parseFloat(orderBook.bids[i].size).toFixed(0) : ''}</td>
+                        <td className="px-3 py-1 text-brand-pink">{orderBook.asks[i] ? (parseFloat(orderBook.asks[i].price) * 100).toFixed(1) + '¢' : ''}</td>
+                        <td className="px-3 py-1 text-right text-ink-faint">{orderBook.asks[i] ? '$' + parseFloat(orderBook.asks[i].size).toFixed(0) : ''}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -468,40 +607,24 @@ export default function LPScannerPage() {
               </div>
             </div>
           ) : (
-            <div className="s2-mono dim" style={{ fontSize: 12, padding: '12px 0' }}>
+            <p className="text-sm text-ink-faint py-4">
               {selectedMarket.tokenId ? 'No order book data' : 'No token ID available'}
-            </div>
+            </p>
           )}
 
           <a
-            className="s2-dw-link"
+            className="mt-6 w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-black text-white rounded-xl font-display font-bold text-sm border-2 border-black hover:bg-black/90 transition-colors"
             href={`https://polymarket.com/event/${selectedMarket.slug}`}
             target="_blank"
             rel="noopener noreferrer"
           >
-            OPEN ON POLYMARKET ↗
+            OPEN ON POLYMARKET <ExternalLink className="w-4 h-4" />
           </a>
-          <p className="s2-dw-note">
+          <p className="text-[10px] text-ink-faint mt-3 text-center">
             Live data from Polymarket. Order book depth shows resting limit orders inside the current spread.
           </p>
         </aside>
       )}
-    </div>
-  );
-}
-
-/* ── Sub-components ─────────────────────────────────────────────────── */
-
-function VelBar({ label, value, max, colorClass }: { label: string; value: number; max: number; colorClass: string }) {
-  return (
-    <div className="s2-vb-row">
-      <span className="s2-vb-lab s2-mono">{label}</span>
-      <div className="s2-vb-track">
-        <div className={'s2-vb ' + colorClass} style={{ width: (value / max * 100) + '%' }} />
-      </div>
-      <span className={'s2-vb-v s2-mono ' + (colorClass === 'rot-b' ? 's2-grn' : colorClass === 'dim-b' ? 'dim' : '')}>
-        ${value.toFixed(0)}/d
-      </span>
     </div>
   );
 }
