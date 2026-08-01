@@ -15,7 +15,7 @@ import { withSharedCache } from '@/lib/scanner-cache';
 import { pMap } from '@/lib/async-utils';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 10;
+export const maxDuration = 30;
 
 const CACHE_KEY = 'arbitrage-scanner';
 
@@ -76,7 +76,7 @@ export async function GET() {
   try {
     const result = await withTimeout(
       withSharedCache<ArbitragePair[]>(CACHE_KEY, scanArbitrage),
-      8000
+      25000
     );
 
     // Enrich each pair with executable arbitrage analysis
