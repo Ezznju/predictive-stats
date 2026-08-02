@@ -216,8 +216,13 @@ export function findArbitragePairs(
       const cheaperYes: 'polymarket' | 'kalshi' =
         polyMid < kalshiYesMid ? 'polymarket' : 'kalshi';
 
-      const avgPrice = (polyMid + kalshiYesMid) / 2;
-      const arbPercent = avgPrice > 0 ? (priceDiff / avgPrice) * 100 : 0;
+      // True locked-in ROI: buy YES cheap + NO(=1−YES) pricey. Cost is
+      // cheapYes + (1 − expensiveYes); profit per contract = priceDiff.
+      const cheapYes = Math.min(polyMid, kalshiYesMid);
+      const expensiveYes = Math.max(polyMid, kalshiYesMid);
+      const costToLock = cheapYes + (1 - expensiveYes);
+      const arbPercent =
+        costToLock > 0 ? (priceDiff / costToLock) * 100 : 0;
 
       // ── Integrity & anomaly detection ───────────────────────────
       const polySpread = polyBestAsk > 0 && polyBestBid > 0 ? polyBestAsk - polyBestBid : 0;
