@@ -98,22 +98,41 @@ interface KalshiMarketInput {
 
 /* ── Pre-match: find which Kalshi events are worth fetching ────────── */
 
+/**
+ * Similarity must be strong enough that fetching the event's markets is
+ * worth it. 0.45 keeps only plausible real-world matches (vs. the old 0.22,
+ * which pulled in ~1,300 events and blew the scan's time budget).
+ */
+const EVENT_MATCH_THRESHOLD = 0.45;
+
+/** Cap the number of Kalshi events we fetch markets for (time budget). */
+const MAX_EVENT_FETCHES = 50;
+
 export function preMatchEvents(
   polyEvents: PolymarketEvent[],
   kalshiEvents: KalshiEventInput[]
 ): Set<string> {
-  const matchedTickers = new Set<string>();
+  const bestByTicker = new Map<string, { ticker: string; score: number }>();
 
   for (const polyEvent of polyEvents) {
     for (const kalshiEvent of kalshiEvents) {
       const { score, conflict } = eventSimilarity(polyEvent.title, kalshiEvent.title);
-      if (!conflict && score >= 0.22) {
-        matchedTickers.add(kalshiEvent.event_ticker);
+      if (conflict || score < EVENT_MATCH_THRESHOLD) continue;
+      const prev = bestByTicker.get(kalshiEvent.event_ticker);
+      if (!prev || score > prev.score) {
+        bestByTicker.set(kalshiEvent.event_ticker, {
+          ticker: kalshiEvent.event_ticker,
+          score,
+        });
       }
     }
   }
 
-  return matchedTickers;
+  const ranked = Array.from(bestByTicker.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_EVENT_FETCHES);
+
+  return new Set(ranked.map((r) => r.ticker));
 }
 
 /* ── Core matching engine ──────────────────────────────────────────── */
@@ -131,7 +150,11 @@ export function findArbitragePairs(
     let bestEvent: { event: KalshiEventInput; score: number } | null = null;
     for (const kalshiEvent of kalshiEvents) {
       const { score, conflict } = eventSimilarity(polyEvent.title, kalshiEvent.title);
-      if (!conflict && score >= 0.22 && (!bestEvent || score > bestEvent.score)) {
+      if (
+        !conflict &&
+        score >= EVENT_MATCH_THRESHOLD &&
+        (!bestEvent || score > bestEvent.score)
+      ) {
         bestEvent = { event: kalshiEvent, score };
       }
     }
