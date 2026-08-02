@@ -99,20 +99,28 @@ interface KalshiMarketInput {
 /* ── Pre-match: find which Kalshi events are worth fetching ────────── */
 
 /**
- * Similarity must be strong enough that fetching the event's markets is
- * worth it. 0.45 keeps only plausible real-world matches (vs. the old 0.22,
- * which pulled in ~1,300 events and blew the scan's time budget).
+ * Match threshold. Kept moderate so newer/quieter categories (Climate,
+ * Entertainment, Companies…) still surface — the strict 0.45 used before
+ * isolated to long-tail only Elections, since those titles correlate
+ * strongly. Category-aware top-N caps below keep the total market fetches
+ * within the scan's time budget.
  */
-const EVENT_MATCH_THRESHOLD = 0.45;
+const EVENT_MATCH_THRESHOLD = 0.22;
 
-/** Cap the number of Kalshi events we fetch markets for (time budget). */
-const MAX_EVENT_FETCHES = 50;
+/**
+ * Cap the number of Kalshi events we fetch markets for across all
+ * categories (the scan shares an overall deadline).
+ */
+const MAX_EVENT_FETCHES = 60;
+
+/** Max events to pre-match from a single category per pass (diversity). */
+const PER_CATEGORY_FETCH_CAP = 8;
 
 export function preMatchEvents(
   polyEvents: PolymarketEvent[],
   kalshiEvents: KalshiEventInput[]
 ): Set<string> {
-  const bestByTicker = new Map<string, { ticker: string; score: number }>();
+  const bestByTicker = new Map<string, { ticker: string; score: number; category: string }>();
 
   for (const polyEvent of polyEvents) {
     for (const kalshiEvent of kalshiEvents) {
@@ -123,12 +131,31 @@ export function preMatchEvents(
         bestByTicker.set(kalshiEvent.event_ticker, {
           ticker: kalshiEvent.event_ticker,
           score,
+          category: kalshiEvent.category,
         });
       }
     }
   }
 
-  const ranked = Array.from(bestByTicker.values())
+  // Pick per category so the total pool isn't dominated by Elections, then
+  // merge and rank globally up to the fetch cap.
+  const byCategory = new Map<string, { ticker: string; score: number }[]>();
+  for (const v of Array.from(bestByTicker.values())) {
+    const entry = byCategory.get(v.category);
+    if (entry) {
+      entry.push({ ticker: v.ticker, score: v.score });
+    } else {
+      byCategory.set(v.category, [{ ticker: v.ticker, score: v.score }]);
+    }
+  }
+
+  const candidates: { ticker: string; score: number }[] = [];
+  for (const list of Array.from(byCategory.values())) {
+    list.sort((a, b) => b.score - a.score);
+    candidates.push(...list.slice(0, PER_CATEGORY_FETCH_CAP));
+  }
+
+  const ranked = candidates
     .sort((a, b) => b.score - a.score)
     .slice(0, MAX_EVENT_FETCHES);
 
@@ -308,7 +335,7 @@ export function findArbitragePairs(
 /* ── Fetch Polymarket events with pricing ─────────────────────────── */
 
 const GAMMA_BASE = 'https://gamma-api.polymarket.com';
-const MAX_EVENT_OFFSET = 200; // reduced for Vercel free tier (10s timeout)
+const MAX_EVENT_OFFSET = 400; // top events by 24h volume — wider cross-category mix
 
 /**
  * Gamma `/events` returns a bare array. We validate the event-level shape
