@@ -73,6 +73,20 @@ export async function GET(request: Request) {
     const sevenDaysAgo = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
     const feed: WhaleFeedItem[] = [];
 
+    // Count trades per wallet (within window) so conviction's sample factor is real
+    const tradeCountByWallet = new Map<string, number>();
+    for (const r of whaleTrades) {
+      if (r.status !== 'fulfilled') continue;
+      for (const t of r.value) {
+        if (t.timestamp >= sevenDaysAgo) {
+          tradeCountByWallet.set(
+            t.proxyWallet,
+            (tradeCountByWallet.get(t.proxyWallet) ?? 0) + 1
+          );
+        }
+      }
+    }
+
     for (const result of whaleTrades) {
       if (result.status !== 'fulfilled') continue;
       for (const trade of result.value) {
@@ -102,7 +116,7 @@ export async function GET(request: Request) {
 
         const walletStats = wallet ? {
           address: wallet.address,
-          trades: 0,
+          trades: Math.max(1, tradeCountByWallet.get(wallet.address) ?? 1),
           winRate: wallet.winRate,
           roi: wallet.pnl / Math.max(1, wallet.volume),
           avgSizeUsd: wallet.volume / Math.max(1, 30),

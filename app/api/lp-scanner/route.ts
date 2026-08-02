@@ -37,17 +37,28 @@ export async function GET(request: NextRequest) {
 
     // Enrich each market with risk-adjusted LP scoring
     const enriched = (result.payload || []).map((market) => {
+      const liquidityUsd = market.volume24h || 50000;
+      const spreadPct = market.currentSpread || 0.02;
+      // Derive hidden-cost inputs from real market fields instead of flat constants:
+      //  - wider spread ⇒ more informed flow ⇒ higher adverse selection (bps)
+      //  - competition count ⇒ more reward dilution for this LP
+      //  - higher volume-to-liquidity ⇒ more fee capture opportunity
+      const adverseSelectionBps = Math.round(Math.min(40, Math.max(3, spreadPct * 100)));
+      const volatilityDaily = Math.round((0.01 + spreadPct * 10) * 1000) / 1000;
+      const rewardDilutionPctAnnual = Math.min(0.25, Math.max(0.02, market.competition * 0.01));
+      const feeCaptureShare = Math.min(0.12, Math.max(0.02, market.volume24h / Math.max(1, liquidityUsd)));
+
       const lpResult = scoreLP({
         marketId: market.conditionId || market.yesTokenId || '',
         name: market.question || '',
-        liquidityUsd: market.volume24h || 50000,
+        liquidityUsd,
         dailyRewardUsd: market.rewardPerDay || 0,
         volume24hUsd: market.volume24h || 0,
         spreadDecimal: market.currentSpread || 0.02,
-        adverseSelectionBps: 10,
-        volatilityDaily: 0.03,
-        rewardDilutionPctAnnual: 0.05,
-        feeCaptureShare: 0.05,
+        adverseSelectionBps,
+        volatilityDaily,
+        rewardDilutionPctAnnual,
+        feeCaptureShare,
         platformRiskScore: 0.2,
       });
 

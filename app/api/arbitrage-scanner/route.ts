@@ -73,6 +73,7 @@ async function scanArbitrage(): Promise<ArbitragePair[]> {
 /* ── GET /api/arbitrage-scanner ────────────────────────────────────── */
 
 export async function GET() {
+  const scanStart = Date.now();
   try {
     const result = await withTimeout(
       withSharedCache<ArbitragePair[]>(CACHE_KEY, scanArbitrage),
@@ -81,6 +82,14 @@ export async function GET() {
 
     // Enrich each pair with executable arbitrage analysis
     const enriched = (result.payload || []).map((pair) => {
+      // Real days-to-resolution from Kalshi close time when available
+      const expTime = pair.kalshi.expirationTime
+        ? new Date(pair.kalshi.expirationTime).getTime()
+        : NaN;
+      const daysToResolution = Number.isFinite(expTime)
+        ? Math.max(1, Math.round((expTime - Date.now()) / 86400000))
+        : 30;
+
       const executable = computeExecutableArbitrage({
         id: `${pair.poly.slug}::${pair.kalshi.ticker}`,
         title: pair.eventName,
@@ -109,7 +118,7 @@ export async function GET() {
           snapshotAgeMs: 30000,
         },
         matchScore: pair.matchConfidence,
-        daysToResolution: 30,
+        daysToResolution,
         resolutionClarityScore: 0.7,
       });
 
@@ -118,6 +127,10 @@ export async function GET() {
         executable: executable || null,
       };
     });
+
+    console.log(
+      `[arbitrage-scanner] pairs=${enriched.length} source=${result.source} cached=${result.source !== 'fresh'} coldScanMs=${Date.now() - scanStart}`
+    );
 
     return NextResponse.json(
       {

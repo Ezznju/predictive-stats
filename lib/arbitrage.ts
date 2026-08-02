@@ -59,6 +59,8 @@ export interface ArbitragePair {
     volume: number;
     ticker: string;
     eventTicker: string;
+    /** Market close time (ISO) — used for real days-to-resolution. */
+    expirationTime?: string;
   };
 
   priceDiffCents: number;
@@ -91,6 +93,7 @@ interface KalshiMarketInput {
   yes_bid_dollars: string;
   yes_ask_dollars: string;
   volume_fp: string;
+  close_time?: string;
 }
 
 /* ── Pre-match: find which Kalshi events are worth fetching ────────── */
@@ -244,6 +247,7 @@ export function findArbitragePairs(
           volume: parseFloat(km.volume_fp) || 0,
           ticker: km.ticker,
           eventTicker: km.event_ticker,
+          expirationTime: km.close_time || undefined,
         },
 
         priceDiffCents,
