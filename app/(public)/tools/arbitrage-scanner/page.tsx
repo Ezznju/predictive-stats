@@ -601,6 +601,12 @@ export default function ArbitrageScannerPage() {
                             <div className="font-display font-semibold text-sm leading-tight truncate">
                               {pair.eventName}
                             </div>
+                            {pair.kalshi.question &&
+                              pair.kalshi.question !== pair.eventName && (
+                                <div className="text-xs text-ink-secondary mt-0.5 truncate">
+                                  {pair.kalshi.question}
+                                </div>
+                              )}
                             <div className="text-xs text-ink-faint mt-0.5">
                               {pair.category}
                             </div>
@@ -1192,6 +1198,12 @@ function MobileCard({
           <div className="font-display font-semibold text-sm leading-tight line-clamp-2">
             {pair.eventName}
           </div>
+          {pair.kalshi.question &&
+            pair.kalshi.question !== pair.eventName && (
+              <div className="text-xs text-ink-secondary mt-0.5 truncate">
+                {pair.kalshi.question}
+              </div>
+            )}
           <div className="text-xs text-ink-faint mt-0.5">{pair.category}</div>
         </div>
         <span

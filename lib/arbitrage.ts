@@ -284,17 +284,18 @@ export function findArbitragePairs(
     }
   }
 
-  // De-duplicate: keep the highest-scoring pair per Kalshi market pair.
-  const seen = new Map<string, ArbitragePair>();
+  // De-duplicate: one row per event. Within an event each candidate sub-market
+  // otherwise produces its own pair, so "Democratic Presidential Nominee 2028"
+  // would appear ~20 times (once per candidate) and dominate the table.
+  const byEvent = new Map<string, ArbitragePair>();
   for (const p of pairs) {
-    const key = `${p.poly.question}::${p.kalshi.ticker}`;
-    const existing = seen.get(key);
+    const existing = byEvent.get(p.eventName);
     if (!existing || p.opportunityScore > existing.opportunityScore) {
-      seen.set(key, p);
+      byEvent.set(p.eventName, p);
     }
   }
 
-  return Array.from(seen.values()).sort(
+  return Array.from(byEvent.values()).sort(
     (a, b) => b.opportunityScore - a.opportunityScore
   );
 }
