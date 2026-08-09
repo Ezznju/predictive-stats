@@ -28,7 +28,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/about`, lastModified: staticDate, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${baseUrl}/contact`, lastModified: staticDate, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${baseUrl}/newsletter`, lastModified: staticDate, changeFrequency: 'monthly', priority: 0.6 },
-    { url: `${baseUrl}/search`, lastModified: staticDate, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${baseUrl}/privacy`, lastModified: staticDate, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${baseUrl}/terms`, lastModified: staticDate, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${baseUrl}/disclaimer`, lastModified: staticDate, changeFrequency: 'yearly', priority: 0.3 },
@@ -64,19 +63,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  // Collect unique tags from all articles for tag archive pages
-  const tagSet = new Set<string>();
-  for (const a of articles) {
-    for (const t of a.tags ?? []) {
-      tagSet.add(t.toLowerCase());
-    }
-  }
-  const tagPages = Array.from(tagSet).map((tag) => ({
-    url: `${baseUrl}/tag/${encodeURIComponent(tag)}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: 0.5,
-  }));
+  // Tag archive pages are thin duplicates of article listings — excluded
+  // from the sitemap and noindexed (see tag/[tag]/page.tsx) to protect
+  // crawl budget for real content pages.
 
-  return [...staticPages, ...articlePages, ...categoryPages, ...authorPages, ...platformPages, ...tagPages];
+  return [...staticPages, ...articlePages, ...categoryPages, ...authorPages, ...platformPages];
 }

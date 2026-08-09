@@ -28,6 +28,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${tag} Articles`,
     description: `All articles tagged "${tag}" on Predictions Market Fans — analysis, guides, and data-driven commentary.`,
     alternates: { canonical: `https://predictionsmarketfans.com/tag/${encodeURIComponent(decodeTag(params.tag))}` },
+    // Tag archives are thin duplicates of article listings — don't index,
+    // but keep following links to the articles they point to.
+    robots: { index: false, follow: true },
   };
 }
 
