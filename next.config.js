@@ -15,9 +15,14 @@ const nextConfig = {
     },
   },
   async redirects() {
-    // Dynamic redirects for /articles/{slug} -> /{category}/{slug}
-    // These are handled by middleware or can be done at runtime
-    return [];
+    return [
+      // Article renamed (slug + category) — Google still has the old URL indexed.
+      {
+        source: '/political-markets/polymarket-lp-rewards-explained-:path*',
+        destination: '/prediction-markets/polymarket-lp-rewards-guide',
+        permanent: true,
+      },
+    ];
   },
 };
 
