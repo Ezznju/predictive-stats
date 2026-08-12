@@ -36,6 +36,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
+    url: 'https://predictionsmarketfans.com',
     siteName: 'Predictions Market Fans',
     title: 'PMF — Sharp analysis for uncertain markets',
     description: 'Sharp analysis for prediction markets. Covering Polymarket, Kalshi, Metaculus, and more.',
