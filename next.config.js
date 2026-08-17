@@ -22,6 +22,12 @@ const nextConfig = {
         destination: '/prediction-markets/polymarket-lp-rewards-guide',
         permanent: true,
       },
+      // Slug renamed by user in admin: understanding-liquidity-in-prediction-markets-why-it-matters -> kalshi-polymarket
+      {
+        source: '/economic-analysis/understanding-liquidity-in-prediction-markets-why-it-matters',
+        destination: '/economic-analysis/understanding-liquidity-in-kalshi-polymarket',
+        permanent: true,
+      },
     ];
   },
 };
