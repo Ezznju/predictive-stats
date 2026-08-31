@@ -38,13 +38,12 @@ function getSupabaseAdmin() {
 
 // Matches any Supabase Storage public URL for the images bucket
 const SUPABASE_IMAGE_RE = /https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\/images\/([^"'()\s>]+)/g;
+const API_MEDIA_RE = /\/api\/media\/([^"'()\s>]+)/g;
 
 function rewriteUrlText(text: string, r2: ReturnType<typeof getR2Config>): { rewritten: string; count: number } {
   let count = 0;
-  const rewritten = text.replace(SUPABASE_IMAGE_RE, (_match, key: string) => {
-    // key is already decoded? Keep as-is, but trim trailing punctuation that regex may have captured
-    // Supabase keys never contain " or ' or ) - regex already stops there
-    // Decode then re-encode via publicMediaUrl which handles slashes correctly
+  let out = text;
+  out = out.replace(SUPABASE_IMAGE_RE, (_match, key: string) => {
     try {
       const cleanKey = decodeURIComponent(key).replace(/\/$/, '');
       count++;
@@ -54,7 +53,19 @@ function rewriteUrlText(text: string, r2: ReturnType<typeof getR2Config>): { rew
       return publicMediaUrl(key, r2);
     }
   });
-  return { rewritten, count };
+  if (r2.publicUrl) {
+    out = out.replace(API_MEDIA_RE, (_match, key: string) => {
+      try {
+        const cleanKey = decodeURIComponent(key).replace(/\/$/, '');
+        count++;
+        return publicMediaUrl(cleanKey, r2);
+      } catch {
+        count++;
+        return publicMediaUrl(key, r2);
+      }
+    });
+  }
+  return { rewritten: out, count };
 }
 
 async function main() {
@@ -76,8 +87,9 @@ async function main() {
     const patch: Record<string, string> = {};
     let changes = 0;
 
-    if (row.featured_image && SUPABASE_IMAGE_RE.test(row.featured_image)) {
+    if (row.featured_image && (SUPABASE_IMAGE_RE.test(row.featured_image) || (r2.publicUrl && API_MEDIA_RE.test(row.featured_image)))) {
       SUPABASE_IMAGE_RE.lastIndex = 0;
+      API_MEDIA_RE.lastIndex = 0;
       const { rewritten, count } = rewriteUrlText(row.featured_image, r2);
       if (count > 0 && rewritten !== row.featured_image) {
         patch['featured_image'] = rewritten;
@@ -87,8 +99,10 @@ async function main() {
     }
     // Reset regex state
     SUPABASE_IMAGE_RE.lastIndex = 0;
-    if (row.content && SUPABASE_IMAGE_RE.test(row.content)) {
+    API_MEDIA_RE.lastIndex = 0;
+    if (row.content && (SUPABASE_IMAGE_RE.test(row.content) || (r2.publicUrl && API_MEDIA_RE.test(row.content)))) {
       SUPABASE_IMAGE_RE.lastIndex = 0;
+      API_MEDIA_RE.lastIndex = 0;
       const { rewritten, count } = rewriteUrlText(row.content, r2);
       if (count > 0 && rewritten !== row.content) {
         patch['content'] = rewritten;
@@ -122,14 +136,16 @@ async function main() {
     console.log(`[rewrite] Found ${authors?.length || 0} authors`);
     let authorPatches: typeof articlesToUpdate = [];
     for (const row of authors || []) {
-      if (row.avatar && SUPABASE_IMAGE_RE.test(row.avatar)) {
+      if (row.avatar && (SUPABASE_IMAGE_RE.test(row.avatar) || (r2.publicUrl && API_MEDIA_RE.test(row.avatar)))) {
         SUPABASE_IMAGE_RE.lastIndex = 0;
+        API_MEDIA_RE.lastIndex = 0;
         const { rewritten, count } = rewriteUrlText(row.avatar, r2);
         if (count > 0 && rewritten !== row.avatar) {
           authorPatches.push({ id: row.id, slug: row.slug, patch: { avatar: rewritten }, changes: count });
         }
       }
       SUPABASE_IMAGE_RE.lastIndex = 0;
+      API_MEDIA_RE.lastIndex = 0;
     }
     console.log(`[rewrite] Authors needing update: ${authorPatches.length}`);
     // Merge into same apply loop later
