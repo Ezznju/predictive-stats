@@ -53,7 +53,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'File too large (max 5MB)' }, { status: 400 });
   }
 
-  console.log('[upload] isR2Configured', isR2Configured(), 'R2_ACCOUNT_ID', !!process.env.R2_ACCOUNT_ID, 'R2_BUCKET', process.env.R2_BUCKET, 'R2_PUBLIC_URL', process.env.R2_PUBLIC_URL);
   // Prefer R2 when configured (zero egress) - fallback to Supabase for local dev
   if (isR2Configured()) {
     try {
@@ -101,4 +100,5 @@ export async function POST(request: NextRequest) {
   const { data: urlData } = supabaseAdmin.storage.from('images').getPublicUrl(filePath);
   return NextResponse.json({ url: urlData.publicUrl });
 }
+
 
