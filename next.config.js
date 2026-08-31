@@ -1,4 +1,4 @@
-/** @type {import('next').NextConfig} */
+﻿/** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
     unoptimized: true,
@@ -6,6 +6,10 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: '*.supabase.co' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
+      { protocol: 'https', hostname: '*.r2.cloudflarestorage.com' },
+      { protocol: 'https', hostname: '*.r2.dev' },
+      { protocol: 'https', hostname: '*.cloudflarestorage.com' },
+      { protocol: 'https', hostname: 'media.predictionsmarketfans.com' },
     ],
   },
   experimental: {
@@ -16,7 +20,7 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // Article renamed (slug + category) — Google still has the old URL indexed.
+      // Article renamed (slug + category) â€” Google still has the old URL indexed.
       {
         source: '/political-markets/polymarket-lp-rewards-explained-:path*',
         destination: '/prediction-markets/polymarket-lp-rewards-guide',
@@ -33,3 +37,5 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
+
+
