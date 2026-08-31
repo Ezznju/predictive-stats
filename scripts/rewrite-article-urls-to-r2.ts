@@ -108,8 +108,11 @@ async function main() {
         patch['content'] = rewritten;
         changes += count;
         if (VERBOSE) {
-          const beforeMatches = [...row.content.matchAll(SUPABASE_IMAGE_RE)].slice(0, 2).map((m) => m[0]);
-          console.log(`  [article ${row.slug}] content: ${count} urls, e.g. ${beforeMatches[0]} -> ${publicMediaUrl(beforeMatches[0].split('/images/')[1], r2)}`);
+          const supMatches = [...row.content.matchAll(SUPABASE_IMAGE_RE)];
+          const apiMatches = r2.publicUrl ? [...row.content.matchAll(API_MEDIA_RE)] : [];
+          const beforeMatches = supMatches.length ? supMatches : apiMatches;
+          const key = beforeMatches[0]?.[1] || 'unknown';
+          console.log(`  [article ${row.slug}] content: ${count} urls, e.g. ${beforeMatches[0]?.[0] || 'unknown'} -> ${publicMediaUrl(key, r2)}`);
         }
       }
     }

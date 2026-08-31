@@ -9,6 +9,7 @@ const nextConfig = {
       { protocol: 'https', hostname: '*.r2.cloudflarestorage.com' },
       { protocol: 'https', hostname: '*.r2.dev' },
       { protocol: 'https', hostname: '*.cloudflarestorage.com' },
+      { protocol: 'https', hostname: 'media.predictionsmarketfans.com' },
     ],
   },
   experimental: {
@@ -36,4 +37,5 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
+
 
