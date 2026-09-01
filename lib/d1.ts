@@ -420,18 +420,17 @@ export async function insertOutboundClick(row: {
   country?: string | null;
   user_agent?: string | null;
 }): Promise<void> {
-  await d1Execute(
+  // robust UUID for both Node and Edge runtimes
+  const id =
+    (typeof crypto !== 'undefined' && (crypto as any).randomUUID
+      ? (crypto as any).randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`);
+  const res = await d1Execute(
     `INSERT INTO outbound_clicks (id, platform_slug, ctx, is_affiliate, referer, country, user_agent) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [
-      crypto.randomUUID(),
-      row.platform_slug,
-      row.ctx ?? null,
-      row.is_affiliate ? 1 : 0,
-      row.referer ?? null,
-      row.country ?? null,
-      row.user_agent ?? null,
-    ]
+    [id, row.platform_slug, row.ctx ?? null, row.is_affiliate ? 1 : 0, row.referer ?? null, row.country ?? null, row.user_agent ?? null]
   );
+  // d1Execute already logs on failure; surface for go route
+  if ((res as any)?.changes === 0) console.warn('[d1] outbound_clicks insert had 0 changes', row);
 }
 
 // Analytics (replaces Supabase admin_analytics RPC)
