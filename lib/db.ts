@@ -4,7 +4,7 @@ import { Article, Author, Category, SiteSettings } from '@/types';
 /* ───── cache ───── */
 
 const cache = new Map<string, { data: any; expiry: number }>();
-const CACHE_TTL = 60 * 1000; // 1 minute
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes - reduces Supabase egress
 
 function getCached<T>(key: string): T | null {
   const entry = cache.get(key);
@@ -97,15 +97,20 @@ export async function getArticles(): Promise<Article[]> {
 export async function getPublishedArticles(): Promise<Article[]> {
   const cached = getCached<Article[]>('published_articles');
   if (cached) return cached;
-  const { data, error } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('status', 'published')
-    .order('publish_date', { ascending: false });
-  if (error) throw error;
-  const articles = (data ?? []).map(toArticle);
-  setCache('published_articles', articles);
-  return articles;
+  try {
+    const { data, error } = await supabase
+      .from('articles')
+      .select('*')
+      .eq('status', 'published')
+      .order('publish_date', { ascending: false });
+    if (error) throw error;
+    const articles = (data ?? []).map(toArticle);
+    setCache('published_articles', articles);
+    return articles;
+  } catch (e) {
+    console.warn('[db] getPublishedArticles failed (quota?)', e);
+    return cached ?? [];
+  }
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
@@ -155,14 +160,23 @@ export async function getArticlesByAuthor(authorId: string): Promise<Article[]> 
 }
 
 export async function getFeaturedArticles(): Promise<Article[]> {
-  const { data, error } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('featured', true)
-    .eq('status', 'published')
-    .order('publish_date', { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(toArticle);
+  const cached = getCached<Article[]>('featured_articles');
+  if (cached) return cached;
+  try {
+    const { data, error } = await supabase
+      .from('articles')
+      .select('*')
+      .eq('featured', true)
+      .eq('status', 'published')
+      .order('publish_date', { ascending: false });
+    if (error) throw error;
+    const articles = (data ?? []).map(toArticle);
+    setCache('featured_articles', articles);
+    return articles;
+  } catch (e) {
+    console.warn('[db] getFeaturedArticles failed', e);
+    return getCached<Article[]>('featured_articles') ?? [];
+  }
 }
 
 export async function getLatestArticles(count: number = 10): Promise<Article[]> {
@@ -217,14 +231,19 @@ export async function getRelatedArticles(article: Article, count: number = 3): P
 export async function getAuthors(): Promise<Author[]> {
   const cached = getCached<Author[]>('authors');
   if (cached) return cached;
-  const { data, error } = await supabase
-    .from('authors')
-    .select('*')
-    .order('name');
-  if (error) throw error;
-  const authors = (data ?? []).map(toAuthor);
-  setCache('authors', authors);
-  return authors;
+  try {
+    const { data, error } = await supabase
+      .from('authors')
+      .select('*')
+      .order('name');
+    if (error) throw error;
+    const authors = (data ?? []).map(toAuthor);
+    setCache('authors', authors);
+    return authors;
+  } catch (e) {
+    console.warn('[db] getAuthors failed', e);
+    return getCached<Author[]>('authors') ?? [];
+  }
 }
 
 export async function getAuthorById(id: string): Promise<Author | null> {
@@ -252,14 +271,19 @@ export async function getAuthorBySlug(slug: string): Promise<Author | null> {
 export async function getCategories(): Promise<Category[]> {
   const cached = getCached<Category[]>('categories');
   if (cached) return cached;
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .order('name');
-  if (error) throw error;
-  const categories = (data ?? []).map(toCategory);
-  setCache('categories', categories);
-  return categories;
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('name');
+    if (error) throw error;
+    const categories = (data ?? []).map(toCategory);
+    setCache('categories', categories);
+    return categories;
+  } catch (e) {
+    console.warn('[db] getCategories failed', e);
+    return getCached<Category[]>('categories') ?? [];
+  }
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {

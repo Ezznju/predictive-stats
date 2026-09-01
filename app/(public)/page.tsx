@@ -16,17 +16,38 @@ import { buildHomepageContent } from '@/lib/homepage-content';
 import { DecisionLabStrip } from '@/components/golden/DecisionLabStrip';
 import { MascotBand } from '@/components/MascotBand';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 export const metadata = { alternates: { canonical: 'https://predictionsmarketfans.com/' } };
 
 export default async function Home() {
-  const [featured, allArticles, categories, authors, settings] = await Promise.all([
-    getFeaturedArticles(),
-    getPublishedArticles(),
-    getCategories(),
-    getAuthors(),
-    getSiteSettings(),
-  ]);
+  let featured: Awaited<ReturnType<typeof getFeaturedArticles>> = [];
+  let allArticles: Awaited<ReturnType<typeof getPublishedArticles>> = [];
+  let categories: Awaited<ReturnType<typeof getCategories>> = [];
+  let authors: Awaited<ReturnType<typeof getAuthors>> = [];
+  let settings: Awaited<ReturnType<typeof getSiteSettings>> = {
+    siteName: 'Predictions Market Fans',
+    siteTagline: 'Sharp analysis for uncertain markets',
+    siteDescription: '',
+    siteUrl: '',
+    newsletterHeading: '',
+    newsletterBody: '',
+    missionHeading: '',
+    missionBody: '',
+    socialTwitter: '',
+    socialLinkedin: '',
+    socialGithub: '',
+  };
+  try {
+    [featured, allArticles, categories, authors, settings] = await Promise.all([
+      getFeaturedArticles(),
+      getPublishedArticles(),
+      getCategories(),
+      getAuthors(),
+      getSiteSettings(),
+    ]);
+  } catch (e) {
+    console.warn('[home] Supabase unavailable (quota?), serving stale/empty', e);
+  }
 
   const { hero, subFeatured, trending, latest, popularReads } =
     buildHomepageContent(featured, allArticles);
