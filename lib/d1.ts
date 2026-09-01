@@ -81,12 +81,43 @@ export async function getArticles(): Promise<Article[]> {
   if(d) return d.articles.map(toArticle);
   return [];
 }
+export async function getArticleById(id: string): Promise<Article | null> {
+  const d = loadStatic();
+  if(d) { const r = d.articles.find((x: any)=> x.id===id); return r ? toArticle(r) : null; }
+  return null;
+}
+export async function getArticlesByCategory(categorySlug: string): Promise<Article[]> {
+  const d = loadStatic();
+  if(d) return d.articles.filter((r: any) => r.category_slug === categorySlug && r.status === 'published')
+    .sort((a: any,b: any)=> String(b.publish_date).localeCompare(String(a.publish_date))).map(toArticle);
+  return [];
+}
+export async function getArticlesByAuthor(authorId: string): Promise<Article[]> {
+  const d = loadStatic();
+  if(d) return d.articles.filter((r: any) => r.author_id === authorId && r.status === 'published')
+    .sort((a: any,b: any)=> String(b.publish_date).localeCompare(String(a.publish_date))).map(toArticle);
+  return [];
+}
+export async function getAuthorById(id: string): Promise<Author | null> {
+  const d = loadStatic();
+  if(d) { const r = d.authors.find((x: any)=> x.id===id); return r ? toAuthor(r) : null; }
+  return null;
+}
+export async function getAuthorBySlug(slug: string): Promise<Author | null> {
+  const d = loadStatic();
+  if(d) { const r = d.authors.find((x: any)=> x.slug===slug); return r ? toAuthor(r) : null; }
+  return null;
+}
+export async function getCategoryBySlug(slug: string): Promise<Category | null> {
+  const d = loadStatic();
+  if(d) { const r = d.categories.find((x: any)=> x.slug===slug); return r ? toCategory(r) : null; }
+  return null;
+}
 export function formatDate(dateStr: string): string {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
-// Re-export others as needed
 export async function getLatestArticles(count=10){ const a=await getPublishedArticles(); return a.slice(0,count); }
 export async function getRelatedArticles(article: Article, count=3){
   const all=await getPublishedArticles();
