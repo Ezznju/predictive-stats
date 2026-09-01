@@ -1,19 +1,10 @@
 ﻿import { Article, Author, Category, SiteSettings } from '@/types';
-import fs from 'fs';
-import path from 'path';
+import dbJson from '../data/db.json';
 
 // Static JSON fallback (committed to repo, zero egress)
-let staticData: { articles: any[]; authors: any[]; categories: any[]; site_settings: any[] } | null = null;
+let staticData: { articles: any[]; authors: any[]; categories: any[]; site_settings: any[] } | null = dbJson as any;
 function loadStatic(){
-  if(staticData) return staticData;
-  try {
-    const p = path.join(process.cwd(), 'data', 'db.json');
-    if(fs.existsSync(p)){
-      staticData = JSON.parse(fs.readFileSync(p, 'utf8'));
-      return staticData!;
-    }
-  } catch {}
-  return null;
+  return staticData;
 }
 
 function toArticle(row: any): Article {
