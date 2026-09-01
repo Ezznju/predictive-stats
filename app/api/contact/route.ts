@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { insertContactMessage } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-
     const { name, email, subject, message } = body;
 
     if (!name || !email || !message) {
@@ -16,29 +15,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 1. Store in Supabase
-    const { error: dbError } = await supabase
-      .from('contact_messages')
-      .insert({
-        name,
-        email,
-        subject: subject || 'general',
-        message,
-      });
+    await insertContactMessage(name, email, subject || 'general', message);
 
-    if (dbError) {
-      console.error('Supabase insert error:', dbError);
-      return NextResponse.json(
-        { error: 'Failed to save message. Please try again.' },
-        { status: 500 }
-      );
-    }
-
-    // 2. Send email notification via Resend (if configured)
     const resendKey = process.env.RESEND_API_KEY;
     if (resendKey) {
       try {
-        const emailRes = await fetch('https://api.resend.com/emails', {
+        await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -55,20 +37,12 @@ export async function POST(request: NextRequest) {
               <p><strong>Subject:</strong> ${subject || 'General Inquiry'}</p>
               <hr />
               <p>${message.replace(/\n/g, '<br />')}</p>
-              <hr />
-              <p style="color:#888;font-size:12px;">Sent from the Predictions Market Fans contact form</p>
             `,
             reply_to: email,
           }),
         });
-
-        if (!emailRes.ok) {
-          const errBody = await emailRes.text();
-          console.error('Resend error:', errBody);
-        }
       } catch (emailErr) {
         console.error('Email send error:', emailErr);
-        // Don't fail the request — message is already saved in DB
       }
     }
 

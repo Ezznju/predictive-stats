@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getArticleById, updateArticle, deleteArticle } from '@/lib/db';
 import { submitIndexNow } from '@/lib/indexnow';
-import { getArticleById } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +33,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   const body = await request.json();
 
-  const row: Record<string, any> = { updated_at: new Date().toISOString() };
+  const row: Record<string, any> = {};
   if (body.title !== undefined) row.title = body.title;
   if (body.slug !== undefined) row.slug = body.slug;
   if (body.excerpt !== undefined) row.excerpt = body.excerpt;
@@ -42,39 +41,27 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   if (body.featuredImage !== undefined) row.featured_image = body.featuredImage;
   if (body.authorId !== undefined) row.author_id = body.authorId;
   if (body.categorySlug !== undefined) row.category_slug = body.categorySlug;
-  if (body.tags !== undefined) row.tags = body.tags;
+  if (body.tags !== undefined) row.tags = JSON.stringify(body.tags);
   if (body.publishDate !== undefined) row.publish_date = body.publishDate;
   if (body.updatedDate !== undefined) row.updated_date = body.updatedDate;
   if (body.readTime !== undefined) row.read_time = body.readTime;
-  if (body.featured !== undefined) row.featured = body.featured;
+  if (body.featured !== undefined) row.featured = body.featured ? 1 : 0;
   if (body.status !== undefined) row.status = body.status;
   if (body.seoTitle !== undefined) row.seo_title = body.seoTitle;
   if (body.metaDescription !== undefined) row.meta_description = body.metaDescription;
   if (body.pullQuote !== undefined) row.pull_quote = body.pullQuote;
 
-  const { data, error } = await supabaseAdmin
-    .from('articles')
-    .update(row)
-    .eq('id', params.id)
-    .select()
-    .single();
+  await updateArticle(params.id, row);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  if (data?.category_slug && data?.slug) {
-    const url = `https://predictionsmarketfans.com/${data.category_slug}/${data.slug}`;
+  if (row.category_slug && row.slug) {
+    const url = `https://predictionsmarketfans.com/${row.category_slug}/${row.slug}`;
     submitIndexNow([url]).catch(() => {});
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json({ id: params.id, ...row });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
-  const { error } = await supabaseAdmin
-    .from('articles')
-    .delete()
-    .eq('id', params.id);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await deleteArticle(params.id);
   return NextResponse.json({ ok: true });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { newsletterSubscribe } from '@/lib/db';
 import { sendWelcomeEmail } from '@/lib/newsletter-email';
+import { randomUUID } from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,25 +16,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 });
     }
 
-    // RPC inserts the subscriber and returns an unsubscribe token for NEW
-    // signups only (NULL = already subscribed, so tokens can't be harvested).
-    const { data: token, error } = await supabase.rpc('newsletter_subscribe', {
-      p_email: email,
-      p_source: String(body.source || 'site'),
-    });
+    const token = randomUUID();
+    const inserted = await newsletterSubscribe(email, String(body.source || 'site'), token);
 
-    if (error) {
-      console.error('Newsletter subscribe error:', error);
-      return NextResponse.json({ error: 'Subscription failed. Please try again.' }, { status: 500 });
-    }
-
-    if (!token) {
-      // Already on the list — treat as success.
+    if (!inserted) {
       return NextResponse.json({ success: true, alreadySubscribed: true });
     }
 
-    // Fire the welcome email; never block or fail the signup on email issues.
-    await sendWelcomeEmail(email, String(token));
+    await sendWelcomeEmail(email, token).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (err) {

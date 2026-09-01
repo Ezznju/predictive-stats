@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
-import { getAuthors } from '@/lib/db';
+import { getAuthors, insertAuthor, countAuthors } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +18,6 @@ export async function GET() {
       twitter: a.twitter,
       linkedin: a.linkedin,
     }));
-    rows.sort((a, b) => a.name.localeCompare(b.name));
     return NextResponse.json(rows, {
       headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
     });
@@ -35,13 +33,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Name and slug are required' }, { status: 400 });
   }
 
-  // Enforce the author limit
-  const { count, error: countError } = await supabase
-    .from('authors')
-    .select('id', { count: 'exact', head: true });
-
-  if (countError) return NextResponse.json({ error: countError.message }, { status: 500 });
-  if ((count ?? 0) >= MAX_AUTHORS) {
+  const count = await countAuthors();
+  if (count >= MAX_AUTHORS) {
     return NextResponse.json(
       { error: `Author limit reached (max ${MAX_AUTHORS}). Delete an author before adding a new one.` },
       { status: 400 }
@@ -49,6 +42,7 @@ export async function POST(request: NextRequest) {
   }
 
   const row = {
+    id: crypto.randomUUID(),
     name: body.name,
     slug: body.slug,
     title: body.title || '',
@@ -58,12 +52,6 @@ export async function POST(request: NextRequest) {
     linkedin: body.linkedin || null,
   };
 
-  const { data, error } = await supabaseAdmin
-    .from('authors')
-    .insert(row)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+  await insertAuthor(row);
+  return NextResponse.json(row, { status: 201 });
 }

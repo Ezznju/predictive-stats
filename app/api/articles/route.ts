@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
+import { getArticles, insertArticle } from '@/lib/db';
 import { submitIndexNow } from '@/lib/indexnow';
-import { getArticles } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,7 +26,6 @@ export async function GET() {
       meta_description: a.metaDescription,
       pull_quote: a.pullQuote,
     }));
-    rows.sort((a, b) => String(b.publish_date || '').localeCompare(String(a.publish_date || '')));
     return NextResponse.json(rows, {
       headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
     });
@@ -40,6 +38,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
 
   const row = {
+    id: crypto.randomUUID(),
     title: body.title,
     slug: body.slug,
     excerpt: body.excerpt || '',
@@ -47,29 +46,23 @@ export async function POST(request: NextRequest) {
     featured_image: body.featuredImage || '',
     author_id: body.authorId || null,
     category_slug: body.categorySlug || null,
-    tags: body.tags || [],
+    tags: JSON.stringify(body.tags || []),
     publish_date: body.publishDate || new Date().toISOString().split('T')[0],
     updated_date: body.updatedDate || null,
     read_time: body.readTime || 5,
-    featured: body.featured || false,
+    featured: body.featured ? 1 : 0,
     status: body.status || 'draft',
     seo_title: body.seoTitle || null,
     meta_description: body.metaDescription || null,
     pull_quote: body.pullQuote || null,
   };
 
-  const { data, error } = await supabaseAdmin
-    .from('articles')
-    .insert(row)
-    .select()
-    .single();
+  await insertArticle(row);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  if (data?.category_slug && data?.slug) {
-    const url = `https://predictionsmarketfans.com/${data.category_slug}/${data.slug}`;
+  if (row.category_slug && row.slug) {
+    const url = `https://predictionsmarketfans.com/${row.category_slug}/${row.slug}`;
     submitIndexNow([url]).catch(() => {});
   }
 
-  return NextResponse.json(data, { status: 201 });
+  return NextResponse.json(row, { status: 201 });
 }

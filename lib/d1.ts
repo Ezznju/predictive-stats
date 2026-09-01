@@ -1,11 +1,55 @@
 ﻿import { Article, Author, Category, SiteSettings } from '@/types';
-import dbJson from '../data/db.json';
 
-// Static JSON fallback (committed to repo, zero egress)
-let staticData: { articles: any[]; authors: any[]; categories: any[]; site_settings: any[] } | null = dbJson as any;
-function loadStatic(){
-  return staticData;
+const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID!;
+const DATABASE_ID = process.env.D1_DATABASE_ID!;
+const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!;
+const BASE = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database/${DATABASE_ID}`;
+
+async function d1Query<T = any>(sql: string, params?: any[]): Promise<T[]> {
+  const res = await fetch(`${BASE}/raw`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${API_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ sql, params }),
+  });
+  const data = await res.json();
+  if (!data.success) {
+    console.error('D1 query failed:', data.errors);
+    return [];
+  }
+  const result = data.result;
+  if (Array.isArray(result) && result[0]?.results?.rows) {
+    const cols: string[] = result[0].results.columns || [];
+    return result[0].results.rows.map((row: any[]) => {
+      const obj: any = {};
+      cols.forEach((col, i) => { obj[col] = row[i]; });
+      return obj;
+    });
+  }
+  return [];
 }
+
+async function d1Execute(sql: string, params?: any[]): Promise<{ changes: number; last_row_id: number }> {
+  const res = await fetch(`${BASE}/raw`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${API_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ sql, params }),
+  });
+  const data = await res.json();
+  if (!data.success) {
+    console.error('D1 execute failed:', data.errors);
+    return { changes: 0, last_row_id: 0 };
+  }
+  const meta = data.result?.meta || {};
+  return { changes: meta.changes || 0, last_row_id: meta.last_row_id || 0 };
+}
+
+// ─── Mappers ────────────────────────────────────────────────────────
 
 function toArticle(row: any): Article {
   return {
@@ -20,114 +64,349 @@ function toArticle(row: any): Article {
     tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : row.tags ?? [],
     publishDate: row.publish_date ?? '',
     updatedDate: row.updated_date ?? undefined,
-    readTime: row.read_time ?? 5,
-    featured: !!row.featured,
+    readTime: Number(row.read_time) || 5,
+    featured: row.featured === 1 || row.featured === true,
     status: row.status ?? 'draft',
     seoTitle: row.seo_title ?? undefined,
     metaDescription: row.meta_description ?? undefined,
     pullQuote: row.pull_quote ?? undefined,
   };
 }
+
 function toAuthor(row: any): Author {
   return {
-    id: row.id, name: row.name, slug: row.slug, bio: row.bio ?? '', title: row.title ?? '',
-    avatar: row.avatar ?? '', twitter: row.twitter ?? undefined, linkedin: row.linkedin ?? undefined,
-  };
-}
-function toCategory(row: any): Category {
-  return { id: row.id, name: row.name, slug: row.slug, description: row.description ?? '', color: row.color ?? '#000000' };
-}
-function toSettings(row: any): SiteSettings {
-  return {
-    siteName: row.site_name ?? 'Predictions Market Fans', siteTagline: row.site_tagline ?? '', siteDescription: row.site_description ?? '',
-    siteUrl: row.site_url ?? '', newsletterHeading: row.newsletter_heading ?? '', newsletterBody: row.newsletter_body ?? '',
-    missionHeading: row.mission_heading ?? '', missionBody: row.mission_body ?? '',
-    socialTwitter: row.social_twitter ?? '', socialLinkedin: row.social_linkedin ?? '', socialGithub: row.social_github ?? '',
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    bio: row.bio ?? '',
+    title: row.title ?? '',
+    avatar: row.avatar ?? '',
+    twitter: row.twitter ?? undefined,
+    linkedin: row.linkedin ?? undefined,
   };
 }
 
+function toCategory(row: any): Category {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description ?? '',
+    color: row.color ?? '#000000',
+  };
+}
+
+function toSettings(row: any): SiteSettings {
+  return {
+    siteName: row.site_name ?? 'Predictions Market Fans',
+    siteTagline: row.site_tagline ?? '',
+    siteDescription: row.site_description ?? '',
+    siteUrl: row.site_url ?? '',
+    newsletterHeading: row.newsletter_heading ?? '',
+    newsletterBody: row.newsletter_body ?? '',
+    missionHeading: row.mission_heading ?? '',
+    missionBody: row.mission_body ?? '',
+    socialTwitter: row.social_twitter ?? '',
+    socialLinkedin: row.social_linkedin ?? '',
+    socialGithub: row.social_github ?? '',
+  };
+}
+
+// ─── Query Functions ────────────────────────────────────────────────
+
 export async function getPublishedArticles(): Promise<Article[]> {
-  const d = loadStatic();
-  if(d) return d.articles.filter((r: any) => r.status === 'published').sort((a: any,b: any)=> String(b.publish_date).localeCompare(String(a.publish_date))).map(toArticle);
-  return [];
+  const rows = await d1Query(
+    `SELECT * FROM articles WHERE status = 'published' ORDER BY publish_date DESC`
+  );
+  return rows.map(toArticle);
 }
+
 export async function getFeaturedArticles(): Promise<Article[]> {
-  const d = loadStatic();
-  if(d) return d.articles.filter((r: any) => r.featured && r.status === 'published').sort((a: any,b: any)=> String(b.publish_date).localeCompare(String(a.publish_date))).map(toArticle);
-  return [];
+  const rows = await d1Query(
+    `SELECT * FROM articles WHERE featured = 1 AND status = 'published' ORDER BY publish_date DESC`
+  );
+  return rows.map(toArticle);
 }
-export async function getAuthors(): Promise<Author[]> {
-  const d = loadStatic();
-  if(d) return d.authors.map(toAuthor);
-  return [];
-}
-export async function getCategories(): Promise<Category[]> {
-  const d = loadStatic();
-  if(d) return d.categories.map(toCategory);
-  return [];
-}
-export async function getSiteSettings(): Promise<SiteSettings> {
-  const d = loadStatic();
-  if(d && d.site_settings[0]) return toSettings(d.site_settings[0]);
-  return { siteName: 'Predictions Market Fans', siteTagline: 'Sharp analysis for uncertain markets', siteDescription: '', siteUrl: '', newsletterHeading: '', newsletterBody: '', missionHeading: '', missionBody: '', socialTwitter: '', socialLinkedin: '', socialGithub: '' };
-}
-export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  const d = loadStatic();
-  if(d) { const r = d.articles.find((x: any)=> x.slug===slug); return r ? toArticle(r) : null; }
-  return null;
-}
+
 export async function getArticles(): Promise<Article[]> {
-  const d = loadStatic();
-  if(d) return d.articles.map(toArticle);
-  return [];
+  const rows = await d1Query(`SELECT * FROM articles ORDER BY publish_date DESC`);
+  return rows.map(toArticle);
 }
+
+export async function getArticleBySlug(slug: string): Promise<Article | null> {
+  const rows = await d1Query(`SELECT * FROM articles WHERE slug = ? LIMIT 1`, [slug]);
+  return rows.length > 0 ? toArticle(rows[0]) : null;
+}
+
 export async function getArticleById(id: string): Promise<Article | null> {
-  const d = loadStatic();
-  if(d) { const r = d.articles.find((x: any)=> x.id===id); return r ? toArticle(r) : null; }
-  return null;
+  const rows = await d1Query(`SELECT * FROM articles WHERE id = ? LIMIT 1`, [id]);
+  return rows.length > 0 ? toArticle(rows[0]) : null;
 }
+
 export async function getArticlesByCategory(categorySlug: string): Promise<Article[]> {
-  const d = loadStatic();
-  if(d) return d.articles.filter((r: any) => r.category_slug === categorySlug && r.status === 'published')
-    .sort((a: any,b: any)=> String(b.publish_date).localeCompare(String(a.publish_date))).map(toArticle);
-  return [];
+  const rows = await d1Query(
+    `SELECT * FROM articles WHERE category_slug = ? AND status = 'published' ORDER BY publish_date DESC`,
+    [categorySlug]
+  );
+  return rows.map(toArticle);
 }
+
 export async function getArticlesByAuthor(authorId: string): Promise<Article[]> {
-  const d = loadStatic();
-  if(d) return d.articles.filter((r: any) => r.author_id === authorId && r.status === 'published')
-    .sort((a: any,b: any)=> String(b.publish_date).localeCompare(String(a.publish_date))).map(toArticle);
-  return [];
+  const rows = await d1Query(
+    `SELECT * FROM articles WHERE author_id = ? AND status = 'published' ORDER BY publish_date DESC`,
+    [authorId]
+  );
+  return rows.map(toArticle);
 }
+
+export async function getAuthors(): Promise<Author[]> {
+  const rows = await d1Query(`SELECT * FROM authors ORDER BY name`);
+  return rows.map(toAuthor);
+}
+
 export async function getAuthorById(id: string): Promise<Author | null> {
-  const d = loadStatic();
-  if(d) { const r = d.authors.find((x: any)=> x.id===id); return r ? toAuthor(r) : null; }
-  return null;
+  const rows = await d1Query(`SELECT * FROM authors WHERE id = ? LIMIT 1`, [id]);
+  return rows.length > 0 ? toAuthor(rows[0]) : null;
 }
+
 export async function getAuthorBySlug(slug: string): Promise<Author | null> {
-  const d = loadStatic();
-  if(d) { const r = d.authors.find((x: any)=> x.slug===slug); return r ? toAuthor(r) : null; }
-  return null;
+  const rows = await d1Query(`SELECT * FROM authors WHERE slug = ? LIMIT 1`, [slug]);
+  return rows.length > 0 ? toAuthor(rows[0]) : null;
 }
+
+export async function getCategories(): Promise<Category[]> {
+  const rows = await d1Query(`SELECT * FROM categories ORDER BY name`);
+  return rows.map(toCategory);
+}
+
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  const d = loadStatic();
-  if(d) { const r = d.categories.find((x: any)=> x.slug===slug); return r ? toCategory(r) : null; }
-  return null;
+  const rows = await d1Query(`SELECT * FROM categories WHERE slug = ? LIMIT 1`, [slug]);
+  return rows.length > 0 ? toCategory(rows[0]) : null;
 }
+
+export async function getSiteSettings(): Promise<SiteSettings> {
+  const rows = await d1Query(`SELECT * FROM site_settings WHERE id = 1 LIMIT 1`);
+  return rows.length > 0 ? toSettings(rows[0]) : {
+    siteName: 'Predictions Market Fans',
+    siteTagline: 'Sharp analysis for uncertain markets',
+    siteDescription: '',
+    siteUrl: '',
+    newsletterHeading: '',
+    newsletterBody: '',
+    missionHeading: '',
+    missionBody: '',
+    socialTwitter: '',
+    socialLinkedin: '',
+    socialGithub: '',
+  };
+}
+
 export function formatDate(dateStr: string): string {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
-export async function getLatestArticles(count=10){ const a=await getPublishedArticles(); return a.slice(0,count); }
-export async function getRelatedArticles(article: Article, count=3){
-  const all=await getPublishedArticles();
-  const tagSet=new Set((article.tags??[]).map(t=>t.toLowerCase()));
-  const scored=all.filter(a=>a.id!==article.id).map(a=>{
-    const shared=(a.tags??[]).filter(t=>tagSet.has(t.toLowerCase())).length;
-    const same=a.categorySlug===article.categorySlug?2:0;
-    return {a,score:shared*3+same};
-  }).sort((x,y)=> y.score - x.score || String(y.a.publishDate).localeCompare(String(x.a.publishDate)));
-  const related=scored.filter(s=>s.score>0).map(s=>s.a);
-  for(const s of scored){ if(related.length>=count) break; if(s.score===0) related.push(s.a); }
-  return related.slice(0,count);
+
+export async function getLatestArticles(count = 10): Promise<Article[]> {
+  const rows = await d1Query(
+    `SELECT * FROM articles WHERE status = 'published' ORDER BY publish_date DESC LIMIT ?`,
+    [count]
+  );
+  return rows.map(toArticle);
+}
+
+export async function getRelatedArticles(article: Article, count = 3): Promise<Article[]> {
+  const tagConditions = (article.tags ?? []).map(() => `tags LIKE ?`).join(' OR ');
+  const params: any[] = [];
+  const tagLikes: string[] = [];
+  for (const tag of (article.tags ?? [])) {
+    tagLikes.push(`%${tag}%`);
+    params.push(`%${tag}%`);
+  }
+
+  let rows: any[];
+  if (tagConditions) {
+    rows = await d1Query(
+      `SELECT * FROM articles
+       WHERE id != ? AND status = 'published'
+       AND (${tagConditions} OR category_slug = ?)
+       ORDER BY publish_date DESC
+       LIMIT ?`,
+      [article.id, ...tagLikes, article.categorySlug, count * 3]
+    );
+  } else {
+    rows = await d1Query(
+      `SELECT * FROM articles
+       WHERE id != ? AND status = 'published' AND category_slug = ?
+       ORDER BY publish_date DESC
+       LIMIT ?`,
+      [article.id, article.categorySlug, count * 3]
+    );
+  }
+
+  // Score and rank
+  const tagSet = new Set((article.tags ?? []).map(t => t.toLowerCase()));
+  const scored = rows.map(r => {
+    const a = toArticle(r);
+    const shared = (a.tags ?? []).filter(t => tagSet.has(t.toLowerCase())).length;
+    const same = a.categorySlug === article.categorySlug ? 2 : 0;
+    return { a, score: shared * 3 + same };
+  }).sort((x, y) => y.score - x.score || String(y.a.publishDate).localeCompare(String(x.a.publishDate)));
+
+  const related = scored.filter(s => s.score > 0).map(s => s.a);
+  for (const s of scored) {
+    if (related.length >= count) break;
+    if (s.score === 0 && !related.find(r => r.id === s.a.id)) related.push(s.a);
+  }
+  return related.slice(0, count);
+}
+
+// ─── Write Functions (for admin API routes) ─────────────────────────
+
+export async function insertArticle(row: Record<string, any>): Promise<any> {
+  const cols = Object.keys(row);
+  const placeholders = cols.map(() => '?').join(', ');
+  const values = cols.map(k => row[k] === undefined ? null : row[k]);
+  await d1Execute(
+    `INSERT INTO articles (${cols.join(', ')}) VALUES (${placeholders})`,
+    values
+  );
+  return row;
+}
+
+export async function updateArticle(id: string, row: Record<string, any>): Promise<any> {
+  const cols = Object.keys(row);
+  if (cols.length === 0) return row;
+  const setClauses = cols.map(k => `${k} = ?`).join(', ');
+  const values = cols.map(k => row[k]);
+  values.push(id);
+  await d1Execute(
+    `UPDATE articles SET ${setClauses} WHERE id = ?`,
+    values
+  );
+  return { id, ...row };
+}
+
+export async function deleteArticle(id: string): Promise<void> {
+  await d1Execute(`DELETE FROM articles WHERE id = ?`, [id]);
+}
+
+export async function insertCategory(row: Record<string, any>): Promise<any> {
+  const cols = Object.keys(row);
+  const placeholders = cols.map(() => '?').join(', ');
+  const values = cols.map(k => row[k] === undefined ? null : row[k]);
+  await d1Execute(
+    `INSERT INTO categories (${cols.join(', ')}) VALUES (${placeholders})`,
+    values
+  );
+  return row;
+}
+
+export async function updateCategory(id: string, row: Record<string, any>): Promise<any> {
+  const cols = Object.keys(row);
+  if (cols.length === 0) return row;
+  const setClauses = cols.map(k => `${k} = ?`).join(', ');
+  const values = cols.map(k => row[k]);
+  values.push(id);
+  await d1Execute(
+    `UPDATE categories SET ${setClauses} WHERE id = ?`,
+    values
+  );
+  return { id, ...row };
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  await d1Execute(`DELETE FROM categories WHERE id = ?`, [id]);
+}
+
+export async function insertAuthor(row: Record<string, any>): Promise<any> {
+  const cols = Object.keys(row);
+  const placeholders = cols.map(() => '?').join(', ');
+  const values = cols.map(k => row[k] === undefined ? null : row[k]);
+  await d1Execute(
+    `INSERT INTO authors (${cols.join(', ')}) VALUES (${placeholders})`,
+    values
+  );
+  return row;
+}
+
+export async function updateAuthor(id: string, row: Record<string, any>): Promise<any> {
+  const cols = Object.keys(row);
+  if (cols.length === 0) return row;
+  const setClauses = cols.map(k => `${k} = ?`).join(', ');
+  const values = cols.map(k => row[k]);
+  values.push(id);
+  await d1Execute(
+    `UPDATE authors SET ${setClauses} WHERE id = ?`,
+    values
+  );
+  return { id, ...row };
+}
+
+export async function deleteAuthor(id: string): Promise<void> {
+  await d1Execute(`DELETE FROM authors WHERE id = ?`, [id]);
+}
+
+export async function countArticlesByAuthor(authorId: string): Promise<number> {
+  const rows = await d1Query(`SELECT COUNT(*) as c FROM articles WHERE author_id = ?`, [authorId]);
+  return rows[0]?.c ?? 0;
+}
+
+export async function countAuthors(): Promise<number> {
+  const rows = await d1Query(`SELECT COUNT(*) as c FROM authors`);
+  return rows[0]?.c ?? 0;
+}
+
+export async function updateSiteSettings(row: Record<string, any>): Promise<any> {
+  const cols = Object.keys(row);
+  if (cols.length === 0) return row;
+  const setClauses = cols.map(k => `${k} = ?`).join(', ');
+  const values = cols.map(k => row[k]);
+  await d1Execute(
+    `UPDATE site_settings SET ${setClauses} WHERE id = 1`,
+    values
+  );
+  return row;
+}
+
+export async function searchArticles(query: string): Promise<any[]> {
+  const like = `%${query}%`;
+  const rows = await d1Query(
+    `SELECT id, title, slug, excerpt, featured_image, author_id, category_slug, tags, publish_date, read_time, featured, status
+     FROM articles
+     WHERE status = 'published' AND (title LIKE ? OR excerpt LIKE ? OR content LIKE ?)
+     ORDER BY publish_date DESC
+     LIMIT 24`,
+    [like, like, like]
+  );
+  return rows;
+}
+
+// Newsletter
+export async function newsletterSubscribe(email: string, source: string, token: string): Promise<boolean> {
+  try {
+    await d1Execute(
+      `INSERT INTO newsletter_subscribers (email, source, token) VALUES (?, ?, ?)`,
+      [email, source, token]
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function newsletterUnsubscribe(token: string): Promise<boolean> {
+  const result = await d1Execute(
+    `UPDATE newsletter_subscribers SET unsubscribed_at = CURRENT_TIMESTAMP WHERE token = ? AND unsubscribed_at IS NULL`,
+    [token]
+  );
+  return result.changes > 0;
+}
+
+// Contact
+export async function insertContactMessage(name: string, email: string, subject: string, message: string): Promise<void> {
+  await d1Execute(
+    `INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)`,
+    [name, email, subject, message]
+  );
 }

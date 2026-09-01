@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { newsletterUnsubscribe } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,16 +13,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${base}/newsletter/unsubscribed?status=invalid`);
   }
 
-  const { data: removed, error } = await supabase.rpc('newsletter_unsubscribe', {
-    p_token: token,
-  });
-
-  if (error) {
-    console.error('Newsletter unsubscribe error:', error);
+  try {
+    const removed = await newsletterUnsubscribe(token);
+    return NextResponse.redirect(
+      `${base}/newsletter/unsubscribed${removed ? '' : '?status=invalid'}`
+    );
+  } catch {
     return NextResponse.redirect(`${base}/newsletter/unsubscribed?status=error`);
   }
-
-  return NextResponse.redirect(
-    `${base}/newsletter/unsubscribed${removed ? '' : '?status=invalid'}`
-  );
 }
