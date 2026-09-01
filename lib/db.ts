@@ -34,4 +34,6 @@ export {
   insertOutboundClick,
   getAnalytics,
   getPulseWhaleTrades,
+  upsertPulseWallet,
+  insertPulseWhaleTrade,
 } from './d1';

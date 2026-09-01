@@ -485,3 +485,52 @@ export async function getPulseWhaleTrades(conditionId: string) {
     [conditionId]
   );
 }
+
+export async function upsertPulseWallet(row: {
+  address: string;
+  username?: string | null;
+  bio?: string | null;
+  profile_image?: string | null;
+  x_username?: string | null;
+  rank?: number | null;
+  pnl?: number | null;
+  volume?: number | null;
+  win_rate?: number | null;
+  trade_count?: number | null;
+  is_smart?: boolean;
+}): Promise<void> {
+  await d1Execute(
+    `INSERT INTO pulse_wallets (address, username, bio, profile_image, x_username, rank, pnl, volume, win_rate, trade_count, is_smart, last_synced_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+     ON CONFLICT(address) DO UPDATE SET
+       username=excluded.username, bio=excluded.bio, profile_image=excluded.profile_image, x_username=excluded.x_username,
+       rank=excluded.rank, pnl=excluded.pnl, volume=excluded.volume, win_rate=excluded.win_rate, trade_count=excluded.trade_count,
+       is_smart=excluded.is_smart, last_synced_at=CURRENT_TIMESTAMP, updated_at=CURRENT_TIMESTAMP`,
+    [row.address, row.username ?? null, row.bio ?? null, row.profile_image ?? null, row.x_username ?? null, row.rank ?? null, row.pnl ?? 0, row.volume ?? 0, row.win_rate ?? 0, row.trade_count ?? 0, row.is_smart ? 1 : 0]
+  );
+}
+
+export async function insertPulseWhaleTrade(row: {
+  id?: string;
+  wallet_address: string;
+  condition_id: string;
+  market_title?: string | null;
+  market_slug?: string | null;
+  event_slug?: string | null;
+  side: 'BUY' | 'SELL';
+  outcome?: string | null;
+  size: number;
+  price: number;
+  usdc_size?: number | null;
+  tx_hash?: string | null;
+  is_whale?: boolean;
+  anomaly_score?: number | null;
+  detected_at?: string | null;
+}): Promise<void> {
+  const id = row.id ?? (typeof crypto !== 'undefined' && (crypto as any).randomUUID ? (crypto as any).randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`);
+  await d1Execute(
+    `INSERT OR IGNORE INTO pulse_whale_trades (id, wallet_address, condition_id, market_title, market_slug, event_slug, side, outcome, size, price, usdc_size, tx_hash, is_whale, anomaly_score, detected_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))`,
+    [id, row.wallet_address, row.condition_id, row.market_title ?? null, row.market_slug ?? null, row.event_slug ?? null, row.side, row.outcome ?? null, row.size, row.price, row.usdc_size ?? row.size * row.price, row.tx_hash ?? null, row.is_whale ? 1 : 0, row.anomaly_score ?? 0, row.detected_at ?? null]
+  );
+}
