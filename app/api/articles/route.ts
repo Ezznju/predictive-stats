@@ -1,19 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { submitIndexNow } from '@/lib/indexnow';
+import { getArticles } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const { data, error } = await supabase
-    .from('articles')
-    .select('*')
-    .order('publish_date', { ascending: false });
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, {
-    headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
-  });
+  try {
+    const articles = await getArticles();
+    const rows = articles.map((a) => ({
+      id: a.id,
+      title: a.title,
+      slug: a.slug,
+      excerpt: a.excerpt,
+      content: a.content,
+      featured_image: a.featuredImage,
+      author_id: a.authorId,
+      category_slug: a.categorySlug,
+      tags: a.tags,
+      publish_date: a.publishDate,
+      updated_date: a.updatedDate,
+      read_time: a.readTime,
+      featured: a.featured,
+      status: a.status,
+      seo_title: a.seoTitle,
+      meta_description: a.metaDescription,
+      pull_quote: a.pullQuote,
+    }));
+    rows.sort((a, b) => String(b.publish_date || '').localeCompare(String(a.publish_date || '')));
+    return NextResponse.json(rows, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+    });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {

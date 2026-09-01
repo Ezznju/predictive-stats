@@ -1,19 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
+import { getSiteSettings } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const { data, error } = await supabase
-    .from('site_settings')
-    .select('*')
-    .eq('id', 1)
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, {
-    headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
-  });
+  try {
+    const settings = await getSiteSettings();
+    return NextResponse.json({
+      id: 1,
+      site_name: settings.siteName,
+      site_tagline: settings.siteTagline,
+      site_description: settings.siteDescription,
+      site_url: settings.siteUrl,
+      newsletter_heading: settings.newsletterHeading,
+      newsletter_body: settings.newsletterBody,
+      mission_heading: settings.missionHeading,
+      mission_body: settings.missionBody,
+      social_twitter: settings.socialTwitter,
+      social_linkedin: settings.socialLinkedin,
+      social_github: settings.socialGithub,
+    }, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+    });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function PUT(request: NextRequest) {

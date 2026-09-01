@@ -1,29 +1,52 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+let _supabase: SupabaseClient | null = null;
+let _supabaseAdmin: SupabaseClient | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  global: {
-    fetch: (input, init) => {
-      return fetch(input, { ...init, cache: 'no-store' as RequestCache });
-    },
+function getClient(admin = false): SupabaseClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = admin
+    ? process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new Error('Supabase is not configured — reads use static JSON, writes are unavailable');
+  }
+
+  if (admin) {
+    if (!_supabaseAdmin) {
+      _supabaseAdmin = createClient(url, key, {
+        global: {
+          headers: process.env.ADMIN_API_TOKEN
+            ? { 'x-admin-token': process.env.ADMIN_API_TOKEN }
+            : {},
+          fetch: (input, init) =>
+            fetch(input, { ...init, cache: 'no-store' as RequestCache }),
+        },
+      });
+    }
+    return _supabaseAdmin;
+  }
+
+  if (!_supabase) {
+    _supabase = createClient(url, key, {
+      global: {
+        fetch: (input, init) =>
+          fetch(input, { ...init, cache: 'no-store' as RequestCache }),
+      },
+    });
+  }
+  return _supabase;
+}
+
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    return (getClient(false) as any)[prop];
   },
 });
 
-/**
- * Server-side client for write operations (admin API routes only).
- * Sends the x-admin-token header, which database RLS policies verify
- * before allowing INSERT/UPDATE/DELETE on content tables.
- * NEVER import this in client components — ADMIN_API_TOKEN must stay server-side.
- */
-export const supabaseAdmin = createClient(supabaseUrl, supabaseAnonKey, {
-  global: {
-    headers: process.env.ADMIN_API_TOKEN
-      ? { 'x-admin-token': process.env.ADMIN_API_TOKEN }
-      : {},
-    fetch: (input, init) => {
-      return fetch(input, { ...init, cache: 'no-store' as RequestCache });
-    },
+export const supabaseAdmin = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    return (getClient(true) as any)[prop];
   },
 });

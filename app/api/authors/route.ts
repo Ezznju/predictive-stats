@@ -1,20 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { getAuthors } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 const MAX_AUTHORS = 10;
 
 export async function GET() {
-  const { data, error } = await supabase
-    .from('authors')
-    .select('*')
-    .order('name');
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, {
-    headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
-  });
+  try {
+    const authors = await getAuthors();
+    const rows = authors.map((a) => ({
+      id: a.id,
+      name: a.name,
+      slug: a.slug,
+      title: a.title,
+      bio: a.bio,
+      avatar: a.avatar,
+      twitter: a.twitter,
+      linkedin: a.linkedin,
+    }));
+    rows.sort((a, b) => a.name.localeCompare(b.name));
+    return NextResponse.json(rows, {
+      headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
+    });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {

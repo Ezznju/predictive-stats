@@ -1,18 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { submitIndexNow } from '@/lib/indexnow';
+import { getArticleById } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const { data, error } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('id', params.id)
-    .single();
-
-  if (error) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(data, {
+  const article = await getArticleById(params.id);
+  if (!article) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  return NextResponse.json({
+    id: article.id,
+    title: article.title,
+    slug: article.slug,
+    excerpt: article.excerpt,
+    content: article.content,
+    featured_image: article.featuredImage,
+    author_id: article.authorId,
+    category_slug: article.categorySlug,
+    tags: article.tags,
+    publish_date: article.publishDate,
+    updated_date: article.updatedDate,
+    read_time: article.readTime,
+    featured: article.featured,
+    status: article.status,
+    seo_title: article.seoTitle,
+    meta_description: article.metaDescription,
+    pull_quote: article.pullQuote,
+  }, {
     headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
   });
 }
