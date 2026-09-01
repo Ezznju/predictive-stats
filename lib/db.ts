@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { Article, Author, Category, SiteSettings } from '@/types';
+import * as d1 from './d1';
 
 /* ───── cache ───── */
 
@@ -108,8 +109,8 @@ export async function getPublishedArticles(): Promise<Article[]> {
     setCache('published_articles', articles);
     return articles;
   } catch (e) {
-    console.warn('[db] getPublishedArticles failed (quota?)', e);
-    return cached ?? [];
+    console.warn('[db] getPublishedArticles failed (quota?), falling back to D1/static', e);
+    try { return await d1.getPublishedArticles(); } catch { return cached ?? []; }
   }
 }
 
@@ -174,8 +175,8 @@ export async function getFeaturedArticles(): Promise<Article[]> {
     setCache('featured_articles', articles);
     return articles;
   } catch (e) {
-    console.warn('[db] getFeaturedArticles failed', e);
-    return getCached<Article[]>('featured_articles') ?? [];
+    console.warn('[db] getFeaturedArticles failed, falling back to D1', e);
+    try { return await d1.getFeaturedArticles(); } catch { return getCached<Article[]>('featured_articles') ?? []; }
   }
 }
 
@@ -241,8 +242,8 @@ export async function getAuthors(): Promise<Author[]> {
     setCache('authors', authors);
     return authors;
   } catch (e) {
-    console.warn('[db] getAuthors failed', e);
-    return getCached<Author[]>('authors') ?? [];
+    console.warn('[db] getAuthors failed, falling back to D1', e);
+    try { return await d1.getAuthors(); } catch { return getCached<Author[]>('authors') ?? []; }
   }
 }
 
@@ -281,8 +282,8 @@ export async function getCategories(): Promise<Category[]> {
     setCache('categories', categories);
     return categories;
   } catch (e) {
-    console.warn('[db] getCategories failed', e);
-    return getCached<Category[]>('categories') ?? [];
+    console.warn('[db] getCategories failed, falling back to D1', e);
+    try { return await d1.getCategories(); } catch { return getCached<Category[]>('categories') ?? []; }
   }
 }
 

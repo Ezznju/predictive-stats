@@ -1,0 +1,13 @@
+id,name,slug,description,color,created_at,updated_at
+20f278c9-3154-41a7-8781-886c8b9f2fb9,Crypto Sentiment,crypto-sentiment,"On-chain signals, sentiment indicators, and narrative-driven crypto market analysis.",#FF6B35,2026-06-11 19:20:11.50607+00,2026-06-11 19:20:11.50607+00
+b8bb5769-c1d9-4d73-92a9-2244051d5d2c,Economic Analysis,economic-analysis,"Macro signals, rate forecasts, and how economic data feeds into prediction markets.",#00D4FF,2026-06-11 19:20:11.50607+00,2026-06-11 19:20:11.50607+00
+7e95fb58-d186-407f-bf81-9ebd4413106a,Forecasting,forecasting,"Research, methods, and commentary on probabilistic forecasting across domains.",#FFD60A,2026-06-11 19:20:11.50607+00,2026-06-11 19:20:11.50607+00
+a3693877-40d5-4753-bd60-c33b10cd2ec6,How-To Guides,how-to-guides,"Step-by-step guides to prediction market trading, forecasting tools, and analytical methods.",#FBBF24,2026-06-11 19:20:11.50607+00,2026-06-11 19:20:11.50607+00
+5a2d9150-6a20-41cb-8af0-04e4c32c0e9d,Market Psychology,market-psychology,"Behavioral economics, cognitive biases, and decision-making under uncertainty.",#F472B6,2026-06-11 19:20:11.50607+00,2026-06-11 19:20:11.50607+00
+63f1ca39-b95a-4122-8963-4a58ec2c595d,Opinion,opinion,"Editorial perspectives on markets, regulation, and the future of forecasting.",#FB923C,2026-06-11 19:20:11.50607+00,2026-06-11 19:20:11.50607+00
+f9ea7c51-0b28-4d38-a7d7-b80459bc97d7,Platform Reviews,platform-reviews,In-depth reviews and comparisons of prediction market platforms and forecasting tools.,#34D399,2026-06-11 19:20:11.50607+00,2026-06-11 19:20:11.50607+00
+0754169d-da20-4523-a74d-1c37dce079b8,Political Markets,political-markets,"Electoral probabilities, geopolitical risk pricing, and political event contracts.",#00E676,2026-06-11 19:20:11.50607+00,2026-06-11 19:20:11.50607+00
+d4958905-b4da-4e50-8e2a-40f844f9852d,Prediction Markets,prediction-markets,"Deep analysis of prediction market mechanics, platforms, pricing behavior, and the wisdom of crowds.",#FF2D2D,2026-06-11 19:20:11.50607+00,2026-06-11 19:20:11.50607+00
+169b4753-aa68-4653-a029-0645fb68de00,Research,research,"Academic research summaries, calibration studies, and methodological deep dives.",#2DD4BF,2026-06-11 19:20:11.50607+00,2026-06-11 19:20:11.50607+00
+9f2c611d-c229-4e0c-b25e-fdd947937649,Sports Projections,sports-projections,"Probability-based sports analysis, model breakdowns, and projection systems.",#A855F7,2026-06-11 19:20:11.50607+00,2026-06-11 19:20:11.50607+00
+bcafa3cf-1d2a-4f2f-9fde-c1b859243203,Strategy,strategy,"Trading strategies, portfolio construction, and risk management for prediction markets.",#818CF8,2026-06-11 19:20:11.50607+00,2026-06-11 19:20:11.50607+00
