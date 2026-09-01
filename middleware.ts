@@ -29,7 +29,6 @@ const PUBLIC_API_PREFIXES = [
   '/api/lp-rewards',
   '/api/order-book',
   '/api/indexnow',
-  '/api/debug',
 ];
 
 // Public POST routes (visitor-facing forms)

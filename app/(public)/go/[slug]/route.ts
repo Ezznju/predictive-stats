@@ -20,8 +20,6 @@ export async function GET(
   const userAgent = request.headers.get('user-agent');
 
   // Track click — await with timeout so D1 write completes before redirect
-  let trackOk = false;
-  let trackErr: string | null = null;
   try {
     await Promise.race([
       insertOutboundClick({
@@ -31,16 +29,10 @@ export async function GET(
         referer,
         country,
         user_agent: userAgent,
-      }).then(() => { trackOk = true; }),
+      }),
       new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 1200)),
     ]);
-  } catch (e: any) {
-    trackErr = e?.message ?? String(e);
-  }
-  // debug mode: ?debug=1 returns JSON instead of redirect
-  if (request.nextUrl.searchParams.get('debug') === '1') {
-    return NextResponse.json({ ok: trackOk, error: trackErr, platform: platform.slug, ctx, isAffiliate });
-  }
+  } catch {}
 
   return NextResponse.redirect(url, 307);
 }
