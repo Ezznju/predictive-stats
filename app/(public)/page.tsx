@@ -46,7 +46,7 @@ export default async function Home() {
       getSiteSettings(),
     ]);
   } catch (e) {
-    console.warn('[home] Supabase unavailable (quota?), serving stale/empty', e);
+    console.warn('[home] D1 unavailable, serving stale/empty', e);
   }
 
   const { hero, subFeatured, trending, latest, popularReads } =
