@@ -31,4 +31,7 @@ export {
   newsletterSubscribe,
   newsletterUnsubscribe,
   insertContactMessage,
+  insertOutboundClick,
+  getAnalytics,
+  getPulseWhaleTrades,
 } from './d1';
