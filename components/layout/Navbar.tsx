@@ -39,7 +39,7 @@ export function Navbar({ siteName, categories }: NavbarProps) {
             <Link href="/about" className="text-sm text-black/70 hover:text-black transition-colors font-medium">About</Link>
             <Link href="/contact" className="text-sm text-black/70 hover:text-black transition-colors font-medium">Contact</Link>
             <Link href="/newsletter" className="text-sm text-black/70 hover:text-black transition-colors font-medium">Newsletter</Link>
-            <Link href="/search" className="text-black/70 hover:text-black transition-colors">
+            <Link href="/search" aria-label="Search" className="text-black/70 hover:text-black transition-colors">
               <Search className="w-4 h-4" />
             </Link>
           </nav>
@@ -47,6 +47,8 @@ export function Navbar({ siteName, categories }: NavbarProps) {
           {/* Mobile menu button */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
             className="md:hidden p-2 text-black/70 hover:text-black"
           >
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
