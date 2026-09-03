@@ -6,7 +6,6 @@ import {
   ArrowUpDown,
   ExternalLink,
   Filter,
-  Loader2,
   RefreshCw,
   TrendingUp,
   AlertTriangle,
@@ -25,6 +24,7 @@ import {
 } from 'lucide-react';
 import { ToolRelatedContent } from '@/components/ToolRelatedContent';
 import { ScannerLiveStatus } from '@/components/ScannerLiveStatus';
+import { TableSkeleton } from '@/components/TableSkeleton';
 
 /* ── Brand colors ──────────────────────────────────────────────────── */
 const POLY = '#7B3FE4';
@@ -188,6 +188,35 @@ export default function ArbitrageScannerPage() {
     const interval = setInterval(fetchData, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchData]);
+
+  // ── Shareable filters (#5): hydrate from ?minArb=&cat=&sort=&dir= once on
+  // mount, then mirror every filter change back into the URL so a filtered
+  // view can be bookmarked or shared and survives a refresh.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const rawMin = p.get('minArb');
+    if (rawMin !== null && !Number.isNaN(Number(rawMin))) {
+      setMinArbPercent(Math.max(0, Math.min(100, Number(rawMin))));
+    }
+    const cat = p.get('cat');
+    if (cat) setCategoryFilter(cat);
+    const keys: SortKey[] = ['arbPercent', 'priceDiffCents', 'matchScore', 'opportunityScore', 'polyVolume', 'kalshiVolume'];
+    const sk = p.get('sort');
+    if (sk && keys.includes(sk as SortKey)) setSortKey(sk as SortKey);
+    const dir = p.get('dir');
+    if (dir === 'asc' || dir === 'desc') setSortAsc(dir === 'asc');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (minArbPercent > 0) p.set('minArb', String(minArbPercent));
+    if (categoryFilter !== 'all') p.set('cat', categoryFilter);
+    if (sortKey !== 'arbPercent') p.set('sort', sortKey);
+    if (sortAsc) p.set('dir', 'asc');
+    const qs = p.toString();
+    window.history.replaceState(null, '', qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+  }, [minArbPercent, categoryFilter, sortKey, sortAsc]);
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -489,15 +518,11 @@ export default function ArbitrageScannerPage() {
 
         {/* ── Loading / Error ───────────────────────────── */}
         {loading && pairs.length === 0 && (
-          <div className="bg-white rounded-xl border-2 border-black shadow-pop p-12 flex flex-col items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-brand-orange mb-3" />
-            <p className="text-ink-muted font-display">
-              Scanning Polymarket &amp; Kalshi for matching events…
-            </p>
-            <p className="text-xs text-ink-faint mt-1">
-              This may take 10-15 seconds on first load
-            </p>
-          </div>
+          <TableSkeleton
+            template="1fr 100px 100px 90px 90px 80px"
+            label="Scanning Polymarket & Kalshi…"
+            caption="First scan can take 10-30 seconds — after that, results load instantly."
+          />
         )}
 
         {error && (

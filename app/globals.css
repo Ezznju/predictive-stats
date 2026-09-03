@@ -12,7 +12,7 @@
   }
 
   :focus { outline: none; }
-  :focus-visible { outline: 2px solid #000; outline-offset: 3px; }
+  :focus-visible { outline: 3px solid #000; outline-offset: 3px; }
 
   ::-webkit-scrollbar {
     width: 8px;
@@ -1067,4 +1067,27 @@ main {
   text-transform: uppercase;
   color: #333;
   margin-top: 0.6rem;
+}
+
+/* ── Skeleton shimmer (scanner loading states) ── */
+.skel {
+  position: relative;
+  overflow: hidden;
+  background: #E9EAEE;
+  border-radius: 6px;
+}
+.skel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  animation: skel-shim 1.3s infinite;
+}
+@keyframes skel-shim {
+  to { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skel::after { animation: none; }
+  .skel { background: #E2E4E9; }
 }

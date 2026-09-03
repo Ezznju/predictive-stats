@@ -4,6 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X, Search } from 'lucide-react';
 import { Category } from '@/types';
+import { InstantSearch } from '@/components/InstantSearch';
+
+const openSearch = () => window.dispatchEvent(new CustomEvent('pmf:open-search'));
 
 interface NavbarProps {
   siteName: string;
@@ -39,9 +42,9 @@ export function Navbar({ siteName, categories }: NavbarProps) {
             <Link href="/about" className="text-sm text-black/70 hover:text-black transition-colors font-medium">About</Link>
             <Link href="/contact" className="text-sm text-black/70 hover:text-black transition-colors font-medium">Contact</Link>
             <Link href="/newsletter" className="text-sm text-black/70 hover:text-black transition-colors font-medium">Newsletter</Link>
-            <Link href="/search" aria-label="Search" className="text-black/70 hover:text-black transition-colors">
+            <button onClick={openSearch} aria-label="Search (press /)" className="text-black/70 hover:text-black transition-colors">
               <Search className="w-4 h-4" />
-            </Link>
+            </button>
           </nav>
 
           {/* Mobile menu button */}
@@ -85,7 +88,7 @@ export function Navbar({ siteName, categories }: NavbarProps) {
             <Link href="/about" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-black/70 hover:text-black hover:bg-surface/30 rounded-lg transition-colors">About</Link>
             <Link href="/contact" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-black/70 hover:text-black hover:bg-surface/30 rounded-lg transition-colors">Contact</Link>
             <Link href="/newsletter" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-black/70 hover:text-black hover:bg-surface/30 rounded-lg transition-colors">Newsletter</Link>
-            <Link href="/search" onClick={() => setMobileOpen(false)} className="block px-3 py-2 text-sm text-black/70 hover:text-black hover:bg-surface/30 rounded-lg transition-colors">Search</Link>
+            <button onClick={() => { setMobileOpen(false); openSearch(); }} className="block w-full text-left px-3 py-2 text-sm text-black/70 hover:text-black hover:bg-surface/30 rounded-lg transition-colors">Search</button>
             <div className="pt-3 border-t border-surface-border mt-3">
               <p className="px-3 text-xs font-semibold text-black/50 uppercase tracking-wider mb-2">Topics</p>
               {categories.map((cat) => (
@@ -103,6 +106,9 @@ export function Navbar({ siteName, categories }: NavbarProps) {
           </nav>
         </div>
       )}
+
+      {/* Instant search overlay (opens via /, Ctrl+K, or the buttons above) */}
+      <InstantSearch />
     </header>
   );
 }

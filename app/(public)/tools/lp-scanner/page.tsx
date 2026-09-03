@@ -19,6 +19,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { ScannerLiveStatus } from '@/components/ScannerLiveStatus';
+import { TableSkeleton } from '@/components/TableSkeleton';
 
 /* ── Types ──────────────────────────────────────────────────────────── */
 
@@ -117,6 +118,31 @@ export default function LPScannerPage() {
       }
     })();
   }, []);
+
+  // ── Shareable state (#5): hydrate ?q=&sort=&dir= once on mount, then
+  // mirror changes into the URL so views are bookmarkable/shareable.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const qq = p.get('q');
+    if (qq) setQ(qq);
+    const sk = p.get('sort');
+    if (sk && ['dailyReward', 'spread', 'minSize', 'volume24hr', 'liquidity', 'competitiveness'].includes(sk)) {
+      setSortKey(sk as SortKey);
+    }
+    const dir = p.get('dir');
+    if (dir === 'asc') setSortDir(1);
+    else if (dir === 'desc') setSortDir(-1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (q) p.set('q', q);
+    if (sortKey !== 'dailyReward') p.set('sort', sortKey);
+    if (sortDir === 1) p.set('dir', 'asc');
+    const qs = p.toString();
+    window.history.replaceState(null, '', qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
+  }, [q, sortKey, sortDir]);
 
   // Fetch order book when market selected
   useEffect(() => {
@@ -304,11 +330,11 @@ export default function LPScannerPage() {
 
         {/* ── Loading / Error ───────────────────────────── */}
         {loading && (
-          <div className="bg-white rounded-xl border-2 border-black shadow-pop p-12 flex flex-col items-center justify-center">
-            <RefreshCw className="w-8 h-8 animate-spin text-brand-orange mb-3" />
-            <p className="text-ink-muted font-display">Scanning Polymarket LP reward pools…</p>
-            <p className="text-xs text-ink-faint mt-1">This may take a few seconds</p>
-          </div>
+          <TableSkeleton
+            template="1fr 90px 80px 80px 100px 100px 120px"
+            label="Scanning Polymarket LP reward pools…"
+            caption="First load takes a few seconds — after that, results load instantly."
+          />
         )}
 
         {error && (
