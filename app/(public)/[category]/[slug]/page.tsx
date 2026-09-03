@@ -165,7 +165,8 @@ function extractPullQuote(html: string): string | null {
       const len = s.length;
       if (len < PQ_MIN || len > PQ_MAX) return;
       if (/https?:|www\.|[@#]/.test(s)) return;
-      if (/[.;:,]$/.test(s.replace(/[)"'”]+$/, ''))) return;
+      // reject lead-ins ("...following:") but keep normal . ! ? endings
+      if (/[;:,]$/.test(s.replace(/[)"'”]+$/, ''))) return;
       const letters = s.replace(/[^a-zA-Z]/g, '');
       if (letters && letters === letters.toUpperCase()) return;
       let score = 0;
