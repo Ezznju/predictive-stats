@@ -15,6 +15,8 @@ export function TableOfContents() {
   const [items, setItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState('');
   const [open, setOpen] = useState(true);
+  const [pastEnd, setPastEnd] = useState(false);
+  const [beforeStart, setBeforeStart] = useState(true);
 
   useEffect(() => {
     const prose = document.querySelector('.prose');
@@ -58,12 +60,51 @@ export function TableOfContents() {
     return () => observer.disconnect();
   }, [items]);
 
+  // Hide the floating sidebar once the reader scrolls past the end of the
+  // article body (conclusion) — or before reaching it (hero area) — so it
+  // never blocks content while scrolling up and down. Reappears on scroll-back.
+  useEffect(() => {
+    if (items.length === 0) return;
+    const prose = document.querySelector('.prose');
+    if (!prose) return;
+
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const r = prose.getBoundingClientRect();
+      const vh = window.innerHeight || 800;
+      setPastEnd(r.bottom < vh * 0.5);
+      setBeforeStart(r.top > vh * 0.5);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [items]);
+
   if (items.length < 3) return null;
+
+  const sidebarVisible = !pastEnd && !beforeStart;
 
   return (
     <>
       {/* Floating sidebar TOC — desktop only */}
-      <nav className="article-layout-toc hidden xl:block">
+      <nav
+        aria-hidden={!sidebarVisible}
+        className={`article-layout-toc hidden xl:block transition-all duration-300 ${
+          sidebarVisible
+            ? 'opacity-100 translate-x-0'
+            : 'opacity-0 -translate-x-3 pointer-events-none invisible'
+        }`}
+      >
         <div className="toc-card">
           <span className="toc-label">IN THIS PIECE</span>
           <div className="mt-3">
