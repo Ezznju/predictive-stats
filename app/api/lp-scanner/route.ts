@@ -32,7 +32,10 @@ export async function GET(request: NextRequest) {
   try {
     const result = await withSharedCache<ScannerMarket[]>(
       CACHE_KEY,
-      fetchRewardMarkets
+      fetchRewardMarkets,
+      // Same 48h backstop as arbitrage: daily cron keeps an entry <24h old,
+      // so cold visitors get instant data instead of a 60s+ paginated crawl.
+      { hardTtlMs: 48 * 60 * 60 * 1000 }
     );
 
     // Enrich each market with risk-adjusted LP scoring

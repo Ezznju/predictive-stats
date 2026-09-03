@@ -7,7 +7,7 @@ import { scanArbitrage } from '@/lib/arbitrage-scan';
 import { withSharedCache } from '@/lib/scanner-cache';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const CACHE_KEY = 'arbitrage-scanner';
 
@@ -30,7 +30,7 @@ export async function GET() {
       // <24h old, so visitors always get instant data + background refresh
       // and never sit through a cold 10-25s scan.
       withSharedCache<ArbitragePair[]>(CACHE_KEY, scanArbitrage, { hardTtlMs: 48 * 60 * 60 * 1000 }),
-      25000
+      50000
     );
 
     // Enrich each pair with executable arbitrage analysis

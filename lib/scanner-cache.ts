@@ -23,6 +23,9 @@ async function d1Query(sql: string, params?: any[]): Promise<any[]> {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${API_TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ sql, params }),
+      // Bound the read: a hung Cloudflare API call must fail fast instead of
+      // eating the route's whole timeout budget (which 502s the visitor).
+      signal: AbortSignal.timeout(8000),
     });
     const data = await res.json();
     if (!data.success) return [];
@@ -43,12 +46,19 @@ async function d1Query(sql: string, params?: any[]): Promise<any[]> {
 
 async function d1Execute(sql: string, params?: any[]): Promise<void> {
   try {
-    await fetch(`${BASE}/raw`, {
+    const res = await fetch(`${BASE}/raw`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${API_TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ sql, params }),
+      signal: AbortSignal.timeout(8000),
     });
-  } catch {}
+    const data = await res.json().catch(() => null);
+    if (!data?.success) {
+      console.warn('[scanner-cache] D1 write not applied:', JSON.stringify(data?.errors ?? 'unparseable response'));
+    }
+  } catch (err) {
+    console.warn('[scanner-cache] D1 write error:', String(err));
+  }
 }
 
 export interface CacheEntry<T> {
@@ -122,7 +132,15 @@ export async function withSharedCache<T>(
     };
   }
 
-  const entry = await getCacheEntry<T>(key);
+  let entry = await getCacheEntry<T>(key);
+
+  // One retry on a miss: distinguishes a transient D1 read blip / replica lag
+  // from a genuinely cold cache. Costs one extra read (~300ms) in the worst
+  // case, saves a 10-25s cold compute + potential 502 in the common one.
+  if (!entry) {
+    await new Promise((r) => setTimeout(r, 500));
+    entry = await getCacheEntry<T>(key);
+  }
 
   if (entry && entry.ageMs < softTtl) {
     l1.set(key, { payload: entry.payload, ts: Date.now() - entry.ageMs });
