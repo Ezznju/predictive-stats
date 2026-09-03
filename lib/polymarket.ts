@@ -118,7 +118,12 @@ export interface OrderBook {
 /* ── Constants ─────────────────────────────────────────────────────── */
 
 const CLOB_BASE = 'https://clob.polymarket.com';
-const MAX_REWARD_PAGES = 30; // safety cap; loop normally exits on empty cursor
+// Deep pagination on /rewards/markets/multi degrades hard (page 20+ costs
+// ~10s+ per page upstream), so a full crawl can take many minutes. We cap at
+// 6 pages (~600 newest markets, ~15-25s): the scanner displays the top few
+// dozen by reward score, and low-reward markets deep in the list never surface
+// in the UI. Repeated-cursor guard below still protects against API loops.
+const MAX_REWARD_PAGES = 6;
 
 /* ── Schemas ───────────────────────────────────────────────────────── */
 
