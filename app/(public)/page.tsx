@@ -4,7 +4,7 @@ import { ArrowRight, TrendingUp, Zap, BarChart3 } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
 import {
-  FlowerShape, UShape, BoldCircle, HalfCircle,
+  FlowerShape, BoldCircle, HalfCircle,
   DiamondShape, ConcentricArches, PinwheelTile,
   QuatrefoilFlower, CornerDotSquare, ArrowBanner,
 } from '@/components/GeometricShapes';
@@ -167,38 +167,6 @@ export default async function Home() {
         </section>
       )}
 
-      {/* ── CATEGORIES ───────────────────────────────────────────────── */}
-      <section className="py-12 border-b border-surface-border relative overflow-hidden">
-        <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
-          <FlowerShape size={100} color="#FF00B8" className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-80 hidden md:block" />
-          <UShape size={80} color="#4845F0" strokeWidth={20} className="absolute right-6 top-6 opacity-80 hidden md:block" />
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="heading-chip bg-neon-magenta" />
-            <h2 className="font-display font-bold text-[28px] text-black">Browse Topics</h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-            {categories.map((cat, i) => {
-              const brights = ['#D9F24B', '#2BD96E', '#29C5F6', '#C9B8F5', '#FF00B8', '#FFE642', '#9D5CFF', '#FF6B00'];
-              const bg = brights[i % brights.length];
-              const lightBg = ['#D9F24B', '#2BD96E', '#29C5F6', '#C9B8F5', '#FFE642'].includes(bg);
-              return (
-                <Link key={cat.id} href={`/category/${cat.slug}`}
-                  className="group rounded-2xl p-4 card-pop card-pop-hover flex items-center gap-3"
-                  style={{ backgroundColor: bg }}>
-                  <div className="w-3.5 h-3.5 rounded-full shrink-0 border-2 border-black" style={{ backgroundColor: cat.color }} />
-                  <h3 className={`font-display font-bold text-sm leading-snug ${lightBg ? 'text-black' : 'text-white'}`}>{cat.name}</h3>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── NEWSLETTER ───────────────────────────────────────────────── */}
-      <NewsletterBlock variant="banner" heading={settings.newsletterHeading} body={settings.newsletterBody} />
-
       {/* ── POPULAR READS + WRITERS (popular collapses if nothing fresh) ── */}
       <section className="py-12 border-b border-surface-border relative overflow-hidden">
         <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
@@ -231,6 +199,37 @@ export default async function Home() {
           )}
         </div>
       </section>
+
+      {/* ── BROWSE TOPICS (compact chip row) ─────────────────────────── */}
+      {categories.length > 0 && (
+        <section className="py-8 border-b border-surface-border relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+            <div className="flex items-center gap-x-4 gap-y-3 flex-wrap">
+              <div className="flex items-center gap-2.5 mr-1">
+                <div className="heading-chip bg-neon-magenta" />
+                <h2 className="font-display font-bold text-lg text-black whitespace-nowrap">Browse Topics</h2>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {categories.map((cat, i) => {
+                  const brights = ['#D9F24B', '#2BD96E', '#29C5F6', '#C9B8F5', '#FF00B8', '#FFE642', '#9D5CFF', '#FF6B00'];
+                  const bg = brights[i % brights.length];
+                  const lightBg = ['#D9F24B', '#2BD96E', '#29C5F6', '#C9B8F5', '#FFE642'].includes(bg);
+                  return (
+                    <Link key={cat.id} href={`/category/${cat.slug}`}
+                      className="px-3 py-1.5 text-xs font-bold rounded-full border-2 border-black hover:-translate-y-0.5 transition-transform whitespace-nowrap"
+                      style={{ backgroundColor: bg, color: lightBg ? '#000' : '#fff' }}>
+                      {cat.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── NEWSLETTER ───────────────────────────────────────────────── */}
+      <NewsletterBlock variant="banner" heading={settings.newsletterHeading} body={settings.newsletterBody} />
 
       {/* ── MISSION ──────────────────────────────────────────────────── */}
       <section className="py-16 relative overflow-hidden">

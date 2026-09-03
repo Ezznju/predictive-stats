@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { unstable_cache } from 'next/cache';
-import { Clock, Calendar, ChevronRight } from 'lucide-react';
+import { Clock, Calendar, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
 import { ReadingProgressBar } from '@/components/ReadingProgressBar';
@@ -39,15 +39,21 @@ const getCachedArticlePage = unstable_cache(
   async (slug: string) => {
     const article = await getArticleBySlug(slug);
     if (!article) return null;
-    const [author, category, related, settings, allAuthors, allCategories] = await Promise.all([
+    const [author, category, related, settings, allAuthors, allCategories, allPublished] = await Promise.all([
       getAuthorById(article.authorId),
       getCategoryBySlug(article.categorySlug),
       getRelatedArticles(article, 3),
       getSiteSettings(),
       getAuthors(),
       getCategories(),
+      getPublishedArticles(),
     ]);
-    return { article, author, category, related, settings, allAuthors, allCategories };
+    // Chronological neighbours (list is newest-first): index-1 is newer ("next"),
+    // index+1 is older ("previous"). Stops readers dead-ending at the last paragraph.
+    const idx = allPublished.findIndex((a) => a.id === article.id);
+    const nextArticle = idx > 0 ? allPublished[idx - 1] : null;
+    const prevArticle = idx >= 0 && idx < allPublished.length - 1 ? allPublished[idx + 1] : null;
+    return { article, author, category, related, settings, allAuthors, allCategories, prevArticle, nextArticle };
   },
   ['article-page'],
   { revalidate: 600, tags: ['articles'] }
@@ -140,7 +146,7 @@ export default async function CategoryArticlePage({ params }: Props) {
   const data = await getCachedArticlePage(params.slug);
   if (!data) notFound();
 
-  const { article, author, category, related, settings, allAuthors, allCategories } = data;
+  const { article, author, category, related, settings, allAuthors, allCategories, prevArticle, nextArticle } = data;
 
   const authorMap = new Map(allAuthors.map(a => [a.id, a]));
   const categoryMap = new Map(allCategories.map(c => [c.slug, c]));
@@ -369,6 +375,44 @@ export default async function CategoryArticlePage({ params }: Props) {
             </span>
           </Link>
         </div>
+
+        {/* Prev / Next */}
+        {(prevArticle || nextArticle) && (
+          <nav aria-label="Article pagination" className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {prevArticle ? (
+              <Link
+                href={`/${prevArticle.categorySlug}/${prevArticle.slug}`}
+                className="group border-2 border-black bg-white p-5 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] hover:bg-[#D9F24B] transition-all"
+              >
+                <span className="flex items-center gap-1.5 font-mono font-bold text-[10px] tracking-[0.12em] uppercase text-black/50">
+                  <ArrowLeft className="w-3.5 h-3.5" /> Previous
+                </span>
+                <span className="block font-display font-bold text-sm mt-2 leading-snug text-black group-hover:text-black">
+                  {prevArticle.title.replace(/<[^>]*>/g, '')}
+                </span>
+                <span className="block text-xs text-ink-muted mt-1.5">
+                  {categoryMap.get(prevArticle.categorySlug)?.name} · {prevArticle.readTime} min
+                </span>
+              </Link>
+            ) : <div className="hidden sm:block" />}
+            {nextArticle ? (
+              <Link
+                href={`/${nextArticle.categorySlug}/${nextArticle.slug}`}
+                className="group border-2 border-black bg-white p-5 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] hover:bg-[#D9F24B] transition-all sm:text-right"
+              >
+                <span className="flex items-center gap-1.5 font-mono font-bold text-[10px] tracking-[0.12em] uppercase text-black/50 sm:justify-end">
+                  Next <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+                <span className="block font-display font-bold text-sm mt-2 leading-snug text-black group-hover:text-black">
+                  {nextArticle.title.replace(/<[^>]*>/g, '')}
+                </span>
+                <span className="block text-xs text-ink-muted mt-1.5">
+                  {categoryMap.get(nextArticle.categorySlug)?.name} · {nextArticle.readTime} min
+                </span>
+              </Link>
+            ) : <div className="hidden sm:block" />}
+          </nav>
+        )}
 
         {/* Comments */}
         <GiscusComments slug={article.slug} />
