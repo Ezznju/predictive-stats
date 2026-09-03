@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { getArticleById, updateArticle, deleteArticle } from '@/lib/db';
 import { submitIndexNow } from '@/lib/indexnow';
 
@@ -52,6 +53,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   if (body.pullQuote !== undefined) row.pull_quote = body.pullQuote;
 
   await updateArticle(params.id, row);
+  revalidateTag('articles');
 
   if (row.category_slug && row.slug) {
     const url = `https://predictionsmarketfans.com/${row.category_slug}/${row.slug}`;
@@ -63,5 +65,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   await deleteArticle(params.id);
+  revalidateTag('articles');
   return NextResponse.json({ ok: true });
 }

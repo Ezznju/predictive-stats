@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { unstable_cache } from 'next/cache';
 import { Clock, Calendar, ChevronRight } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
@@ -31,10 +32,31 @@ interface Props {
   params: { category: string; slug: string };
 }
 
+// Article views previously fired ~7 D1 REST round-trips each. Cache the whole
+// data bundle for 10 min. Tag-purged on admin create/update/delete (see
+// app/api/articles/route.ts + [id]/route.ts), so edits go live instantly.
+const getCachedArticlePage = unstable_cache(
+  async (slug: string) => {
+    const article = await getArticleBySlug(slug);
+    if (!article) return null;
+    const [author, category, related, settings, allAuthors, allCategories] = await Promise.all([
+      getAuthorById(article.authorId),
+      getCategoryBySlug(article.categorySlug),
+      getRelatedArticles(article, 3),
+      getSiteSettings(),
+      getAuthors(),
+      getCategories(),
+    ]);
+    return { article, author, category, related, settings, allAuthors, allCategories };
+  },
+  ['article-page'],
+  { revalidate: 600, tags: ['articles'] }
+);
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const article = await getArticleBySlug(params.slug);
-  if (!article) return { title: 'Article Not Found' };
-  const author = await getAuthorById(article.authorId);
+  const data = await getCachedArticlePage(params.slug);
+  if (!data) return { title: 'Article Not Found' };
+  const { article, author } = data;
   const categorySlug = params.category;
 
   const siteUrl = 'https://predictionsmarketfans.com';
@@ -115,17 +137,10 @@ function embedTweet(html: string): string {
 }
 
 export default async function CategoryArticlePage({ params }: Props) {
-  const article = await getArticleBySlug(params.slug);
-  if (!article) notFound();
+  const data = await getCachedArticlePage(params.slug);
+  if (!data) notFound();
 
-  const [author, category, related, settings, allAuthors, allCategories] = await Promise.all([
-    getAuthorById(article.authorId),
-    getCategoryBySlug(article.categorySlug),
-    getRelatedArticles(article, 3),
-    getSiteSettings(),
-    getAuthors(),
-    getCategories(),
-  ]);
+  const { article, author, category, related, settings, allAuthors, allCategories } = data;
 
   const authorMap = new Map(allAuthors.map(a => [a.id, a]));
   const categoryMap = new Map(allCategories.map(c => [c.slug, c]));

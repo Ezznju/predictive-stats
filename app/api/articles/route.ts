@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { getArticles, insertArticle } from '@/lib/db';
 import { submitIndexNow } from '@/lib/indexnow';
 
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
   };
 
   await insertArticle(row);
+  revalidateTag('articles');
 
   if (row.category_slug && row.slug) {
     const url = `https://predictionsmarketfans.com/${row.category_slug}/${row.slug}`;
