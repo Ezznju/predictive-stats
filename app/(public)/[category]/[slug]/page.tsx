@@ -7,6 +7,8 @@ import { Clock, Calendar, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-rea
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
 import { ReadingProgressBar } from '@/components/ReadingProgressBar';
+import { ReadingMiniBar } from '@/components/ReadingMiniBar';
+import { HeadingAnchors } from '@/components/HeadingAnchors';
 import { TableOfContents } from '@/components/TableOfContents';
 import { GiscusComments } from '@/components/GiscusComments';
 import { PolymarketEmbeds } from '@/components/PolymarketEmbeds';
@@ -254,6 +256,7 @@ export default async function CategoryArticlePage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <ReadingProgressBar />
+      <ReadingMiniBar title={article.title.replace(/<[^>]*>/g, '')} />
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumbs */}
@@ -354,6 +357,9 @@ export default async function CategoryArticlePage({ params }: Props) {
             prose-li:text-ink-secondary"
           dangerouslySetInnerHTML={{ __html: finalBody }}
         />
+
+        {/* Deep-link anchors on section headings */}
+        <HeadingAnchors />
 
         {/* Tags */}
         <div className="mt-10 pt-6 border-t border-black/10">

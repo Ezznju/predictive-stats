@@ -1,5 +1,6 @@
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { BackToTop } from '@/components/BackToTop';
 import { getSiteSettings, getCategories } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,7 @@ export default async function PublicLayout({ children }: { children: React.React
       <Navbar siteName={settings.siteName} categories={categories} />
       <main className="flex-1">{children}</main>
       <Footer settings={settings} categories={categories} />
+      <BackToTop />
     </>
   );
 }
