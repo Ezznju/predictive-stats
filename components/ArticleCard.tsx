@@ -53,9 +53,9 @@ export function ArticleCard({ article, variant = 'default', author, category }: 
                 {category.name}
               </span>
             )}
-            <h2 className="font-display font-bold text-[24px] sm:text-[28px] text-white leading-[1.12] group-hover:text-brand-yellow transition-colors">
+            <h1 className="font-display font-bold text-[24px] sm:text-[28px] text-white leading-[1.12] group-hover:text-brand-yellow transition-colors">
               {article.title}
-            </h2>
+            </h1>
             <p className="text-white/80 text-[14px] font-medium mt-2 line-clamp-2">{article.excerpt}</p>
             <div className="flex items-center gap-3 mt-3 text-[14px] font-medium text-white/60">
               {author && <span>{author.name}</span>}
