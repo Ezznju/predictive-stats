@@ -20,7 +20,7 @@ export default function AdminDashboard() {
     async function load() {
       try {
         const [articlesRes, categoriesRes, authorsRes] = await Promise.all([
-          fetch('/api/articles', { cache: 'no-store' }),
+          fetch('/api/articles?summary=1', { cache: 'no-store' }),
           fetch('/api/categories', { cache: 'no-store' }),
           fetch('/api/authors', { cache: 'no-store' }),
         ]);

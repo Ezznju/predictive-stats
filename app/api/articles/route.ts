@@ -5,28 +5,34 @@ import { submitIndexNow } from '@/lib/indexnow';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // ?summary=1 drops the heavy `content` field (list views don't need it —
+    // full bodies are ~95% of the payload). Same keys otherwise.
+    const summary = request.nextUrl.searchParams.get('summary') === '1';
     const articles = await getArticles();
-    const rows = articles.map((a) => ({
-      id: a.id,
-      title: a.title,
-      slug: a.slug,
-      excerpt: a.excerpt,
-      content: a.content,
-      featured_image: a.featuredImage,
-      author_id: a.authorId,
-      category_slug: a.categorySlug,
-      tags: a.tags,
-      publish_date: a.publishDate,
-      updated_date: a.updatedDate,
-      read_time: a.readTime,
-      featured: a.featured,
-      status: a.status,
-      seo_title: a.seoTitle,
-      meta_description: a.metaDescription,
-      pull_quote: a.pullQuote,
-    }));
+    const rows = articles.map((a) => {
+      const row: Record<string, unknown> = {
+        id: a.id,
+        title: a.title,
+        slug: a.slug,
+        excerpt: a.excerpt,
+        featured_image: a.featuredImage,
+        author_id: a.authorId,
+        category_slug: a.categorySlug,
+        tags: a.tags,
+        publish_date: a.publishDate,
+        updated_date: a.updatedDate,
+        read_time: a.readTime,
+        featured: a.featured,
+        status: a.status,
+        seo_title: a.seoTitle,
+        meta_description: a.metaDescription,
+        pull_quote: a.pullQuote,
+      };
+      if (!summary) row.content = a.content;
+      return row;
+    });
     return NextResponse.json(rows, {
       headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' },
     });

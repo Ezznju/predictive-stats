@@ -29,7 +29,7 @@ export default function AdminCategoriesPage() {
     async function load() {
       const [cRes, aRes] = await Promise.all([
         fetch('/api/categories', { cache: 'no-store' }),
-        fetch('/api/articles', { cache: 'no-store' }),
+        fetch('/api/articles?summary=1', { cache: 'no-store' }),
       ]);
       setCategories(await cRes.json());
       setArticles(await aRes.json());

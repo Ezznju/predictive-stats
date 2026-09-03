@@ -13,7 +13,7 @@ export default function AdminArticlesPage() {
   useEffect(() => {
     async function load() {
       const [aRes, cRes, uRes] = await Promise.all([
-        fetch('/api/articles', { cache: 'no-store' }),
+        fetch('/api/articles?summary=1', { cache: 'no-store' }),
         fetch('/api/categories', { cache: 'no-store' }),
         fetch('/api/authors', { cache: 'no-store' }),
       ]);

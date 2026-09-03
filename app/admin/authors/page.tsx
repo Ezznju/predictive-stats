@@ -184,7 +184,7 @@ export default function AdminAuthorsPage() {
     async function load() {
       const [auRes, aRes] = await Promise.all([
         fetch('/api/authors', { cache: 'no-store' }),
-        fetch('/api/articles', { cache: 'no-store' }),
+        fetch('/api/articles?summary=1', { cache: 'no-store' }),
       ]);
       setAuthors(await auRes.json());
       setArticles(await aRes.json());
