@@ -465,6 +465,23 @@
   }
 }
 
+/* ── Decision Lab cards: lift + accent glow on hover ── */
+.dl-cell {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.dl-cell:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.32);
+  box-shadow: 0 14px 34px -12px var(--tc, rgba(255, 255, 255, 0.25));
+}
+.dl-cell:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dl-cell, .dl-cell:hover { transform: none; }
+}
+
 /* ── Article title — bold condensed uppercase ── */
 .article-title {
   color: #0b1120;
