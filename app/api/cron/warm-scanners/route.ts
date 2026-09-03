@@ -17,8 +17,10 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 
 /**
  * GET /api/cron/warm-scanners
- * Vercel Cron (every 10 min, see vercel.json) pre-warms the shared D1 cache
- * so visitors always find data waiting — they only hit Refresh for latest.
+ * Vercel Cron (daily 05:30 UTC, see vercel.json — Hobby plan max) pre-warms
+ * the shared D1 cache so visitors always find data waiting — they only hit
+ * Refresh for latest. Daytime visitors keep it minutes-fresh via background
+ * refreshes; the 48h hard TTL means a cold wait effectively never happens.
  * Gated by CRON_SECRET (Vercel sends it as Bearer automatically for cron).
  */
 export async function GET(request: NextRequest) {
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest) {
   const out: Record<string, unknown> = {};
 
   try {
-    const pairs = await withTimeout(scanArbitrage(), 50000);
+    const pairs = await withTimeout(scanArbitrage(), 25000);
     await setCacheEntry('arbitrage-scanner', pairs);
     out.arbitrage = { ok: true, pairs: pairs.length };
   } catch (e: unknown) {
@@ -39,7 +41,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const markets = await withTimeout(fetchRewardMarkets(), 50000);
+    const markets = await withTimeout(fetchRewardMarkets(), 25000);
     await setCacheEntry('lp-scanner', markets);
     out.lp = { ok: true, markets: Array.isArray(markets) ? markets.length : 0 };
   } catch (e: unknown) {

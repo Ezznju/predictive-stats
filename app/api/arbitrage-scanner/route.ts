@@ -26,9 +26,10 @@ export async function GET() {
   const scanStart = Date.now();
   try {
     const result = await withTimeout(
-      // 2h hard TTL backstop: even if the pre-warm cron ever misses,
-      // visitors get instant (stale) data + background refresh, never a cold wait.
-      withSharedCache<ArbitragePair[]>(CACHE_KEY, scanArbitrage, { hardTtlMs: 2 * 60 * 60 * 1000 }),
+      // 48h hard TTL backstop: the daily pre-warm cron guarantees an entry
+      // <24h old, so visitors always get instant data + background refresh
+      // and never sit through a cold 10-25s scan.
+      withSharedCache<ArbitragePair[]>(CACHE_KEY, scanArbitrage, { hardTtlMs: 48 * 60 * 60 * 1000 }),
       25000
     );
 
