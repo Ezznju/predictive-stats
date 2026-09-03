@@ -50,8 +50,8 @@ const TOOLS = [
   {
     slug: 'pulse',
     href: '/pulse',
-    name: 'Prediction Pulse',
-    platform: 'Whale Tracker',
+    name: 'Polymarket Whale Tracker',
+    platform: 'Smart Money',
     question: 'When a big wallet moves, is it a signal worth following or just noise?',
     description:
       'Whale trades, <em>judged</em>. Conviction as a five-axis radar; skill shrunk toward the average so a thin record can\'t lie.',

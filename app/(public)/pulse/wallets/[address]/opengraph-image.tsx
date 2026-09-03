@@ -17,7 +17,7 @@ export default async function Image({ params }: { params: { address: string } })
         title={`Whale Profile: ${shortAddr}`}
         badge="WHALE PROFILE"
         badgeColor="#29C5F6"
-        metaLeft="Prediction Pulse"
+        metaLeft="Polymarket Whale Tracker"
         metaRight="Intelligence scores & history"
       />
     ),

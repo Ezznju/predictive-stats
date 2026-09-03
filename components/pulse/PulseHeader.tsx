@@ -8,8 +8,8 @@ interface PulseHeaderProps {
 }
 
 export function PulseHeader({
-  title = 'Prediction Pulse',
-  subtitle = 'Real-time whale intelligence across prediction markets',
+  title = 'Polymarket Whale Tracker',
+  subtitle = 'Real-time whale intelligence from Polymarket wallets',
   breadcrumbs,
 }: PulseHeaderProps) {
   return (

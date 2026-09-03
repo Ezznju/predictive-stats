@@ -31,7 +31,7 @@ export default async function Image({ params }: { params: { conditionId: string 
         title={title}
         badge="WHALE ACTIVITY"
         badgeColor="#FF00B8"
-        metaLeft="Prediction Pulse"
+        metaLeft="Polymarket Whale Tracker"
         metaRight="Real-time whale trades"
       />
     ),

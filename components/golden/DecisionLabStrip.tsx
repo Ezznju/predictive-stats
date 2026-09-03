@@ -122,7 +122,7 @@ function renderCell(tool: Tool, d: ArbCell | LpCell | PulseCell) {
 }
 
 const TOOL_LINK: Record<Tool, string> = { arb: '/tools/arbitrage-scanner', lp: '/tools/lp-scanner', pulse: '/pulse' }
-const TOOL_LABEL: Record<Tool, string> = { arb: 'Arbitrage Scanner', lp: 'LP Reward Scanner', pulse: 'Prediction Pulse' }
+const TOOL_LABEL: Record<Tool, string> = { arb: 'Arbitrage Scanner', lp: 'LP Reward Scanner', pulse: 'Polymarket Whale Tracker' }
 
 interface ToolMeta {
   name: string
@@ -147,7 +147,7 @@ const TOOL_META: Record<Tool, ToolMeta> = {
     cta: 'Scan pools', tint: 'rgba(183,148,255,0.12)',
   },
   pulse: {
-    name: 'Prediction Pulse', sub: 'Whale Tracker', icon: Activity,
+    name: 'Polymarket Whale Tracker', sub: 'Smart Money', icon: Activity,
     iconBg: 'rgba(217,242,75,0.28)',
     question: '“When a big wallet moves, is it a signal worth following or just noise?”',
     cta: 'Track whales', tint: 'rgba(217,242,75,0.20)',

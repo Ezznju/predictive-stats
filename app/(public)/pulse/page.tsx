@@ -7,21 +7,21 @@ import { WhaleFeed } from '@/components/pulse/WhaleFeed';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Prediction Pulse — Live Whale Tracker',
+  title: 'Polymarket Whale Tracker — Live Whale Feed',
   description:
-    'Real-time whale intelligence across Polymarket and Kalshi. Track large trades, monitor top wallets, and spot market-moving activity as it happens.',
+    'Real-time whale intelligence on Polymarket. Track large trades, monitor top wallets, and spot market-moving activity as it happens.',
   alternates: { canonical: 'https://predictionsmarketfans.com/pulse' },
   openGraph: {
     type: 'website',
-    title: 'Prediction Pulse — Live Whale Tracker',
+    title: 'Polymarket Whale Tracker — Live Whale Feed',
     description:
-      'Real-time whale intelligence across prediction markets. Track large trades, monitor top wallets, and spot market-moving activity.',
+      'Real-time whale intelligence on Polymarket. Track large trades, monitor top wallets, and spot market-moving activity.',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Prediction Pulse — Live Whale Tracker',
+    title: 'Polymarket Whale Tracker — Live Whale Feed',
     description:
-      'Real-time whale intelligence across prediction markets.',
+      'Real-time whale intelligence on Polymarket. Track large trades, monitor top wallets, and spot market-moving activity.',
   },
 };
 
@@ -29,9 +29,9 @@ export default function PulsePage() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
-    name: 'Prediction Pulse — Live Whale Tracker',
+    name: 'Polymarket Whale Tracker — Live Whale Feed',
     description:
-      'Real-time whale intelligence across prediction markets. Track large trades, monitor top wallets, and spot market-moving activity.',
+      'Real-time whale intelligence on Polymarket. Track large trades, monitor top wallets, and spot market-moving activity.',
     url: 'https://predictionsmarketfans.com/pulse',
     isPartOf: {
       '@type': 'WebSite',
@@ -53,7 +53,7 @@ export default function PulsePage() {
       {
         '@type': 'ListItem',
         position: 2,
-        name: 'Prediction Pulse',
+        name: 'Polymarket Whale Tracker',
         item: 'https://predictionsmarketfans.com/pulse',
       },
     ],
@@ -75,7 +75,7 @@ export default function PulsePage() {
           <PulseHeader
             breadcrumbs={[
               { label: 'Home', href: '/' },
-              { label: 'Prediction Pulse' },
+              { label: 'Polymarket Whale Tracker' },
             ]}
           />
 

@@ -74,7 +74,7 @@ export default async function WalletPage({ params }: WalletPageProps) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://predictionsmarketfans.com' },
-      { '@type': 'ListItem', position: 2, name: 'Prediction Pulse', item: 'https://predictionsmarketfans.com/pulse' },
+      { '@type': 'ListItem', position: 2, name: 'Polymarket Whale Tracker', item: 'https://predictionsmarketfans.com/pulse' },
       { '@type': 'ListItem', position: 3, name: data.username, item: `https://predictionsmarketfans.com/pulse/wallets/${params.address}` },
     ],
   };
@@ -91,7 +91,7 @@ export default async function WalletPage({ params }: WalletPageProps) {
             subtitle={`Whale profile · ${data.uniqueMarkets} markets · ${data.tradeCount} trades`}
             breadcrumbs={[
               { label: 'Home', href: '/' },
-              { label: 'Prediction Pulse', href: '/pulse' },
+              { label: 'Polymarket Whale Tracker', href: '/pulse' },
               { label: data.username },
             ]}
           />

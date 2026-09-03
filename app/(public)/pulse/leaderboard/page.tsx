@@ -27,14 +27,14 @@ function skillGrade(score: number): { label: string; color: string } {
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: 'Whale Skill Leaderboard — Prediction Pulse',
+    title: 'Whale Skill Leaderboard — Polymarket Whale Tracker',
     description:
-      'Top wallets ranked by skill score. Composite of win rate, P&L, and volume across prediction markets.',
+      'Top wallets ranked by skill score. Composite of win rate, P&L, and volume on Polymarket.',
     alternates: { canonical: 'https://predictionsmarketfans.com/pulse/leaderboard' },
     openGraph: {
       type: 'website',
-      title: 'Whale Skill Leaderboard — Prediction Pulse',
-      description: 'Top wallets ranked by skill score across prediction markets.',
+      title: 'Whale Skill Leaderboard — Polymarket Whale Tracker',
+      description: 'Top wallets ranked by skill score on Polymarket.',
     },
   };
 }
@@ -49,7 +49,7 @@ export default async function LeaderboardPage() {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
     name: 'Whale Skill Leaderboard',
-    description: 'Top wallets ranked by skill score across prediction markets.',
+    description: 'Top wallets ranked by skill score on Polymarket.',
     url: 'https://predictionsmarketfans.com/pulse/leaderboard',
   };
 
@@ -58,7 +58,7 @@ export default async function LeaderboardPage() {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://predictionsmarketfans.com' },
-      { '@type': 'ListItem', position: 2, name: 'Prediction Pulse', item: 'https://predictionsmarketfans.com/pulse' },
+      { '@type': 'ListItem', position: 2, name: 'Polymarket Whale Tracker', item: 'https://predictionsmarketfans.com/pulse' },
       { '@type': 'ListItem', position: 3, name: 'Skill Leaderboard', item: 'https://predictionsmarketfans.com/pulse/leaderboard' },
     ],
   };
@@ -75,7 +75,7 @@ export default async function LeaderboardPage() {
             subtitle="Top wallets ranked by win rate, P&L, and volume — composite skill score"
             breadcrumbs={[
               { label: 'Home', href: '/' },
-              { label: 'Prediction Pulse', href: '/pulse' },
+              { label: 'Polymarket Whale Tracker', href: '/pulse' },
               { label: 'Skill Leaderboard' },
             ]}
           />

@@ -64,7 +64,7 @@ export default async function MarketPage({ params }: MarketPageProps) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://predictionsmarketfans.com' },
-      { '@type': 'ListItem', position: 2, name: 'Prediction Pulse', item: 'https://predictionsmarketfans.com/pulse' },
+      { '@type': 'ListItem', position: 2, name: 'Polymarket Whale Tracker', item: 'https://predictionsmarketfans.com/pulse' },
       { '@type': 'ListItem', position: 3, name: data.marketTitle, item: `https://predictionsmarketfans.com/pulse/markets/${params.conditionId}` },
     ],
   };
@@ -81,7 +81,7 @@ export default async function MarketPage({ params }: MarketPageProps) {
             subtitle={`Whale activity · ${data.category || 'General'} · Volume: $${(data.volume24hr / 1000).toFixed(1)}K 24h`}
             breadcrumbs={[
               { label: 'Home', href: '/' },
-              { label: 'Prediction Pulse', href: '/pulse' },
+              { label: 'Polymarket Whale Tracker', href: '/pulse' },
               { label: data.marketTitle },
             ]}
           />
