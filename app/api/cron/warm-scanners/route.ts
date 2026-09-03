@@ -30,23 +30,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const out: Record<string, unknown> = {};
+  // Parallel: worst case ≈ slowest scan (~50s cap each), fits maxDuration 60.
+  // Sequential would risk 25s + 50s+ > 60s and a killed function.
+  const [arbitrage, lp] = await Promise.all([
+    (async () => {
+      const pairs = await withTimeout(scanArbitrage(), 50000);
+      await setCacheEntry('arbitrage-scanner', pairs);
+      return { ok: true as const, pairs: pairs.length };
+    })().catch((e: unknown) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) })),
+    (async () => {
+      const markets = await withTimeout(fetchRewardMarkets(), 50000);
+      await setCacheEntry('lp-scanner', markets);
+      return { ok: true as const, markets: Array.isArray(markets) ? markets.length : 0 };
+    })().catch((e: unknown) => ({ ok: false as const, error: e instanceof Error ? e.message : String(e) })),
+  ]);
 
-  try {
-    const pairs = await withTimeout(scanArbitrage(), 25000);
-    await setCacheEntry('arbitrage-scanner', pairs);
-    out.arbitrage = { ok: true, pairs: pairs.length };
-  } catch (e: unknown) {
-    out.arbitrage = { ok: false, error: e instanceof Error ? e.message : String(e) };
-  }
-
-  try {
-    const markets = await withTimeout(fetchRewardMarkets(), 25000);
-    await setCacheEntry('lp-scanner', markets);
-    out.lp = { ok: true, markets: Array.isArray(markets) ? markets.length : 0 };
-  } catch (e: unknown) {
-    out.lp = { ok: false, error: e instanceof Error ? e.message : String(e) };
-  }
-
-  return NextResponse.json({ ok: true, warmed: out });
+  return NextResponse.json({ ok: true, warmed: { arbitrage, lp } });
 }
