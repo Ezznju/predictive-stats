@@ -186,13 +186,16 @@ const OrderBookSchema = z
 export async function fetchRewardMarkets(): Promise<ScannerMarket[]> {
   const allMarkets: RewardMarketRaw[] = [];
   let cursor: string | undefined;
+  const seenCursors = new Set<string>();
 
   // Paginate until the API signals the end (empty / sentinel cursor).
   for (let page = 0; page < MAX_REWARD_PAGES; page++) {
     const url = new URL(`${CLOB_BASE}/rewards/markets/multi`);
     url.searchParams.set('limit', '100');
     if (cursor && cursor !== 'LTE=') {
-      url.searchParams.set('after_cursor', cursor);
+      // API expects `next_cursor` (verified: it advances and returns new data;
+      // `after_cursor` is silently ignored and would loop on page 1 forever).
+      url.searchParams.set('next_cursor', cursor);
     }
 
     // Throws after retries — caller (route) will serve stale cache.
@@ -205,6 +208,10 @@ export async function fetchRewardMarkets(): Promise<ScannerMarket[]> {
 
     allMarkets.push(...json.data);
     cursor = json.next_cursor || undefined;
+    // Guard: if the API ever re-sends a cursor we've already followed,
+    // stop instead of re-downloading the same page until MAX_REWARD_PAGES.
+    if (cursor && seenCursors.has(cursor)) break;
+    if (cursor) seenCursors.add(cursor);
     if (!cursor || cursor === 'LTE=' || json.data.length < 100) break;
   }
 
