@@ -2,15 +2,8 @@
 
 import Link from 'next/link';
 import { ExternalLink } from 'lucide-react';
+import { TimeAgo } from './TimeAgo';
 import type { WhaleFeedItem, AggregatedWhaleCard } from '@/lib/pulse/types';
-
-function formatTime(ts: number): string {
-  const diff = Date.now() - ts * 1000;
-  if (diff < 60_000) return 'just now';
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
-  return `${Math.floor(diff / 86_400_000)}d ago`;
-}
 
 function formatUSD(n: number): string {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
@@ -77,9 +70,7 @@ export function WhaleCard({ trade }: WhaleCardProps) {
             {name}
           </span>
         </Link>
-        <span className="text-[10px] text-ink-faint font-body whitespace-nowrap">
-          {formatTime(trade.timestamp)}
-        </span>
+          <TimeAgo ts={trade.timestamp} className="text-[10px] text-ink-faint font-body whitespace-nowrap" />
       </div>
 
       {/* Amount + side + badges */}
@@ -238,7 +229,7 @@ export function AggregatedCard({ card }: { card: AggregatedWhaleCard }) {
         ) : (
           <span>Single trade</span>
         )}
-        {' · '}Last: {formatTime(card.lastTimestamp)}
+        {' · '}Last: <TimeAgo ts={card.lastTimestamp} />
       </div>
 
       {/* Market */}

@@ -17,9 +17,12 @@ import {
   BarChart3,
   Clock,
   Zap,
+  Link2,
+  Download,
 } from 'lucide-react';
 import { ScannerLiveStatus } from '@/components/ScannerLiveStatus';
 import { TableSkeleton } from '@/components/TableSkeleton';
+import { downloadCsv } from '@/lib/csv';
 
 /* ── Types ──────────────────────────────────────────────────────────── */
 
@@ -95,6 +98,9 @@ export default function LPScannerPage() {
   const [obLoading, setObLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<number | string | null>(null);
+  // Share-permalink highlight (#hi=<conditionId>) + per-row copied state
+  const [hiParam, setHiParam] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Velocity calculator
   const [vCap, setVCap] = useState(1000);
@@ -132,8 +138,45 @@ export default function LPScannerPage() {
     const dir = p.get('dir');
     if (dir === 'asc') setSortDir(1);
     else if (dir === 'desc') setSortDir(-1);
+    const hi = p.get('hi');
+    if (hi) setHiParam(hi);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Scroll to the shared row once data arrives
+  useEffect(() => {
+    if (!hiParam || markets.length === 0) return;
+    const el = document.querySelector('[data-hi="true"]');
+    if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [hiParam, markets]);
+
+  const copyRowLink = (conditionId: string) => {
+    const p = new URLSearchParams();
+    if (q) p.set('q', q);
+    if (sortKey !== 'dailyReward') p.set('sort', sortKey);
+    if (sortDir === 1) p.set('dir', 'asc');
+    p.set('hi', conditionId);
+    navigator.clipboard?.writeText(`${window.location.origin}/tools/lp-scanner?${p.toString()}`).catch(() => {});
+    setCopiedKey(conditionId);
+    setTimeout(() => setCopiedKey((k) => (k === conditionId ? null : k)), 1500);
+  };
+
+  const exportCsv = () => {
+    downloadCsv(`pmf-lp-rewards-${new Date().toISOString().slice(0, 10)}.csv`, filtered.map((m) => ({
+      question: m.question,
+      slug: m.slug,
+      condition_id: m.conditionId,
+      daily_reward_usd: +m.dailyReward.toFixed(2),
+      spread_cents: +(m.spread * 100).toFixed(1),
+      min_size: m.minSize,
+      volume_24h: Math.round(m.volume24hr),
+      liquidity: Math.round(m.liquidity),
+      competitiveness: +(m.competitiveness * 100).toFixed(0),
+      days_left: daysUntil(m.endDate) ?? '',
+      yes_cents: +(m.yesPrice * 100).toFixed(0),
+      no_cents: +(m.noPrice * 100).toFixed(0),
+    })));
+  };
 
   useEffect(() => {
     const p = new URLSearchParams();
@@ -291,6 +334,14 @@ export default function LPScannerPage() {
             />
           </div>
           <button
+            onClick={exportCsv}
+            disabled={filtered.length === 0}
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-black bg-brand-yellow border-2 border-black rounded-lg px-3 py-2 shadow-pop-sm hover:-translate-y-0.5 transition-transform disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" />
+            CSV
+          </button>
+          <button
             onClick={() => setShowFilters(!showFilters)}
             className="inline-flex items-center gap-1.5 text-sm font-bold text-black bg-white border-2 border-black rounded-lg px-3 py-2 shadow-pop-sm hover:-translate-y-0.5 transition-transform"
           >
@@ -378,10 +429,26 @@ export default function LPScannerPage() {
                   {filtered.map((m) => {
                     const days = daysUntil(m.endDate);
                     return (
-                      <tr key={m.conditionId} className="hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => setSelectedMarket(m)}>
+                      <tr key={m.conditionId} data-hi={hiParam === m.conditionId ? 'true' : undefined} className={`hover:bg-gray-50/50 transition-colors cursor-pointer ${hiParam === m.conditionId ? 'bg-brand-yellow/40' : ''}`} onClick={() => setSelectedMarket(m)}>
                         <td className="px-4 py-3 max-w-xs">
-                          <div className="font-display font-semibold text-sm leading-tight truncate">{m.question}</div>
-                          <div className="text-xs text-ink-faint mt-0.5">{m.slug}</div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="min-w-0 flex-1">
+                              <div className="font-display font-semibold text-sm leading-tight truncate">{m.question}</div>
+                              <div className="text-xs text-ink-faint mt-0.5">{m.slug}</div>
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); copyRowLink(m.conditionId); }}
+                              aria-label="Copy share link to this pool"
+                              title="Copy share link"
+                              className={`flex-shrink-0 p-1 rounded-md border-2 transition-colors ${
+                                copiedKey === m.conditionId
+                                  ? 'bg-neon-green border-black'
+                                  : 'border-transparent text-ink-faint hover:text-ink hover:border-black/20'
+                              }`}
+                            >
+                              {copiedKey === m.conditionId ? <span className="text-[10px] font-bold">✓</span> : <Link2 className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
                         </td>
                         <td className="px-3 py-3 text-center">
                           <span className="font-mono text-sm font-bold" style={{ color: BRAND }}>${m.dailyReward.toFixed(2)}</span>
@@ -424,8 +491,22 @@ export default function LPScannerPage() {
               {filtered.map((m) => {
                 const days = daysUntil(m.endDate);
                 return (
-                  <div key={m.conditionId} className="p-4 hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => setSelectedMarket(m)}>
-                    <div className="font-display font-semibold text-sm leading-tight mb-1">{m.question}</div>
+                  <div key={m.conditionId} data-hi={hiParam === m.conditionId ? 'true' : undefined} className={`p-4 hover:bg-gray-50/50 transition-colors cursor-pointer ${hiParam === m.conditionId ? 'bg-brand-yellow/40' : ''}`} onClick={() => setSelectedMarket(m)}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="font-display font-semibold text-sm leading-tight mb-1 flex-1 min-w-0">{m.question}</div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); copyRowLink(m.conditionId); }}
+                        aria-label="Copy share link to this pool"
+                        title="Copy share link"
+                        className={`flex-shrink-0 p-1 rounded-md border-2 transition-colors ${
+                          copiedKey === m.conditionId
+                            ? 'bg-neon-green border-black'
+                            : 'border-transparent text-ink-faint hover:text-ink hover:border-black/20'
+                        }`}
+                      >
+                        {copiedKey === m.conditionId ? <span className="text-[10px] font-bold">✓</span> : <Link2 className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
                     <div className="flex flex-wrap items-center gap-3 text-xs">
                       <span className="font-mono font-bold" style={{ color: BRAND }}>${m.dailyReward.toFixed(2)}/day</span>
                       <span className={`font-mono ${m.spread <= 0.02 ? 'text-neon-green' : m.spread <= 0.05 ? 'text-brand-yellow' : 'text-brand-pink'}`}>

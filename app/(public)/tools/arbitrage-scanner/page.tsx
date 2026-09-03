@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   ArrowUpDown,
@@ -21,10 +21,13 @@ import {
   Sparkles,
   Search,
   Percent,
+  Link2,
+  Download,
 } from 'lucide-react';
 import { ToolRelatedContent } from '@/components/ToolRelatedContent';
 import { ScannerLiveStatus } from '@/components/ScannerLiveStatus';
 import { TableSkeleton } from '@/components/TableSkeleton';
+import { downloadCsv } from '@/lib/csv';
 
 /* ── Brand colors ──────────────────────────────────────────────────── */
 const POLY = '#7B3FE4';
@@ -166,6 +169,10 @@ export default function ArbitrageScannerPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  // Share-permalink highlight (#hi=<polymarket slug>) + per-row copied state
+  const [hiParam, setHiParam] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const hiScrolled = useRef(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -200,6 +207,8 @@ export default function ArbitrageScannerPage() {
     }
     const cat = p.get('cat');
     if (cat) setCategoryFilter(cat);
+    const hi = p.get('hi');
+    if (hi) setHiParam(hi);
     const keys: SortKey[] = ['arbPercent', 'priceDiffCents', 'matchScore', 'opportunityScore', 'polyVolume', 'kalshiVolume'];
     const sk = p.get('sort');
     if (sk && keys.includes(sk as SortKey)) setSortKey(sk as SortKey);
@@ -217,6 +226,42 @@ export default function ArbitrageScannerPage() {
     const qs = p.toString();
     window.history.replaceState(null, '', qs ? `${window.location.pathname}?${qs}` : window.location.pathname);
   }, [minArbPercent, categoryFilter, sortKey, sortAsc]);
+
+  // Scroll to the shared row once data arrives (hi param from a share link)
+  useEffect(() => {
+    if (!hiParam || pairs.length === 0 || hiScrolled.current) return;
+    const el = document.querySelector('[data-hi="true"]');
+    if (el) {
+      hiScrolled.current = true;
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  }, [hiParam, pairs]);
+
+  const copyRowLink = (slug: string, key: string) => {
+    const p = new URLSearchParams();
+    if (minArbPercent > 0) p.set('minArb', String(minArbPercent));
+    if (categoryFilter !== 'all') p.set('cat', categoryFilter);
+    if (sortKey !== 'arbPercent') p.set('sort', sortKey);
+    if (sortAsc) p.set('dir', 'asc');
+    p.set('hi', slug);
+    navigator.clipboard?.writeText(`${window.location.origin}/tools/arbitrage-scanner?${p.toString()}`).catch(() => {});
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey((k) => (k === key ? null : k)), 1500);
+  };
+
+  const exportCsv = () => {
+    downloadCsv(`pmf-arbitrage-${new Date().toISOString().slice(0, 10)}.csv`, filtered.map((p) => ({
+      event: p.eventName,
+      category: p.category,
+      arb_pct: +(p.arbPercent ?? 0).toFixed(2),
+      diff_cents: p.priceDiffCents,
+      poly_yes_cents: +((p.poly?.yesPrice ?? 0) * 100).toFixed(1),
+      kalshi_yes_cents: +((p.kalshi?.yesPrice ?? 0) * 100).toFixed(1),
+      cheaper_yes: p.cheaperYes ?? '',
+      match_score: p.matchScore,
+      opportunity_score: p.opportunityScore,
+    })));
+  };
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -469,6 +514,14 @@ export default function ArbitrageScannerPage() {
             )}
           </button>
           <button
+            onClick={exportCsv}
+            disabled={filtered.length === 0}
+            className="inline-flex items-center gap-1.5 text-sm font-bold text-black bg-brand-yellow border-2 border-black rounded-lg px-3 py-2 shadow-pop-sm hover:-translate-y-0.5 transition-transform disabled:opacity-50"
+          >
+            <Download className="w-4 h-4" />
+            CSV
+          </button>
+          <button
             onClick={fetchData}
             disabled={loading}
             className="inline-flex items-center gap-1.5 text-sm font-bold text-black bg-neon-cyan border-2 border-black rounded-lg px-3 py-2 shadow-pop-sm hover:-translate-y-0.5 transition-transform disabled:opacity-50"
@@ -614,11 +667,13 @@ export default function ArbitrageScannerPage() {
                     const arb = arbLabel(pair.arbPercent);
                     const match = matchLabel(pair.matchScore);
                     const isExpanded = expandedRow === i;
+                    const isHi = hiParam != null && pair.poly?.slug === hiParam;
                     return (
                       <>
                         <tr
                           key={`row-${i}`}
-                          className="hover:bg-gray-50/50 transition-colors cursor-pointer"
+                          data-hi={isHi ? 'true' : undefined}
+                          className={`hover:bg-gray-50/50 transition-colors cursor-pointer ${isHi ? 'bg-brand-yellow/40' : ''}`}
                           onClick={() => setExpandedRow(isExpanded ? null : i)}
                         >
                           <td className="px-4 py-3 max-w-xs">
@@ -711,6 +766,18 @@ export default function ArbitrageScannerPage() {
                               >
                                 Kalshi
                               </a>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); copyRowLink(pair.poly?.slug ?? `row-${i}`, `arb-${i}`); }}
+                                aria-label="Copy share link to this row"
+                                title="Copy share link"
+                                className={`p-1 rounded-md border-2 transition-colors ${
+                                  copiedKey === `arb-${i}`
+                                    ? 'bg-neon-green border-black'
+                                    : 'border-transparent text-ink-faint hover:text-ink hover:border-black/20'
+                                }`}
+                              >
+                                {copiedKey === `arb-${i}` ? <span className="text-[10px] font-bold">✓</span> : <Link2 className="w-3.5 h-3.5" />}
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -736,6 +803,9 @@ export default function ArbitrageScannerPage() {
                   pair={pair}
                   expanded={expandedRow === i}
                   onToggle={() => setExpandedRow(expandedRow === i ? null : i)}
+                  highlight={hiParam != null && pair.poly?.slug === hiParam}
+                  shared={copiedKey === `arb-${i}`}
+                  onShare={() => copyRowLink(pair.poly?.slug ?? `row-${i}`, `arb-${i}`)}
                 />
               ))}
             </div>
@@ -1208,15 +1278,25 @@ function MobileCard({
   pair,
   expanded,
   onToggle,
+  highlight,
+  shared,
+  onShare,
 }: {
   pair: ArbitragePair;
   expanded: boolean;
   onToggle: () => void;
+  highlight: boolean;
+  shared: boolean;
+  onShare: () => void;
 }) {
   const arb = arbLabel(pair.arbPercent);
 
   return (
-    <div className="p-4" onClick={onToggle}>
+    <div
+      data-hi={highlight ? 'true' : undefined}
+      className={`p-4 ${highlight ? 'bg-brand-yellow/40' : ''}`}
+      onClick={onToggle}
+    >
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0 flex-1">
           <div className="font-display font-semibold text-sm leading-tight line-clamp-2">
@@ -1230,6 +1310,16 @@ function MobileCard({
             )}
           <div className="text-xs text-ink-faint mt-0.5">{pair.category}</div>
         </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); onShare(); }}
+          aria-label="Copy share link to this row"
+          title="Copy share link"
+          className={`flex-shrink-0 p-1.5 rounded-md border-2 transition-colors ${
+            shared ? 'bg-neon-green border-black' : 'border-transparent text-ink-faint hover:text-ink hover:border-black/20'
+          }`}
+        >
+          {shared ? <span className="text-[10px] font-bold">✓</span> : <Link2 className="w-3.5 h-3.5" />}
+        </button>
         <span
           className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-bold ${arb.color}`}
         >

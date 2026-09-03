@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { WhaleCard, AggregatedCard } from './WhaleCard';
 import { FilterBar } from './FilterBar';
@@ -23,6 +23,8 @@ export function WhaleFeed() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [minSize, setMinSize] = useState(0);
   const [view, setView] = useState<'aggregated' | 'raw'>('aggregated');
+  const knownKeys = useRef<Set<string> | null>(null);
+  const [newCount, setNewCount] = useState(0);
 
   const fetchFeed = useCallback(async () => {
     try {
@@ -31,7 +33,16 @@ export function WhaleFeed() {
       const res = await fetch(`/api/pulse/whale-feed?${params}`);
       if (!res.ok) throw new Error('Failed to fetch');
       const json = await res.json();
-      setTrades(json.data ?? []);
+      const incoming: WhaleFeedItem[] = json.data ?? [];
+      // Count trades we have not shown before -> "N new" pill instead of a
+      // jarring in-place jump. Clicking the pill scrolls up and clears it.
+      const keys = incoming.map((t) => `${t.txHash}-${t.timestamp}`);
+      if (knownKeys.current) {
+        const fresh = keys.filter((k) => !knownKeys.current!.has(k)).length;
+        if (fresh > 0) setNewCount((c) => c + fresh);
+      }
+      knownKeys.current = new Set(keys);
+      setTrades(incoming);
       setCards(json.cards ?? []);
       setLastUpdated(new Date());
       setError(null);
@@ -170,6 +181,18 @@ export function WhaleFeed() {
           </button>
         </div>
       </div>
+
+      {/* New-trades pill */}
+      {newCount > 0 && (
+        <div className="flex justify-center">
+          <button
+            onClick={() => { setNewCount(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-neon-green border-2 border-black rounded-full shadow-pop-sm font-display font-bold text-xs text-black hover:-translate-y-0.5 transition-transform"
+          >
+            ▲ {newCount} new {newCount === 1 ? 'trade' : 'trades'} — jump up
+          </button>
+        </div>
+      )}
 
       <FilterBar filters={filters} onChange={setFilters} />
 

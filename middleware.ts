@@ -28,12 +28,13 @@ const PUBLIC_API_PREFIXES = [
   '/api/gamma-rewards',
   '/api/lp-rewards',
   '/api/order-book',
+  '/api/reactions',
   '/api/indexnow',
   '/api/cron',
 ];
 
-// Public POST routes (visitor-facing forms)
-const PUBLIC_POST_ROUTES = ['/api/contact', '/api/newsletter'];
+// Public POST routes (visitor-facing forms + one-tap reactions)
+const PUBLIC_POST_ROUTES = ['/api/contact', '/api/newsletter', '/api/reactions'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

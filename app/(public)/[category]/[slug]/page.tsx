@@ -14,6 +14,8 @@ import { GiscusComments } from '@/components/GiscusComments';
 import { PolymarketEmbeds } from '@/components/PolymarketEmbeds';
 import { TwitterEmbeds } from '@/components/TwitterEmbeds';
 import { ShareButtons } from '@/components/ShareButtons';
+import { ImageLightbox } from '@/components/ImageLightbox';
+import { ReactionsBar } from '@/components/ReactionsBar';
 import {
   getArticleBySlug,
   getPublishedArticles,
@@ -379,11 +381,17 @@ export default async function CategoryArticlePage({ params }: Props) {
         {/* Share */}
         <ShareButtons url={articleUrl} title={article.title} />
 
+        {/* Reactions — one tap, no signup */}
+        <ReactionsBar slug={article.slug} />
+
         {/* Hydrate live Polymarket odds embeds */}
         <PolymarketEmbeds />
 
         {/* Hydrate embedded tweets */}
         <TwitterEmbeds />
+
+        {/* Fullscreen lightbox for prose images */}
+        <ImageLightbox />
 
         </div>
         {/* ── end reading sheet ── */}
