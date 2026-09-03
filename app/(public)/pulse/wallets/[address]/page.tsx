@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PulseHeader } from '@/components/pulse/PulseHeader';
+import { fetchWalletProfileData } from '@/lib/pulse/wallet-data';
+import { withPulseCache, PULSE_KEYS } from '@/lib/pulse/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,14 +11,13 @@ interface WalletPageProps {
 }
 
 async function getWalletData(address: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://predictionsmarketfans.com';
+  // Direct lib call (same cached computation the API route serves) —
+  // no HTTP loopback through the public domain.
   try {
-    const res = await fetch(`${baseUrl}/api/pulse/wallet/${address}`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data;
+    const result = await withPulseCache(PULSE_KEYS.walletProfile(address), () =>
+      fetchWalletProfileData(address)
+    );
+    return result.payload;
   } catch {
     return null;
   }
@@ -140,7 +141,7 @@ export default async function WalletPage({ params }: WalletPageProps) {
             </h2>
             {data.recentTrades?.length > 0 ? (
               <div className="space-y-2">
-                {(data.recentTrades as Array<Record<string, unknown>>).map((trade, i) => (
+                {(data.recentTrades as unknown as Array<Record<string, unknown>>).map((trade, i) => (
                   <div
                     key={i}
                     className="bg-white border-2 border-black rounded-xl p-4 shadow-pop-sm flex items-center justify-between"

@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PulseHeader } from '@/components/pulse/PulseHeader';
+import { fetchMarketStatsData } from '@/lib/pulse/market-data';
+import { withPulseCache, PULSE_KEYS } from '@/lib/pulse/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,14 +11,13 @@ interface MarketPageProps {
 }
 
 async function getMarketData(conditionId: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://predictionsmarketfans.com';
+  // Direct lib call (same cached computation the API route serves) —
+  // no HTTP loopback through the public domain.
   try {
-    const res = await fetch(`${baseUrl}/api/pulse/market/${conditionId}`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data;
+    const result = await withPulseCache(PULSE_KEYS.marketStats(conditionId), () =>
+      fetchMarketStatsData(conditionId)
+    );
+    return result.payload;
   } catch {
     return null;
   }

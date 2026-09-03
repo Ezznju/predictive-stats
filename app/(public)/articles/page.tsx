@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import { ArticleCard } from '@/components/ArticleCard';
 import { getPublishedArticles, getCategories, getAuthors } from '@/lib/db';
 import Link from 'next/link';
@@ -18,12 +19,23 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://predictionsmarketfans.com/articles' },
 };
 
+// Cache the listing bundle for 10 min (same pattern as the article page).
+// Tag-purged on article writes.
+const getCachedArticlesPage = unstable_cache(
+  async () => {
+    const [articles, categories, authors] = await Promise.all([
+      getPublishedArticles(),
+      getCategories(),
+      getAuthors(),
+    ]);
+    return { articles, categories, authors };
+  },
+  ['articles-page'],
+  { revalidate: 600, tags: ['articles'] }
+);
+
 export default async function ArticlesPage() {
-  const [articles, categories, authors] = await Promise.all([
-    getPublishedArticles(),
-    getCategories(),
-    getAuthors(),
-  ]);
+  const { articles, categories, authors } = await getCachedArticlesPage();
 
   const authorMap = new Map(authors.map(a => [a.id, a]));
   const categoryMap = new Map(categories.map(c => [c.slug, c]));

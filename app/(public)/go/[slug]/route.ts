@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { waitUntil } from '@vercel/functions';
 import { getPlatformBySlug, getOutboundUrl } from '@/lib/platforms';
 import { insertOutboundClick } from '@/lib/db';
 
@@ -19,18 +20,25 @@ export async function GET(
   const country = request.headers.get('x-vercel-ip-country') ?? request.headers.get('x-vercel-ip-city');
   const userAgent = request.headers.get('user-agent');
 
-  // Track click — await with timeout so D1 write completes before redirect
+  // Track click without taxing the redirect: hand the write to the
+  // background via waitUntil, and only wait up to 300ms for the fast path.
+  const p = insertOutboundClick({
+    platform_slug: platform.slug,
+    ctx,
+    is_affiliate: isAffiliate,
+    referer,
+    country,
+    user_agent: userAgent,
+  });
+  try {
+    waitUntil(p);
+  } catch {
+    // waitUntil unavailable — fall through to the awaited race below
+  }
   try {
     await Promise.race([
-      insertOutboundClick({
-        platform_slug: platform.slug,
-        ctx,
-        is_affiliate: isAffiliate,
-        referer,
-        country,
-        user_agent: userAgent,
-      }),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 1200)),
+      p,
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 300)),
     ]);
   } catch {}
 

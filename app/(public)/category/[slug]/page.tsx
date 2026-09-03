@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { unstable_cache } from 'next/cache';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
@@ -9,8 +10,26 @@ export const dynamic = 'force-dynamic';
 
 interface Props { params: { slug: string } }
 
+// Cache the listing bundle for 10 min (same pattern as the article page).
+// Tag-purged on article writes; category renames can lag up to 10 min.
+const getCachedCategoryPage = unstable_cache(
+  async (slug: string) => {
+    const category = await getCategoryBySlug(slug);
+    if (!category) return null;
+    const [categoryArticles, authors, categories] = await Promise.all([
+      getArticlesByCategory(category.slug),
+      getAuthors(),
+      getCategories(),
+    ]);
+    return { category, categoryArticles, authors, categories };
+  },
+  ['category-page'],
+  { revalidate: 600, tags: ['articles'] }
+);
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const cat = await getCategoryBySlug(params.slug);
+  const data = await getCachedCategoryPage(params.slug);
+  const cat = data?.category;
   if (!cat) return { title: 'Category Not Found' };
   return {
     title: cat.name,
@@ -21,14 +40,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CategoryPage({ params }: Props) {
-  const category = await getCategoryBySlug(params.slug);
-  if (!category) notFound();
+  const data = await getCachedCategoryPage(params.slug);
+  if (!data) notFound();
 
-  const [categoryArticles, authors, categories] = await Promise.all([
-    getArticlesByCategory(category.slug),
-    getAuthors(),
-    getCategories(),
-  ]);
+  const { category, categoryArticles, authors, categories } = data;
 
   const authorMap = new Map(authors.map(a => [a.id, a]));
   const categoryMap = new Map(categories.map(c => [c.slug, c]));

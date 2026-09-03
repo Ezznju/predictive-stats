@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { unstable_cache } from 'next/cache';
 import Link from 'next/link';
 import { Twitter, Linkedin, ChevronRight } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
@@ -9,8 +10,26 @@ export const dynamic = 'force-dynamic';
 
 interface Props { params: { slug: string } }
 
+// Cache the listing bundle for 10 min (same pattern as the article page).
+// Tag-purged on article writes; author profile edits can lag up to 10 min.
+const getCachedAuthorPage = unstable_cache(
+  async (slug: string) => {
+    const author = await getAuthorBySlug(slug);
+    if (!author) return null;
+    const [authorArticles, allAuthors, categories] = await Promise.all([
+      getArticlesByAuthor(author.id),
+      getAuthors(),
+      getCategories(),
+    ]);
+    return { author, authorArticles, allAuthors, categories };
+  },
+  ['author-page'],
+  { revalidate: 600, tags: ['articles'] }
+);
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const author = await getAuthorBySlug(params.slug);
+  const data = await getCachedAuthorPage(params.slug);
+  const author = data?.author;
   if (!author) return { title: 'Author Not Found' };
   return {
     title: author.name,
@@ -21,14 +40,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function AuthorPage({ params }: Props) {
-  const author = await getAuthorBySlug(params.slug);
-  if (!author) notFound();
+  const data = await getCachedAuthorPage(params.slug);
+  if (!data) notFound();
 
-  const [authorArticles, allAuthors, categories] = await Promise.all([
-    getArticlesByAuthor(author.id),
-    getAuthors(),
-    getCategories(),
-  ]);
+  const { author, authorArticles, allAuthors, categories } = data;
 
   const authorMap = new Map(allAuthors.map(a => [a.id, a]));
   const categoryMap = new Map(categories.map(c => [c.slug, c]));
