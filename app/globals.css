@@ -1026,9 +1026,13 @@ main {
 
 /* -- Auto-extracted pull quote (articles without a manual pullQuote) -- */
 .auto-pullquote {
-  border-left: 6px solid #FFBF00;
+  background: #FFE642;
+  border: 3px solid #000;
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 #000;
   margin: 2.5rem 0;
-  padding: 0.25rem 0 0.25rem 1.5rem;
+  padding: 1.25rem 1.5rem 1.1rem;
+  transform: rotate(-0.5deg);
 }
 .auto-pullquote p {
   font-family: var(--font-sora), system-ui, sans-serif;
@@ -1061,6 +1065,6 @@ main {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #666;
+  color: #333;
   margin-top: 0.6rem;
 }
