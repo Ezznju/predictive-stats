@@ -18,13 +18,13 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
   };
 
   return (
-    <div className="flex items-center gap-3 mt-6 pb-8 border-b border-white/20">
+    <div className="flex items-center gap-3 mt-6 pb-8 border-b border-black/10">
       <span className="text-sm text-ink-muted font-medium">Share:</span>
       <a
         href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="p-2 bg-white/15 rounded-lg text-ink-secondary hover:text-black hover:bg-surface-border transition-all"
+        className="p-2 bg-black/5 rounded-lg text-ink-secondary hover:text-black hover:bg-black/10 transition-all"
       >
         <Twitter className="w-4 h-4" />
       </a>
@@ -32,7 +32,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
         href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="p-2 bg-white/15 rounded-lg text-ink-secondary hover:text-black hover:bg-surface-border transition-all"
+        className="p-2 bg-black/5 rounded-lg text-ink-secondary hover:text-black hover:bg-black/10 transition-all"
       >
         <Linkedin className="w-4 h-4" />
       </a>

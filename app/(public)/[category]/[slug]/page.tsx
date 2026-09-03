@@ -273,6 +273,11 @@ export default async function CategoryArticlePage({ params }: Props) {
           )}
         </nav>
 
+        {/* ── Reading sheet: white paper surface for the article itself.
+             Long body text no longer sits on raw orange; the page keeps the
+             brand frame while content gets a calm sheet. ── */}
+        <div className="bg-white border-2 border-black rounded-2xl shadow-pop-lg p-5 sm:p-8 lg:p-10">
+
         {/* Header */}
         <header className="mb-8">
           {category && (
@@ -290,7 +295,7 @@ export default async function CategoryArticlePage({ params }: Props) {
           <p className="text-[16px] text-ink-secondary mt-4 leading-relaxed">{article.excerpt}</p>
 
           {/* Meta */}
-          <div className="flex flex-wrap items-center gap-4 mt-6 pb-6 border-b border-white/20">
+          <div className="flex flex-wrap items-center gap-4 mt-6 pb-6 border-b border-black/10">
             {author && (
               <Link href={`/author/${author.slug}`} className="flex items-center gap-3 group">
                 <div className="w-10 h-10 rounded-full overflow-hidden">
@@ -311,7 +316,7 @@ export default async function CategoryArticlePage({ params }: Props) {
 
         {/* Featured Image */}
         {article.featuredImage && (
-          <div className="relative aspect-[16/9] rounded-2xl overflow-hidden mb-10 shadow-md">
+          <div className="relative aspect-[16/9] rounded-2xl overflow-hidden mb-10 border-2 border-black shadow-pop">
             <Image
               src={article.featuredImage}
               alt={article.title}
@@ -345,19 +350,19 @@ export default async function CategoryArticlePage({ params }: Props) {
             prose-a:text-black prose-a:no-underline hover:prose-a:underline
             prose-strong:text-ink
             prose-blockquote:border-l-black prose-blockquote:text-ink-secondary
-            prose-code:text-black prose-code:bg-white/15 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+            prose-code:text-black prose-code:bg-black/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
             prose-li:text-ink-secondary"
           dangerouslySetInnerHTML={{ __html: finalBody }}
         />
 
         {/* Tags */}
-        <div className="mt-10 pt-6 border-t border-white/20">
+        <div className="mt-10 pt-6 border-t border-black/10">
           <div className="flex flex-wrap gap-2">
             {article.tags.map((tag) => (
               <Link
                 key={tag}
                 href={`/tag/${encodeURIComponent(tag.toLowerCase())}`}
-                className="px-3 py-1 text-xs bg-white/15 text-ink-secondary rounded-full border border-white/20 hover:bg-black hover:text-white hover:border-black transition-colors"
+                className="px-3 py-1 text-xs bg-black/5 text-ink-secondary rounded-full border border-black/10 hover:bg-black hover:text-white hover:border-black transition-colors"
               >
                 #{tag}
               </Link>
@@ -373,6 +378,9 @@ export default async function CategoryArticlePage({ params }: Props) {
 
         {/* Hydrate embedded tweets */}
         <TwitterEmbeds />
+
+        </div>
+        {/* ── end reading sheet ── */}
 
         {/* Author Bio */}
         {author && (
