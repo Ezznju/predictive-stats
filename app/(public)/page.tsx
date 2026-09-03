@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, TrendingUp, Zap, BarChart3, Activity } from 'lucide-react';
+import { ArrowRight, TrendingUp, Zap, BarChart3 } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
 import {
@@ -134,80 +134,10 @@ export default async function Home() {
         </section>
       )}
 
-      {/* ── DECISION LAB STRIP ──────────────────────────────────────── */}
+      {/* ── FREE TOOLS × DECISION LAB (merged live section) ───────────── */}
       <DecisionLabStrip />
 
-      {/* ── FREE TOOLS (promoted up — the product leads) ─────────────── */}
-      <section className="py-12 border-b border-surface-border relative overflow-hidden">
-        <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
-          <CornerDotSquare size={60} color="#29C5F6" dotColor="#FF00B8" className="absolute top-6 -right-4 opacity-70 hidden md:block" />
-          <HalfCircle size={80} color="#2BD96E" direction="right" className="absolute -left-10 bottom-8 opacity-70 hidden md:block" />
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="heading-chip bg-neon-blue" />
-              <h2 className="font-display font-bold text-[28px] text-black">Free Tools</h2>
-            </div>
-            <Link href="/tools" className="text-sm text-black hover:text-white font-medium flex items-center gap-1 transition-colors">
-              All tools <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Link href="/tools/lp-scanner"
-              className="group bg-white rounded-2xl border-2 border-black p-5 card-pop card-pop-hover">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-[#7B3FE4]/10 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-[#7B3FE4]" />
-                </div>
-                <div>
-                  <h3 className="font-display font-bold text-[22px] text-ink group-hover:text-black transition-colors">LP Reward Scanner</h3>
-                  <p className="text-[14px] font-medium text-ink-muted">Polymarket</p>
-                </div>
-              </div>
-              <div className="bg-[#C6F23A] rounded-xl border-2 border-black p-3">
-                <p className="text-sm font-bold text-black">
-                  This tool answers: &ldquo;Does providing liquidity here actually pay, once hidden costs are counted?&rdquo;
-                </p>
-              </div>
-            </Link>
-            <Link href="/tools/arbitrage-scanner"
-              className="group bg-white rounded-2xl border-2 border-black p-5 card-pop card-pop-hover">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-[#00D395]/10 flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-[#00D395]" />
-                </div>
-                <div>
-                  <h3 className="font-display font-bold text-[22px] text-ink group-hover:text-black transition-colors">Arbitrage Scanner</h3>
-                  <p className="text-[14px] font-medium text-ink-muted">Polymarket × Kalshi</p>
-                </div>
-              </div>
-              <div className="bg-[#C6F23A] rounded-xl border-2 border-black p-3">
-                <p className="text-sm font-bold text-black">
-                  This tool answers: &ldquo;Is anything mispriced right now, and could I actually fill it?&rdquo;
-                </p>
-              </div>
-            </Link>
-            <Link href="/pulse"
-              className="group bg-white rounded-2xl border-2 border-black p-5 card-pop card-pop-hover">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-[#D9F24B]/10 flex items-center justify-center">
-                  <Activity className="w-5 h-5 text-[#D9F24B]" />
-                </div>
-                <div>
-                  <h3 className="font-display font-bold text-[22px] text-ink group-hover:text-black transition-colors">Prediction Pulse</h3>
-                  <p className="text-[14px] font-medium text-ink-muted">Whale Tracker</p>
-                </div>
-              </div>
-              <div className="bg-[#C6F23A] rounded-xl border-2 border-black p-3">
-                <p className="text-sm font-bold text-black">
-                  This tool answers: &ldquo;When a big wallet moves, is it a signal worth following or just noise?&rdquo;
-                </p>
-              </div>
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* Free Tools now render live inside <DecisionLabStrip /> above — merged pairwise. */}
 
       {/* ── LATEST ANALYSIS (collapses if nothing fresh) ─────────────── */}
       {latest.length > 0 && (

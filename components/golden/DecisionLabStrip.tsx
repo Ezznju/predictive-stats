@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight } from 'lucide-react'
-import { ZigzagLine, CornerDotSquare, ConcentricArches } from '@/components/GeometricShapes'
+import { ArrowRight, TrendingUp, Zap, Activity, type LucideIcon } from 'lucide-react'
+import { CornerDotSquare, HalfCircle } from '@/components/GeometricShapes'
 
 /* ── THE SEAM ──────────────────────────────────────────────────────────
    Keep USE_MOCK = true until fetchLiveOpportunities() returns real data.
@@ -123,36 +123,76 @@ function renderCell(tool: Tool, d: ArbCell | LpCell | PulseCell) {
 
 const TOOL_LINK: Record<Tool, string> = { arb: '/tools/arbitrage-scanner', lp: '/tools/lp-scanner', pulse: '/pulse' }
 const TOOL_LABEL: Record<Tool, string> = { arb: 'Arbitrage Scanner', lp: 'LP Reward Scanner', pulse: 'Prediction Pulse' }
-const TOOL_SHORT: Record<Tool, string> = { arb: 'Arbitrage', lp: 'LP Scanner', pulse: 'Pulse' }
 
-function Cell({ tool, data, flashToken }: { tool: Tool; data: ArbCell | LpCell | PulseCell; flashToken: number }) {
+interface ToolMeta {
+  name: string
+  sub: string
+  icon: LucideIcon
+  iconBg: string
+  question: string
+  cta: string
+  tint: string
+}
+const TOOL_META: Record<Tool, ToolMeta> = {
+  arb: {
+    name: 'Arbitrage Scanner', sub: 'Polymarket × Kalshi', icon: Zap,
+    iconBg: 'rgba(43,217,110,0.14)',
+    question: '“Is anything mispriced right now, and could I actually fill it?”',
+    cta: 'Find spreads', tint: 'rgba(43,217,110,0.10)',
+  },
+  lp: {
+    name: 'LP Reward Scanner', sub: 'Polymarket', icon: TrendingUp,
+    iconBg: 'rgba(183,148,255,0.16)',
+    question: '“Does providing liquidity here actually pay, once hidden costs are counted?”',
+    cta: 'Scan pools', tint: 'rgba(183,148,255,0.12)',
+  },
+  pulse: {
+    name: 'Prediction Pulse', sub: 'Whale Tracker', icon: Activity,
+    iconBg: 'rgba(217,242,75,0.28)',
+    question: '“When a big wallet moves, is it a signal worth following or just noise?”',
+    cta: 'Track whales', tint: 'rgba(217,242,75,0.20)',
+  },
+}
+
+function ToolCard({ tool, data, flashToken }: { tool: Tool; data: ArbCell | LpCell | PulseCell; flashToken: number }) {
+  const meta = TOOL_META[tool]
+  const Icon = meta.icon
   return (
-    <Link
-      href={TOOL_LINK[tool]}
-      aria-label={`Open ${TOOL_LABEL[tool]}`}
-      className="dl-cell group relative rounded-xl px-4 py-3.5 min-w-0 overflow-hidden bg-white border-2 border-black shadow-pop"
-      style={{ ['--tc' as any]: TC[tool] }}
-    >
-      <span
-        aria-hidden="true"
-        className="absolute top-0 left-0 right-0 h-[2px]"
-        style={{ background: `linear-gradient(90deg, ${TC[tool]}, transparent 75%)` }}
-      />
-      {flashToken > 0 && (
-        <span key={flashToken} className="cell-ring" style={{ ['--tc' as any]: TC[tool] }} aria-hidden="true" />
-      )}
-      {renderCell(tool, data)}
-      <span className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-ink-faint transition-all duration-200 group-hover:text-black group-hover:gap-2">
-        Open {TOOL_SHORT[tool]} <ArrowRight className="w-3 h-3" />
-      </span>
-    </Link>
+    <div className="bg-white rounded-2xl border-2 border-black p-5 card-pop card-pop-hover flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center shrink-0" style={{ backgroundColor: meta.iconBg }}>
+          <Icon className="w-5 h-5 text-black" />
+        </div>
+        <div>
+          <h3 className="font-display font-bold text-[22px] text-ink leading-none">{meta.name}</h3>
+          <p className="text-[14px] font-medium text-ink-muted mt-1">{meta.sub}</p>
+        </div>
+      </div>
+      <div className="relative overflow-hidden rounded-xl border-2 border-black p-3" style={{ backgroundColor: meta.tint }}>
+        {flashToken > 0 && (
+          <span key={flashToken} className="cell-ring" style={{ ['--tc' as any]: TC[tool] }} aria-hidden="true" />
+        )}
+        {renderCell(tool, data)}
+      </div>
+      <div className="bg-[#C6F23A] rounded-xl border-2 border-black p-3">
+        <p className="text-sm font-bold text-black">
+          This tool answers: {meta.question}
+        </p>
+      </div>
+      <Link
+        href={TOOL_LINK[tool]}
+        aria-label={`Open ${TOOL_LABEL[tool]}`}
+        className="mt-auto inline-flex items-center justify-center gap-2 bg-black text-white font-display font-bold text-sm px-4 py-2.5 rounded-xl btn-pop"
+      >
+        {meta.cta} <ArrowRight className="w-4 h-4" />
+      </Link>
+    </div>
   )
 }
 
 export function DecisionLabStrip() {
   const [top, setTop] = useState<LiveOpportunities>(() => mockTop())
   const [flash, setFlash] = useState({ arb: 0, lp: 0, pulse: 0 })
-  const [age, setAge] = useState(0)
   const warned = useRef(false)
 
   useEffect(() => {
@@ -178,45 +218,37 @@ export function DecisionLabStrip() {
           /* keep last good snapshot */
         }
       }
-      setAge(0)
     }
 
     if (!USE_MOCK) tick()
-    const ageTimer = setInterval(() => setAge((x) => x + 1), 1000)
     const liveTimer = setInterval(tick, 3800)
-    return () => { mounted = false; clearInterval(ageTimer); clearInterval(liveTimer) }
+    return () => { mounted = false; clearInterval(liveTimer) }
   }, [])
 
   return (
-    <section className="relative border-b border-surface-border overflow-hidden">
+    <section className="py-12 border-b border-surface-border relative overflow-hidden">
       <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.85]" aria-hidden="true">
-        <ZigzagLine width={2000} height={40} color="#D9F24B" className="absolute -top-1 left-0" />
-        <CornerDotSquare size={70} color="#29C5F6" dotColor="#FF00B8" className="absolute -left-3 bottom-2 rotate-6" />
-        <ConcentricArches size={150} colors={['#FF00B8', '#FF6B00', '#FF00B8']} className="absolute -right-8 -bottom-10" />
+        <CornerDotSquare size={60} color="#29C5F6" dotColor="#FF00B8" className="absolute top-6 -right-4 opacity-70 hidden md:block" />
+        <HalfCircle size={80} color="#2BD96E" direction="right" className="absolute -left-10 bottom-8 opacity-70 hidden md:block" />
       </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 relative z-10 flex flex-col gap-5">
-        <div className="flex items-center gap-3 flex-wrap">
-          <span className="heading-chip bg-neon-lime" aria-hidden="true" />
-          <h2 className="font-display font-bold text-[28px] text-black">The Decision Lab</h2>
-          <span className="ml-auto flex items-center gap-2 bg-white border-2 border-black rounded-full px-3 py-1 shadow-pop-sm">
-            <span className="live-dot" aria-hidden="true" />
-            <span className="text-[10px] font-bold tracking-[0.18em] text-black">LIVE</span>
-            <span className="text-[11px] tabular-nums text-ink-faint inline-block min-w-[92px]">updated {age}s ago</span>
-          </span>
-        </div>
-
-        <div className="flex flex-col gap-4 md:flex-row md:items-stretch">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
-            <Cell tool="arb" data={top.arb} flashToken={flash.arb} />
-            <Cell tool="lp" data={top.lp} flashToken={flash.lp} />
-            <Cell tool="pulse" data={top.pulse} flashToken={flash.pulse} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="heading-chip bg-neon-blue" />
+            <h2 className="font-display font-bold text-[28px] text-black">Free Tools</h2>
+            <span className="hidden sm:inline-flex items-center gap-1.5 bg-white border-2 border-black rounded-full px-2.5 py-1 shadow-pop-sm">
+              <span className="live-dot" aria-hidden="true" />
+              <span className="text-[10px] font-bold tracking-[0.14em] text-black">LIVE</span>
+            </span>
           </div>
-          <Link href="/tools"
-            className="group/cta flex flex-col items-center justify-center gap-1 bg-neon-lime text-black font-display font-bold text-sm px-5 py-3 rounded-xl border-2 border-black shadow-pop hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-pop-lg active:translate-x-0 active:translate-y-0 active:shadow-pop-sm focus-visible:outline-black transition-all whitespace-nowrap self-stretch md:min-w-[170px]">
-            <span className="inline-flex items-center gap-2 text-[15px]">Open the tools <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover/cta:translate-x-1" /></span>
-            <span className="text-[10px] font-body font-semibold text-black/60">3 free tools · no signup</span>
+          <Link href="/tools" className="text-sm text-black hover:text-white font-medium flex items-center gap-1 transition-colors">
+            All tools <ArrowRight className="w-3.5 h-3.5" />
           </Link>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {(['arb', 'lp', 'pulse'] as Tool[]).map((t) => (
+            <ToolCard key={t} tool={t} data={top[t]} flashToken={flash[t]} />
+          ))}
         </div>
       </div>
     </section>
