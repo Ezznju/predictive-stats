@@ -24,6 +24,7 @@ import {
   Percent,
 } from 'lucide-react';
 import { ToolRelatedContent } from '@/components/ToolRelatedContent';
+import { ScannerLiveStatus } from '@/components/ScannerLiveStatus';
 
 /* ── Brand colors ──────────────────────────────────────────────────── */
 const POLY = '#7B3FE4';
@@ -447,9 +448,7 @@ export default function ArbitrageScannerPage() {
             Refresh
           </button>
           <div className="flex-1" />
-          <span className="text-xs text-ink-faint">
-            Auto-refreshes every 5 min
-          </span>
+          <ScannerLiveStatus updatedAt={updatedAt} />
         </div>
 
         {/* ── Filters Panel ─────────────────────────────── */}

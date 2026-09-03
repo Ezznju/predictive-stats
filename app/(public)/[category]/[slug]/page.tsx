@@ -142,6 +142,57 @@ function embedTweet(html: string): string {
   );
 }
 
+/* ── Auto pull quote ──────────────────────────────────────────────────
+ * Most articles have no manual pullQuote, so long reads have zero visual
+ * rhythm. Extract one punchy sentence from the upper half and drop it in
+ * after the 3rd paragraph. Skipped entirely if the article already has a
+ * <blockquote> (it quotes itself) or is too short to need a break. */
+
+const PQ_MIN = 80;
+const PQ_MAX = 220;
+const PQ_PUNCH = /\b(means|because|risk|fee|spread|payout|profit|mistake|never|always|actually|problem|truth|secret|myth|rule|price|market|money|wrong|right)\b/i;
+
+function extractPullQuote(html: string): string | null {
+  if (/<blockquote/i.test(html)) return null;
+  const paras = html.match(/<p[^>]*>[\s\S]*?<\/p>/g) ?? [];
+  if (paras.length < 6) return null;
+  const upper = paras.slice(0, Math.ceil(paras.length * 0.5));
+  const candidates: { text: string; score: number }[] = [];
+  upper.forEach((p, pi) => {
+    const text = p.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    text.split(/(?<=[.!?])\s+/).forEach((raw) => {
+      const s = raw.trim();
+      const len = s.length;
+      if (len < PQ_MIN || len > PQ_MAX) return;
+      if (/https?:|www\.|[@#]/.test(s)) return;
+      if (/[.;:,]$/.test(s.replace(/[)"'”]+$/, ''))) return;
+      const letters = s.replace(/[^a-zA-Z]/g, '');
+      if (letters && letters === letters.toUpperCase()) return;
+      let score = 0;
+      if (/\d/.test(s)) score += 3;
+      if (PQ_PUNCH.test(s)) score += 2;
+      score += Math.max(0, 4 - pi);
+      score -= Math.abs(140 - len) / 60;
+      candidates.push({ text: s, score });
+    });
+  });
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => b.score - a.score);
+  return candidates[0].text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function insertPullQuote(html: string, quote: string, cite: string): string {
+  const aside =
+    `\n<aside class="not-prose auto-pullquote"><p>${quote}</p>` +
+    `<cite>&mdash; ${cite}</cite></aside>\n`;
+  const paras = html.match(/<p[^>]*>[\s\S]*?<\/p>/g) ?? [];
+  if (paras.length < 4) return html;
+  const anchor = paras[2];
+  const i = html.indexOf(anchor);
+  if (i === -1) return html;
+  return html.slice(0, i + anchor.length) + aside + html.slice(i + anchor.length);
+}
+
 export default async function CategoryArticlePage({ params }: Props) {
   const data = await getCachedArticlePage(params.slug);
   if (!data) notFound();
@@ -188,6 +239,14 @@ export default async function CategoryArticlePage({ params }: Props) {
       { '@type': 'ListItem', position: category ? 3 : 2, name: article.title, item: articleUrl },
     ],
   };
+
+  // Article body with embeds + auto-links, then an auto pull quote for long
+  // reads that have no manual one (manual pullQuote keeps its top slot).
+  const bodyHtml = autoLink(embedTweet(embedYouTube(embedPolymarket(embedTools(wrapTables(article.content))))));
+  const autoQuote = article.pullQuote ? null : extractPullQuote(bodyHtml);
+  const citeText = `${article.title.replace(/<[^>]*>/g, '')}, ${new Date(article.publishDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
+    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const finalBody = autoQuote ? insertPullQuote(bodyHtml, autoQuote, citeText) : bodyHtml;
 
   return (
     <>
@@ -287,7 +346,7 @@ export default async function CategoryArticlePage({ params }: Props) {
             prose-blockquote:border-l-black prose-blockquote:text-ink-secondary
             prose-code:text-black prose-code:bg-white/15 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
             prose-li:text-ink-secondary"
-          dangerouslySetInnerHTML={{ __html: autoLink(embedTweet(embedYouTube(embedPolymarket(embedTools(wrapTables(article.content)))))) }}
+          dangerouslySetInnerHTML={{ __html: finalBody }}
         />
 
         {/* Tags */}

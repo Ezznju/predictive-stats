@@ -18,6 +18,7 @@ import {
   Clock,
   Zap,
 } from 'lucide-react';
+import { ScannerLiveStatus } from '@/components/ScannerLiveStatus';
 
 /* ── Types ──────────────────────────────────────────────────────────── */
 
@@ -92,6 +93,7 @@ export default function LPScannerPage() {
   const [orderBook, setOrderBook] = useState<OrderBook | null>(null);
   const [obLoading, setObLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<number | string | null>(null);
 
   // Velocity calculator
   const [vCap, setVCap] = useState(1000);
@@ -107,6 +109,7 @@ export default function LPScannerPage() {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         setMarkets(data.markets ?? []);
+        setUpdatedAt(data.updatedAt ?? null);
       } catch (err: any) {
         setError(err?.message ?? 'Failed to load');
       } finally {
@@ -269,6 +272,7 @@ export default function LPScannerPage() {
             Sort
           </button>
           <span className="text-xs text-ink-faint">{filtered.length} markets</span>
+          <ScannerLiveStatus updatedAt={updatedAt} />
         </div>
 
         {/* ── Filter chips ─────────────────────────────── */}
