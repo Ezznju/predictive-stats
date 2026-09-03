@@ -193,7 +193,8 @@ export default function AnalyticsPage() {
         <p className="font-semibold mb-1">Couldn&apos;t load analytics</p>
         <p>{error}</p>
         <p className="mt-2 text-red-500">
-          Make sure the <code>admin_analytics</code> database migration has been applied and
+          Make sure the D1 tables (<code>outbound_clicks</code>, <code>newsletter_subscribers</code>,{' '}
+          <code>contact_messages</code> — see <code>d1/schema.sql</code>) exist and
           <code> ADMIN_API_TOKEN</code> is set.
         </p>
       </div>

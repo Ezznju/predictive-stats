@@ -40,6 +40,9 @@ export async function generateMetadata({ params }: WalletPageProps): Promise<Met
     title: `${name} — Whale Profile`,
     description: `Whale wallet profile for ${name}. View trading history, P&L, win rate, positions, and intelligence scores.`,
     alternates: { canonical: `https://predictionsmarketfans.com/pulse/wallets/${params.address}` },
+    // Per-wallet pages are auto-generated thin content — keep them out of the
+    // index (but follow links). The /pulse hub page stays indexable.
+    robots: { index: false, follow: true },
     openGraph: {
       type: 'profile',
       title: `${name} — Whale Profile`,

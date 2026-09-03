@@ -24,12 +24,15 @@ async function getMarketData(conditionId: string) {
 
 export async function generateMetadata({ params }: MarketPageProps): Promise<Metadata> {
   const data = await getMarketData(params.conditionId);
-  if (!data) return { title: 'Market Not Found' };
+  if (!data) return { title: 'Market Not Found', robots: { index: false, follow: true } };
 
   return {
     title: `${data.marketTitle} — Whale Activity`,
     description: `Whale trading activity for ${data.marketTitle}. Track large trades, top holders, and smart money flow.`,
     alternates: { canonical: `https://predictionsmarketfans.com/pulse/markets/${params.conditionId}` },
+    // Per-market pages are auto-generated thin content — keep them out of the
+    // index (but follow links). The /pulse hub page stays indexable.
+    robots: { index: false, follow: true },
     openGraph: {
       type: 'website',
       title: `${data.marketTitle} — Whale Activity`,
