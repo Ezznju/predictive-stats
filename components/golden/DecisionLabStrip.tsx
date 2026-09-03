@@ -55,10 +55,10 @@ type Tool = 'arb' | 'lp' | 'pulse'
 const TC: Record<Tool, string> = { arb: '#2EE6A6', lp: '#B794FF', pulse: '#D9F24B' }
 
 const TONE: Record<'g' | 'r' | 'c' | 'k', string> = {
-  g: 'text-[#5ef0a8] bg-[rgba(63,214,143,0.20)] border-[rgba(63,214,143,0.55)]',
-  r: 'text-[#ff8a8a] bg-[rgba(255,107,107,0.19)] border-[rgba(255,107,107,0.55)]',
-  c: 'text-[#7fdcf2] bg-[rgba(41,197,246,0.19)] border-[rgba(41,197,246,0.50)]',
-  k: 'text-[#f6d488] bg-[rgba(232,182,76,0.19)] border-[rgba(232,182,76,0.50)]',
+  g: 'text-black bg-[rgba(43,217,110,0.22)] border-black/60',
+  r: 'text-black bg-[rgba(255,107,107,0.20)] border-black/60',
+  c: 'text-black bg-[rgba(41,197,246,0.22)] border-black/60',
+  k: 'text-black bg-[rgba(255,191,0,0.28)] border-black/60',
 }
 function Chip({ tone, children }: { tone: 'g' | 'r' | 'c' | 'k'; children: React.ReactNode }) {
   return (
@@ -73,12 +73,11 @@ function renderCell(tool: Tool, d: ArbCell | LpCell | PulseCell) {
     const a = d as ArbCell
     return (
       <>
-        <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#2EE6A6]">Arbitrage</div>
-        <div className="font-display font-bold text-[30px] leading-[1.05] mt-1 flex items-baseline flex-wrap gap-x-1.5 text-[#5ef0a8] tabular-nums"
-          style={{ textShadow: '0 0 22px rgba(94,240,168,0.45)' }}>
-          +{a.net.toFixed(1)}¢<span className="text-[11px] font-medium text-[rgba(255,255,255,0.55)]" style={{ textShadow: 'none' }}>/ pair · net</span>
+        <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-black rounded-md border-2 border-black" style={{ backgroundColor: '#2BD96E' }}>Arbitrage</span>
+        <div className="font-display font-bold text-black text-[30px] leading-[1.05] mt-1.5 flex items-baseline flex-wrap gap-x-1.5 tabular-nums">
+          +{a.net.toFixed(1)}¢<span className="text-[11px] font-medium text-ink-faint">/ pair · net</span>
         </div>
-        <div className="text-[13px] font-medium text-[rgba(255,255,255,0.80)] mt-1.5 leading-snug line-clamp-2">{a.mkt}</div>
+        <div className="text-[13px] font-medium text-ink-secondary mt-1.5 leading-snug line-clamp-2">{a.mkt}</div>
         <div className="flex flex-wrap gap-1.5 mt-2">
           <Chip tone="c">net of fees + slip</Chip>
           <Chip tone="k">conf {a.conf}%</Chip>
@@ -92,13 +91,12 @@ function renderCell(tool: Tool, d: ArbCell | LpCell | PulseCell) {
     const pos = l.real >= 0
     return (
       <>
-        <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#B794FF]">LP Rewards</div>
-        <div className={`font-display font-bold text-[30px] leading-[1.05] mt-1 flex items-baseline flex-wrap gap-x-1.5 tabular-nums ${pos ? 'text-[#5ef0a8]' : 'text-[#ff8a8a]'}`}
-          style={{ textShadow: pos ? '0 0 22px rgba(94,240,168,0.45)' : '0 0 22px rgba(255,138,138,0.45)' }}>
-          {pos ? '+' : ''}{(l.real * 100).toFixed(0)}%<span className="text-[11px] font-medium text-[rgba(255,255,255,0.55)]" style={{ textShadow: 'none' }}>realistic APR</span>
+        <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-black rounded-md border-2 border-black" style={{ backgroundColor: '#B794FF' }}>LP Rewards</span>
+        <div className={`font-display font-bold text-[30px] leading-[1.05] mt-1.5 flex items-baseline flex-wrap gap-x-1.5 tabular-nums ${pos ? 'text-black' : 'text-red-600'}`}>
+          {pos ? '+' : ''}{(l.real * 100).toFixed(0)}%<span className="text-[11px] font-medium text-ink-faint">realistic APR</span>
         </div>
-        <div className="text-[13px] font-medium text-[rgba(255,255,255,0.80)] mt-1.5 leading-snug line-clamp-2">
-          {l.mkt} · <span className="text-[rgba(255,255,255,0.4)] line-through text-[11px]">{l.head}</span> headline
+        <div className="text-[13px] font-medium text-ink-secondary mt-1.5 leading-snug line-clamp-2">
+          {l.mkt} · <span className="text-ink-faint line-through text-[11px]">{l.head}</span> headline
         </div>
         <div className="flex flex-wrap gap-1.5 mt-2">
           {l.fail ? <Chip tone="r">⚠ no break-even</Chip> : <Chip tone="g">breaks even</Chip>}
@@ -114,11 +112,10 @@ function renderCell(tool: Tool, d: ArbCell | LpCell | PulseCell) {
     : <Chip tone="c">{p.chip}</Chip>
   return (
     <>
-        <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#D9F24B]">Smart Money</div>
-        <div className="font-display font-bold text-[24px] leading-[1.1] mt-1 text-white truncate tabular-nums"
-          title={p.wallet}
-          style={{ textShadow: '0 0 22px rgba(217,242,75,0.35)' }}>{p.wallet}</div>
-        <div className="text-[13px] font-medium text-[rgba(255,255,255,0.80)] mt-1.5 leading-snug line-clamp-2">{p.note}</div>
+        <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-black rounded-md border-2 border-black" style={{ backgroundColor: '#D9F24B' }}>Smart Money</span>
+        <div className="font-display font-bold text-[24px] leading-[1.1] mt-1.5 text-black truncate tabular-nums"
+          title={p.wallet}>{p.wallet}</div>
+        <div className="text-[13px] font-medium text-ink-secondary mt-1.5 leading-snug line-clamp-2">{p.note}</div>
       <div className="flex flex-wrap gap-1.5 mt-2">{chip}<Chip tone="c">graded</Chip></div>
     </>
   )
@@ -133,7 +130,7 @@ function Cell({ tool, data, flashToken }: { tool: Tool; data: ArbCell | LpCell |
     <Link
       href={TOOL_LINK[tool]}
       aria-label={`Open ${TOOL_LABEL[tool]}`}
-      className="dl-cell group relative rounded-xl px-4 py-3.5 min-w-0 overflow-hidden bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] border border-white/15"
+      className="dl-cell group relative rounded-xl px-4 py-3.5 min-w-0 overflow-hidden bg-white border-2 border-black shadow-pop"
       style={{ ['--tc' as any]: TC[tool] }}
     >
       <span
@@ -145,7 +142,7 @@ function Cell({ tool, data, flashToken }: { tool: Tool; data: ArbCell | LpCell |
         <span key={flashToken} className="cell-ring" style={{ ['--tc' as any]: TC[tool] }} aria-hidden="true" />
       )}
       {renderCell(tool, data)}
-      <span className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-[rgba(255,255,255,0.45)] transition-all duration-200 group-hover:text-white group-hover:gap-2">
+      <span className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-bold text-ink-faint transition-all duration-200 group-hover:text-black group-hover:gap-2">
         Open {TOOL_SHORT[tool]} <ArrowRight className="w-3 h-3" />
       </span>
     </Link>
@@ -191,27 +188,21 @@ export function DecisionLabStrip() {
   }, [])
 
   return (
-    <section className="relative bg-black text-white overflow-hidden">
-      <div aria-hidden="true" className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-      <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
-        <div className="absolute -top-24 -left-24 w-[420px] h-[420px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(46,230,166,0.10) 0%, transparent 65%)' }} />
-        <div className="absolute -bottom-32 -right-16 w-[480px] h-[480px] rounded-full" style={{ background: 'radial-gradient(circle, rgba(255,0,184,0.10) 0%, transparent 65%)' }} />
-        <div className="absolute top-1/3 left-1/2 w-[600px] h-[300px] -translate-x-1/2 rounded-full" style={{ background: 'radial-gradient(ellipse, rgba(183,148,255,0.07) 0%, transparent 65%)' }} />
-      </div>
-      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.22]" aria-hidden="true">
+    <section className="relative border-b border-surface-border overflow-hidden">
+      <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.85]" aria-hidden="true">
         <ZigzagLine width={2000} height={40} color="#D9F24B" className="absolute -top-1 left-0" />
         <CornerDotSquare size={70} color="#29C5F6" dotColor="#FF00B8" className="absolute -left-3 bottom-2 rotate-6" />
         <ConcentricArches size={150} colors={['#FF00B8', '#FF6B00', '#FF00B8']} className="absolute -right-8 -bottom-10" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 relative z-10 flex flex-col gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 relative z-10 flex flex-col gap-5">
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="w-4 h-7 rounded-md bg-neon-lime border-2 border-white shrink-0" aria-hidden="true" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neon-cyan">The Decision Lab</span>
-          <span className="ml-auto flex items-center gap-2">
+          <span className="heading-chip bg-neon-lime" aria-hidden="true" />
+          <h2 className="font-display font-bold text-[28px] text-black">The Decision Lab</h2>
+          <span className="ml-auto flex items-center gap-2 bg-white border-2 border-black rounded-full px-3 py-1 shadow-pop-sm">
             <span className="live-dot" aria-hidden="true" />
-            <span className="text-[10px] font-bold tracking-[0.18em] text-[#5ef0a8]">LIVE</span>
-            <span className="text-[11px] tabular-nums text-[rgba(255,255,255,0.45)] inline-block min-w-[92px]">updated {age}s ago</span>
+            <span className="text-[10px] font-bold tracking-[0.18em] text-black">LIVE</span>
+            <span className="text-[11px] tabular-nums text-ink-faint inline-block min-w-[92px]">updated {age}s ago</span>
           </span>
         </div>
 
@@ -222,7 +213,7 @@ export function DecisionLabStrip() {
             <Cell tool="pulse" data={top.pulse} flashToken={flash.pulse} />
           </div>
           <Link href="/tools"
-            className="group/cta flex flex-col items-center justify-center gap-1 bg-neon-lime text-black font-display font-bold text-sm px-5 py-3 rounded-xl border-2 border-white shadow-[4px_4px_0_0_#FF00B8] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#FF00B8] active:translate-x-0 active:translate-y-0 active:shadow-[4px_4px_0_0_#FF00B8] focus-visible:outline-white transition-all whitespace-nowrap self-stretch md:self-stretch md:min-w-[170px]">
+            className="group/cta flex flex-col items-center justify-center gap-1 bg-neon-lime text-black font-display font-bold text-sm px-5 py-3 rounded-xl border-2 border-black shadow-pop hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-pop-lg active:translate-x-0 active:translate-y-0 active:shadow-pop-sm focus-visible:outline-black transition-all whitespace-nowrap self-stretch md:min-w-[170px]">
             <span className="inline-flex items-center gap-2 text-[15px]">Open the tools <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover/cta:translate-x-1" /></span>
             <span className="text-[10px] font-body font-semibold text-black/60">3 free tools · no signup</span>
           </Link>
