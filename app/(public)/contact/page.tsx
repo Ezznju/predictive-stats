@@ -20,10 +20,11 @@ export default function ContactPage() {
     setError('');
 
     try {
+      const fd = new FormData(e.currentTarget as HTMLFormElement);
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, subject, message }),
+        body: JSON.stringify({ name, email, subject, message, website: fd.get('website') || '' }),
       });
 
       if (!res.ok) {
@@ -107,6 +108,16 @@ export default function ContactPage() {
               placeholder="Your message..."
             />
           </div>
+          {/* Honeypot — invisible to humans, bots fill it and get silently dropped */}
+          <input
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            defaultValue=""
+            className="absolute -left-[9999px] top-auto w-px h-px opacity-0"
+          />
           <button
             type="submit"
             disabled={sending}

@@ -1,13 +1,12 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
 
+// Internal search UI — useful for visitors, thin for crawlers.
+// Keep it out of the index (but follow its links to articles).
 export const metadata: Metadata = {
   title: 'Search',
-  description:
-    'Search all Predictions Market Fans articles on prediction markets, forecasting, and probabilistic analysis.',
-  alternates: { canonical: 'https://predictionsmarketfans.com/search' },
   robots: { index: false, follow: true },
 };
 
 export default function SearchLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return <>{children}</>;
 }

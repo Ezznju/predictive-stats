@@ -33,6 +33,7 @@ export {
   insertContactMessage,
   insertOutboundClick,
   getAnalytics,
+  checkRateLimit,
   getPulseWhaleTrades,
   upsertPulseWallet,
   insertPulseWhaleTrade,

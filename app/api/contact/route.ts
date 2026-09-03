@@ -1,17 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { insertContactMessage } from '@/lib/db';
+import { insertContactMessage, checkRateLimit } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function getClientIp(request: NextRequest): string {
+  const fwd = request.headers.get('x-forwarded-for');
+  if (fwd) return fwd.split(',')[0].trim();
+  return request.headers.get('x-real-ip') ?? 'unknown';
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, subject, message } = body;
 
-    if (!name || !email || !message) {
+    // Honeypot — bots fill it, humans never see it. Silently accept.
+    if (typeof body.website === 'string' && body.website.trim() !== '') {
+      return NextResponse.json({ success: true });
+    }
+
+    const name = String(body.name || '').trim().slice(0, 100);
+    const email = String(body.email || '').trim().toLowerCase().slice(0, 254);
+    const subject = String(body.subject || 'general').trim().slice(0, 200);
+    const message = String(body.message || '').trim().slice(0, 5000);
+
+    if (!name || !EMAIL_RE.test(email) || !message) {
       return NextResponse.json(
-        { error: 'Name, email, and message are required.' },
+        { error: 'Name, a valid email, and message are required.' },
         { status: 400 }
+      );
+    }
+
+    if (!(await checkRateLimit(`contact:${getClientIp(request)}`, 5, 3600))) {
+      return NextResponse.json(
+        { error: 'Too many messages. Please try again later.' },
+        { status: 429 }
       );
     }
 

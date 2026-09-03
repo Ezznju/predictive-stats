@@ -35,10 +35,11 @@ export function NewsletterBlock({
     setSubmitting(true);
     setError('');
     try {
+      const fd = new FormData(e.currentTarget as HTMLFormElement);
       const res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, source: variant }),
+        body: JSON.stringify({ email, source: variant, website: fd.get('website') || '' }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -71,6 +72,8 @@ export function NewsletterBlock({
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex gap-2 mt-4">
+              {/* Honeypot — invisible to humans, bots fill it and get silently dropped */}
+              <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" defaultValue="" className="absolute -left-[9999px] top-auto w-px h-px opacity-0" />
               <input
                 type="email"
                 value={email}
@@ -114,7 +117,9 @@ export function NewsletterBlock({
             <span className="font-display font-semibold">You&apos;re on the list!</span>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mt-6 max-w-md mx-auto">
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mt-6 max-w-md mx-auto">
+            {/* Honeypot — invisible to humans, bots fill it and get silently dropped */}
+            <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" defaultValue="" className="absolute -left-[9999px] top-auto w-px h-px opacity-0" />
             <input
               type="email"
               value={email}

@@ -82,6 +82,11 @@ CREATE TABLE IF NOT EXISTS scanner_cache (
   payload TEXT NOT NULL,
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))
 );
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key TEXT PRIMARY KEY,
+  count INTEGER NOT NULL DEFAULT 1,
+  window_start TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS outbound_clicks (
   id TEXT PRIMARY KEY,
   platform_slug TEXT NOT NULL,

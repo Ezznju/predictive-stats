@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { newsletterSubscribe } from '@/lib/db';
+import { newsletterSubscribe, checkRateLimit } from '@/lib/db';
 import { sendWelcomeEmail } from '@/lib/newsletter-email';
 import { randomUUID } from 'crypto';
 
@@ -7,13 +7,29 @@ export const dynamic = 'force-dynamic';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function getClientIp(request: NextRequest): string {
+  const fwd = request.headers.get('x-forwarded-for');
+  if (fwd) return fwd.split(',')[0].trim();
+  return request.headers.get('x-real-ip') ?? 'unknown';
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const email = String(body.email || '').trim().toLowerCase();
+
+    // Honeypot — bots fill it, humans never see it. Silently accept.
+    if (typeof body.website === 'string' && body.website.trim() !== '') {
+      return NextResponse.json({ success: true });
+    }
+
+    const email = String(body.email || '').trim().toLowerCase().slice(0, 254);
 
     if (!email || !EMAIL_RE.test(email)) {
       return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 });
+    }
+
+    if (!(await checkRateLimit(`newsletter:${getClientIp(request)}`, 10, 3600))) {
+      return NextResponse.json({ error: 'Too many signups. Please try again later.' }, { status: 429 });
     }
 
     const token = randomUUID();

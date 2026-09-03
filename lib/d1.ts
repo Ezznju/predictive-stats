@@ -478,6 +478,27 @@ export async function getAnalytics(days: number) {
   };
 }
 
+// Rate limiting (shared across serverless instances via D1).
+// Fail-open: never blocks legit users if D1 hiccups.
+export async function checkRateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
+  try {
+    const nowMs = Date.now();
+    const rows = await d1Query(`SELECT count, window_start FROM rate_limits WHERE key = ?`, [key]);
+    if (rows.length === 0 || nowMs - new Date(rows[0].window_start).getTime() >= windowSeconds * 1000) {
+      await d1Execute(
+        `INSERT INTO rate_limits (key, count, window_start) VALUES (?, 1, ?) ON CONFLICT(key) DO UPDATE SET count=1, window_start=excluded.window_start`,
+        [key, new Date(nowMs).toISOString()]
+      );
+      return true;
+    }
+    if (Number(rows[0].count) >= limit) return false;
+    await d1Execute(`UPDATE rate_limits SET count = count + 1 WHERE key = ?`, [key]);
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 // Pulse
 export async function getPulseWhaleTrades(conditionId: string) {
   return d1Query(
