@@ -198,9 +198,10 @@ export function RichEditor({ content = '', onChange, placeholder = 'Start writin
   const readTime = Math.max(1, Math.ceil(words / 250));
 
   return (
-    <div className="tiptap-editor border border-surface-border rounded-xl overflow-hidden focus-within:border-brand-amber/50 transition-colors bg-surface-raised">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-surface-border bg-surface-overlay/50 sticky top-0 z-10">
+    <div className="tiptap-editor border border-surface-border rounded-xl overflow-clip focus-within:border-brand-amber/50 transition-colors bg-surface-raised">
+      {/* Toolbar — sticky against page scroll (overflow-clip, unlike
+          overflow-hidden, doesn't trap it inside this box) */}
+      <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-surface-border bg-surface-overlay shadow-sm sticky top-0 z-10">
         {/* Block format */}
         <ToolbarButton onClick={() => editor.chain().focus().setParagraph().run()} active={editor.isActive('paragraph')} title="Paragraph">
           <Pilcrow className="w-4 h-4" />
