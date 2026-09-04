@@ -79,15 +79,20 @@ export function Navbar({ siteName, categories }: NavbarProps) {
             </button>
           </nav>
 
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => (shown ? closeDrawer() : openDrawer())}
-            aria-label={shown ? 'Close menu' : 'Open menu'}
-            aria-expanded={shown}
-            className="md:hidden p-2 text-black/70 hover:text-black"
-          >
-            {shown ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+          {/* Mobile: persistent search + hamburger */}
+          <div className="flex items-center gap-1 md:hidden">
+            <button onClick={openSearch} aria-label="Search (press /)" className="p-2 text-black/70 hover:text-black transition-colors">
+              <Search className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => (shown ? closeDrawer() : openDrawer())}
+              aria-label={shown ? 'Close menu' : 'Open menu'}
+              aria-expanded={shown}
+              className="p-2 text-black/70 hover:text-black"
+            >
+              {shown ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Category bar (desktop) */}
