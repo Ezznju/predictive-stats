@@ -1,19 +1,19 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'LP Scanner — Live Polymarket Reward Pools',
+  title: 'Polymarket LP Reward Scanner — Live APR, Net of Fees',
   description:
-    'Real-time Polymarket LP reward pool scanner. Sort active markets by daily reward, spread, volume, and competitiveness. Live order book depth and velocity calculator.',
+    'Free Polymarket LP reward scanner. Sort active reward pools by realistic APR net of fees and competition, with live spreads, volume, and order book depth.',
   alternates: { canonical: 'https://predictionsmarketfans.com/tools/lp-scanner' },
   openGraph: {
-    title: 'LP Scanner — Live Polymarket Reward Pools',
+    title: 'Polymarket LP Reward Scanner — Live APR, Net of Fees',
     description:
       'Real-time Polymarket LP reward pool scanner with live order book data, sorting, and velocity calculator.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'LP Scanner — Live Polymarket Reward Pools',
+    title: 'Polymarket LP Reward Scanner — Live APR, Net of Fees',
     description:
       'Scan active Polymarket LP reward pools. Daily rewards, spreads, volume, competitiveness, and live order books.',
   },
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'WebApplication',
-  name: 'LP Scanner — Live Polymarket Reward Pools',
+  name: 'Polymarket LP Reward Scanner',
   url: 'https://predictionsmarketfans.com/tools/lp-scanner',
   description:
     'Real-time Polymarket LP reward pool scanner with live order book data and velocity calculator.',
