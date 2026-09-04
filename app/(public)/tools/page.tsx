@@ -7,6 +7,7 @@ import {
   Zap,
   Shield,
   Activity,
+  Flame,
 } from 'lucide-react';
 import {
   FlowerShape,
@@ -58,6 +59,18 @@ const TOOLS = [
     icon: Activity,
     color: '#00D395',
     ctaLabel: 'OPEN FEED',
+  },
+  {
+    slug: 'trending-markets',
+    href: '/polymarket-trending-markets',
+    name: 'Trending Markets',
+    platform: 'Polymarket · Live',
+    question: 'Which Polymarket markets are traders piling into right now?',
+    description:
+      'The most active markets by 24-hour volume, <em>live</em>. Prices, liquidity and momentum — updated every minute.',
+    icon: Flame,
+    color: '#FF7900',
+    ctaLabel: 'OPEN BOARD',
   },
 ];
 

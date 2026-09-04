@@ -64,6 +64,13 @@ const LINK_RULES: LinkRule[] = [
     href: '/tools/arbitrage-scanner',
     title: 'Find arbitrage opportunities',
   },
+  // Before the platform rules so "Polymarket trending markets" links here,
+  // not to the Polymarket review.
+  {
+    terms: ['trending markets', 'most active Polymarket markets', 'active Polymarket markets', 'hot Polymarket markets'],
+    href: '/polymarket-trending-markets',
+    title: 'Live Polymarket trending markets board',
+  },
 ];
 
 /**
