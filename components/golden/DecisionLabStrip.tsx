@@ -226,7 +226,7 @@ export function DecisionLabStrip() {
   }, [])
 
   return (
-    <section className="py-12 border-b border-surface-border relative overflow-hidden">
+    <section className="py-12 bg-[#0B1120] border-y-2 border-black relative overflow-hidden">
       <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.85]" aria-hidden="true">
         <CornerDotSquare size={60} color="#29C5F6" dotColor="#FF00B8" className="absolute top-6 -right-4 opacity-70 hidden md:block" />
         <HalfCircle size={80} color="#2BD96E" direction="right" className="absolute -left-10 bottom-8 opacity-70 hidden md:block" />
@@ -235,13 +235,13 @@ export function DecisionLabStrip() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <div className="heading-chip bg-neon-blue" />
-            <h2 className="font-display font-bold text-[28px] text-black">Free Tools</h2>
+            <h2 className="font-display font-bold text-[28px] text-white">Free Tools</h2>
             <span className="hidden sm:inline-flex items-center gap-1.5 bg-white border-2 border-black rounded-full px-2.5 py-1 shadow-pop-sm">
               <span className="live-dot" aria-hidden="true" />
               <span className="text-[10px] font-bold tracking-[0.14em] text-black">LIVE</span>
             </span>
           </div>
-          <Link href="/tools" className="text-sm text-black hover:text-white font-medium flex items-center gap-1 transition-colors">
+          <Link href="/tools" className="text-sm text-white/70 hover:text-[#D9F24B] font-medium flex items-center gap-1 transition-colors">
             All tools <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>

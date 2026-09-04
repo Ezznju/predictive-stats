@@ -167,8 +167,8 @@ export default async function Home() {
         </section>
       )}
 
-      {/* ── POPULAR READS + WRITERS (popular collapses if nothing fresh) ── */}
-      <section className="py-12 border-b border-surface-border relative overflow-hidden">
+      {/* ── POPULAR READS + WRITERS (cream band for section rhythm) ── */}
+      <section className="py-12 bg-[#FFF7E6] border-b border-surface-border relative overflow-hidden">
         <div className="absolute inset-0 z-0 pointer-events-none" aria-hidden="true">
           <HalfCircle size={100} color="#2BD96E" direction="up" className="absolute -bottom-12 left-20 opacity-80 hidden md:block" />
           <DiamondShape size={60} color="#D9F24B" className="absolute top-10 right-10 opacity-90 hidden md:block" />
