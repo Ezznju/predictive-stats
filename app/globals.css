@@ -1112,3 +1112,22 @@ main {
 .prose h2:hover > .heading-anchor,
 .prose h3:hover > .heading-anchor,
 .heading-anchor:focus-visible { opacity: 1; color: #FF7900; }
+
+/* ── Micro-polish kit ── */
+/* Brand selection color (overrides the base gray) */
+::selection { background: #FFE642; color: #000; }
+
+/* Anchor/TOC jumps must not land headings under the sticky navbar */
+.prose h2, .prose h3 { scroll-margin-top: 6.5rem; }
+
+/* Respect reduced motion globally (pop translates, pulses, shimmers) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
