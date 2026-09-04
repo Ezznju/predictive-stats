@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, TrendingUp, Zap, Activity, type LucideIcon } from 'lucide-react'
+import { ArrowRight, TrendingUp, Zap, Activity, Flame, type LucideIcon } from 'lucide-react'
 import { CornerDotSquare, HalfCircle } from '@/components/GeometricShapes'
 
 /* ── THE SEAM ──────────────────────────────────────────────────────────
@@ -15,7 +15,8 @@ const USE_MOCK = true
 export interface ArbCell   { mkt: string; net: number; conf: number; risk?: string }
 export interface LpCell    { mkt: string; real: number; head: string; fail: boolean }
 export interface PulseCell { wallet: string; note: string; chip: string; win: boolean | null; park?: boolean }
-export interface LiveOpportunities { arb: ArbCell; lp: LpCell; pulse: PulseCell }
+export interface TrendCell { mkt: string; vol: number; yes: number }
+export interface LiveOpportunities { arb: ArbCell; lp: LpCell; pulse: PulseCell; trend: TrendCell }
 
 /** Replace this body with a call to your engine / cached route handler.
  *  Return ONE current top opportunity per tool, in the shape above.
@@ -44,15 +45,22 @@ const MOCK = {
     { wallet: '0x37ee…f86F', note: 'sold $64.7K Spain YES @ 99.9¢', chip: 'exited at top', win: null },
     { wallet: '0x2c33…0563', note: 'Argentina NO @ 99.8¢', chip: '0.2% edge', win: null, park: true },
   ] as PulseCell[],
+  trend: [
+    { mkt: 'Fed interest rate decision — September FOMC', vol: 8_400_000, yes: 62 },
+    { mkt: 'BTC above $150k by December 31, 2026?', vol: 5_700_000, yes: 24 },
+    { mkt: 'Government shutdown before October 1?', vol: 3_100_000, yes: 44 },
+    { mkt: 'OpenAI releases GPT-6 by December 31?', vol: 940_000, yes: 57 },
+  ] as TrendCell[],
 }
-const cursor = { arb: 0, lp: 0, pulse: 0 }
-function mockTop(advance?: 'arb' | 'lp' | 'pulse'): LiveOpportunities {
-  if (advance) cursor[advance] = (cursor[advance] + 1) % MOCK[advance].length
-  return { arb: MOCK.arb[cursor.arb], lp: MOCK.lp[cursor.lp], pulse: MOCK.pulse[cursor.pulse] }
+const cursor = { arb: 0, lp: 0, pulse: 0, trend: 0 }
+function mockTop(advance?: Tool): LiveOpportunities {
+  if (advance === 'trending') cursor.trend = (cursor.trend + 1) % MOCK.trend.length
+  else if (advance) cursor[advance] = (cursor[advance] + 1) % MOCK[advance].length
+  return { arb: MOCK.arb[cursor.arb], lp: MOCK.lp[cursor.lp], pulse: MOCK.pulse[cursor.pulse], trend: MOCK.trend[cursor.trend] }
 }
 
-type Tool = 'arb' | 'lp' | 'pulse'
-const TC: Record<Tool, string> = { arb: '#2EE6A6', lp: '#B794FF', pulse: '#D9F24B' }
+type Tool = 'arb' | 'lp' | 'pulse' | 'trending'
+const TC: Record<Tool, string> = { arb: '#2EE6A6', lp: '#B794FF', pulse: '#D9F24B', trending: '#FF7900' }
 
 const TONE: Record<'g' | 'r' | 'c' | 'k', string> = {
   g: 'text-black bg-[rgba(43,217,110,0.22)] border-black/60',
@@ -68,7 +76,8 @@ function Chip({ tone, children }: { tone: 'g' | 'r' | 'c' | 'k'; children: React
   )
 }
 
-function renderCell(tool: Tool, d: ArbCell | LpCell | PulseCell) {
+function renderCell(tool: Tool, d: ArbCell | LpCell | PulseCell | TrendCell) {
+  if (tool === 'trending') return renderTrendCell(d as TrendCell)
   if (tool === 'arb') {
     const a = d as ArbCell
     return (
@@ -121,8 +130,30 @@ function renderCell(tool: Tool, d: ArbCell | LpCell | PulseCell) {
   )
 }
 
-const TOOL_LINK: Record<Tool, string> = { arb: '/tools/arbitrage-scanner', lp: '/tools/lp-scanner', pulse: '/pulse' }
-const TOOL_LABEL: Record<Tool, string> = { arb: 'Arbitrage Scanner', lp: 'LP Reward Scanner', pulse: 'Polymarket Whale Tracker' }
+function fmtVol(n: number): string {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
+  return `$${n.toFixed(0)}`
+}
+
+function renderTrendCell(t: TrendCell) {
+  return (
+    <>
+      <span className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-black rounded-md border-2 border-black" style={{ backgroundColor: '#FF7900' }}>Trending</span>
+      <div className="font-display font-bold text-black text-[30px] leading-[1.05] mt-1.5 flex items-baseline flex-wrap gap-x-1.5 tabular-nums">
+        {fmtVol(t.vol)}<span className="text-[11px] font-medium text-ink-faint">/ 24h · #1 market</span>
+      </div>
+      <div className="text-[13px] font-medium text-ink-secondary mt-1.5 leading-snug line-clamp-2">{t.mkt}</div>
+      <div className="flex flex-wrap gap-1.5 mt-2">
+        <Chip tone="c">by 24h volume</Chip>
+        <Chip tone="k">YES {t.yes.toFixed(0)}¢</Chip>
+      </div>
+    </>
+  )
+}
+
+const TOOL_LINK: Record<Tool, string> = { arb: '/tools/arbitrage-scanner', lp: '/tools/lp-scanner', pulse: '/pulse', trending: '/polymarket-trending-markets' }
+const TOOL_LABEL: Record<Tool, string> = { arb: 'Arbitrage Scanner', lp: 'LP Reward Scanner', pulse: 'Polymarket Whale Tracker', trending: 'Trending Markets' }
 
 interface ToolMeta {
   name: string
@@ -152,9 +183,15 @@ const TOOL_META: Record<Tool, ToolMeta> = {
     question: '“When a big wallet moves, is it a signal worth following or just noise?”',
     cta: 'Track whales', tint: 'rgba(217,242,75,0.20)',
   },
+  trending: {
+    name: 'Trending Markets', sub: 'Polymarket · Live', icon: Flame,
+    iconBg: 'rgba(255,121,0,0.16)',
+    question: '“Which Polymarket markets are traders piling into right now?”',
+    cta: 'Open board', tint: 'rgba(255,121,0,0.10)',
+  },
 }
 
-function ToolCard({ tool, data, flashToken }: { tool: Tool; data: ArbCell | LpCell | PulseCell; flashToken: number }) {
+function ToolCard({ tool, data, flashToken }: { tool: Tool; data: ArbCell | LpCell | PulseCell | TrendCell; flashToken: number }) {
   const meta = TOOL_META[tool]
   const Icon = meta.icon
   return (
@@ -192,24 +229,52 @@ function ToolCard({ tool, data, flashToken }: { tool: Tool; data: ArbCell | LpCe
 
 export function DecisionLabStrip() {
   const [top, setTop] = useState<LiveOpportunities>(() => mockTop())
-  const [flash, setFlash] = useState({ arb: 0, lp: 0, pulse: 0 })
+  const [flash, setFlash] = useState({ arb: 0, lp: 0, pulse: 0, trending: 0 })
+  const [trendMarkets, setTrendMarkets] = useState<TrendCell[]>([])
+  const trendIdx = useRef(0)
   const warned = useRef(false)
+
+  // Real live data for the trending card (top market by 24h volume)
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      try {
+        const res = await fetch('/api/trending')
+        const json = await res.json()
+        if (mounted && Array.isArray(json.markets) && json.markets.length > 0) {
+          setTrendMarkets(
+            json.markets.map((m: any) => ({
+              mkt: String(m.question ?? ''),
+              vol: Number(m.volume24hr ?? 0),
+              yes: Number((m.yesPrice ?? 0) * 100),
+            }))
+          )
+        }
+      } catch {
+        /* keep mock */
+      }
+    }
+    load()
+    const t = setInterval(load, 60_000)
+    return () => { mounted = false; clearInterval(t) }
+  }, [])
 
   useEffect(() => {
     let mounted = true
     const tick = async () => {
       if (!mounted) return
       if (USE_MOCK) {
-        const tools: Tool[] = ['arb', 'lp', 'pulse']
+        const tools: Tool[] = ['arb', 'lp', 'pulse', 'trending']
         const t = tools[Math.floor(Math.random() * tools.length)]
         setTop(mockTop(t))
         setFlash((f) => ({ ...f, [t]: f[t] + 1 }))
+        if (trendMarkets.length > 0) trendIdx.current = (trendIdx.current + 1) % trendMarkets.length
       } else {
         try {
           const data = await fetchLiveOpportunities()
           if (data) {
             setTop(data)
-            setFlash((f) => ({ arb: f.arb + 1, lp: f.lp + 1, pulse: f.pulse + 1 }))
+            setFlash((f) => ({ arb: f.arb + 1, lp: f.lp + 1, pulse: f.pulse + 1, trending: f.trending + 1 }))
           } else if (!warned.current) {
             warned.current = true
             console.warn('[DecisionLabStrip] fetchLiveOpportunities() returned null — showing placeholder.')
@@ -223,7 +288,11 @@ export function DecisionLabStrip() {
     if (!USE_MOCK) tick()
     const liveTimer = setInterval(tick, 3800)
     return () => { mounted = false; clearInterval(liveTimer) }
-  }, [])
+  }, [trendMarkets.length])
+
+  const trendCell: TrendCell = trendMarkets.length > 0
+    ? trendMarkets[trendIdx.current % trendMarkets.length]
+    : top.trend
 
   return (
     <section className="py-12 border-b border-surface-border relative overflow-hidden">
@@ -245,9 +314,9 @@ export function DecisionLabStrip() {
             All tools <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {(['arb', 'lp', 'pulse'] as Tool[]).map((t) => (
-            <ToolCard key={t} tool={t} data={top[t]} flashToken={flash[t]} />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+          {(['arb', 'lp', 'pulse', 'trending'] as Tool[]).map((t) => (
+            <ToolCard key={t} tool={t} data={t === 'trending' ? trendCell : top[t]} flashToken={flash[t]} />
           ))}
         </div>
       </div>
