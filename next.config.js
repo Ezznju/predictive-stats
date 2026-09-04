@@ -32,6 +32,18 @@ const nextConfig = {
         destination: '/economic-analysis/understanding-liquidity-in-kalshi-polymarket',
         permanent: true,
       },
+      // Combos content consolidation: duplicate step-by-step articles 301 into
+      // the main guide (it held 11k impressions vs 1.2k + 133 for the copies).
+      {
+        source: '/articles/how-kalshi-combos-actually-work-step-by-step',
+        destination: '/platform-reviews/how-do-kalshi-combos-work-the-complete-guide-to-kalshi-combo-bets-parlays-rules-',
+        permanent: true,
+      },
+      {
+        source: '/research/how-kalshi-combos-actually-work-step-by-step',
+        destination: '/platform-reviews/how-do-kalshi-combos-work-the-complete-guide-to-kalshi-combo-bets-parlays-rules-',
+        permanent: true,
+      },
     ];
   },
 };

@@ -198,6 +198,29 @@ function insertPullQuote(html: string, quote: string, cite: string): string {
   return html.slice(0, i + anchor.length) + aside + html.slice(i + anchor.length);
 }
 
+// FAQPage schema from question-shaped H2/H3s followed by a paragraph. Lets
+// articles win rich results for the exact questions people search (e.g. the
+// Kalshi combos guide: "why can't I do combos on kalshi").
+function extractFaq(html: string): { q: string; a: string }[] {
+  const out: { q: string; a: string }[] = [];
+  const re = /<h[23][^>]*>([\s\S]*?)<\/h[23]>([\s\S]*?)(?=<h[23][^>]*>|$)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) && out.length < 8) {
+    const q = m[1]
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/^(troubleshooting|faq|q)\s*[:\-–]\s*/i, '');
+    if (!q.endsWith('?')) continue;
+    const para = m[2].match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+    if (!para) continue;
+    const a = para[1].replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (a.length < 40 || a.length > 1000) continue;
+    out.push({ q, a });
+  }
+  return out;
+}
+
 export default async function CategoryArticlePage({ params }: Props) {
   const data = await getCachedArticlePage(params.slug);
   if (!data) notFound();
@@ -253,10 +276,27 @@ export default async function CategoryArticlePage({ params }: Props) {
     .replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const finalBody = autoQuote ? insertPullQuote(bodyHtml, autoQuote, citeText) : bodyHtml;
 
+  const faqPairs = extractFaq(finalBody);
+  const faqJsonLd =
+    faqPairs.length >= 2
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: faqPairs.map((f) => ({
+            '@type': 'Question',
+            name: f.q,
+            acceptedAnswer: { '@type': 'Answer', text: f.a },
+          })),
+        }
+      : null;
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      {faqJsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      )}
       <ReadingProgressBar />
       <ReadingMiniBar title={article.title.replace(/<[^>]*>/g, '')} />
 
