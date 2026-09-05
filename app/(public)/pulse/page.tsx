@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { PulseHeader } from '@/components/pulse/PulseHeader';
 import { StatsBar } from '@/components/pulse/StatsBar';
 import { WhaleFeed } from '@/components/pulse/WhaleFeed';
+import { ToolShareBar } from '@/components/ToolShareBar';
 
 export const dynamic = 'force-dynamic';
 
@@ -89,6 +90,10 @@ export default function PulsePage() {
                 Skill Leaderboard →
               </Link>
             </div>
+            <ToolShareBar
+              url="https://predictionsmarketfans.com/pulse"
+              title="Polymarket Whale Tracker — live whale trades, graded by skill"
+            />
             <StatsBar stats={null} loading={false} />
             <WhaleFeed />
           </div>

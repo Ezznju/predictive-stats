@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { ScannerLiveStatus } from '@/components/ScannerLiveStatus';
 import { TableSkeleton } from '@/components/TableSkeleton';
+import { ToolShareBar } from '@/components/ToolShareBar';
 import { downloadCsv } from '@/lib/csv';
 
 /* ── Types ──────────────────────────────────────────────────────────── */
@@ -281,6 +282,10 @@ export default function LPScannerPage() {
             reward rates, annual yield estimates, and spread metrics — sorted to
             surface the best farming opportunities right now.
           </p>
+          <ToolShareBar
+            url="https://predictionsmarketfans.com/tools/lp-scanner"
+            title="Polymarket LP Reward Scanner — real APR net of fees, live order books"
+          />
         </div>
       </div>
 

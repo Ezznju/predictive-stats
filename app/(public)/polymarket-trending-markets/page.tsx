@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ChevronRight, ExternalLink } from 'lucide-react';
 import { ScannerLiveStatus } from '@/components/ScannerLiveStatus';
 import { TrendingRefresh } from '@/components/TrendingRefresh';
+import { ToolShareBar } from '@/components/ToolShareBar';
 import { fetchTrendingMarkets, TrendingMarket } from '@/lib/trending';
 
 export const revalidate = 60;
@@ -182,6 +183,10 @@ export default async function TrendingMarketsPage() {
             trading volume — with live YES/NO prices, liquidity, and time remaining. This board re-reads Polymarket&apos;s
             public API every minute, so what you see is always the current picture, not a stale article.
           </p>
+          <ToolShareBar
+            url="https://predictionsmarketfans.com/polymarket-trending-markets"
+            title="Polymarket Trending Markets — live board of the most active markets, updated every minute"
+          />
         </header>
 
         {/* Movers */}

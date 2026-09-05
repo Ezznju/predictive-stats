@@ -27,6 +27,7 @@ import {
 import { ToolRelatedContent } from '@/components/ToolRelatedContent';
 import { ScannerLiveStatus } from '@/components/ScannerLiveStatus';
 import { TableSkeleton } from '@/components/TableSkeleton';
+import { ToolShareBar } from '@/components/ToolShareBar';
 import { downloadCsv } from '@/lib/csv';
 
 /* ── Brand colors ──────────────────────────────────────────────────── */
@@ -400,6 +401,10 @@ export default function ArbitrageScannerPage() {
             . This scanner finds those gaps in real time — so you can buy low on
             one side, sell high on the other, and lock in the spread.
           </p>
+          <ToolShareBar
+            url="https://predictionsmarketfans.com/tools/arbitrage-scanner"
+            title="Free Polymarket × Kalshi Arbitrage Scanner — live gaps, execution plans, no signup"
+          />
         </div>
       </div>
 
