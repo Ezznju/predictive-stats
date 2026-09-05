@@ -18,6 +18,32 @@ const nextConfig = {
       '/**': ['./assets/**'],
     },
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          // Clickjacking protection (esp. the admin panel)
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // Force HTTPS once a browser has seen the site
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
+          // Don't leak full URLs to third parties via Referer
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // No browser features needed (mic/camera/etc)
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
+          // Baseline CSP: keeps object/base-uri locked while allowing the
+          // inline + third-party scripts the site genuinely needs (AdSense,
+          // Clarity, Next hydration). Report-Only so nothing can break.
+          {
+            key: 'Content-Security-Policy-Report-Only',
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https:; frame-src https:; object-src 'none'; base-uri 'self'",
+          },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       // Article renamed (slug + category) â€” Google still has the old URL indexed.

@@ -11,7 +11,6 @@ function extensionFromContentType(contentType: string) {
   if (contentType === 'image/webp') return 'webp';
   if (contentType === 'image/gif') return 'gif';
   if (contentType === 'image/avif') return 'avif';
-  if (contentType === 'image/svg+xml') return 'svg';
   return 'bin';
 }
 
@@ -34,7 +33,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 });
   }
 
-  const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/avif'];
+  const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
+  // SVG intentionally excluded: it can carry <script> and would execute on
+  // the media subdomain (stored-XSS host). Article images never need it.
   if (!allowed.includes(file.type)) {
     return NextResponse.json({ error: 'File type not allowed' }, { status: 400 });
   }

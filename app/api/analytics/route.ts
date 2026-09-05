@@ -4,10 +4,9 @@ import { getAnalytics } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const token = process.env.ADMIN_API_TOKEN;
-  if (!token) {
-    return NextResponse.json({ error: 'ADMIN_API_TOKEN is not configured' }, { status: 500 });
-  }
+  // Access is enforced by middleware (session cookie required for /api/*
+  // outside the public allow-list). The old ADMIN_API_TOKEN check here was
+  // dead code — it compared against nothing and would have failed open.
   const daysRaw = parseInt(request.nextUrl.searchParams.get('days') ?? '30', 10);
   const days = Number.isFinite(daysRaw) ? Math.min(Math.max(daysRaw, 1), 365) : 30;
   try {
