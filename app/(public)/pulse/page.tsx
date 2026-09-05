@@ -13,19 +13,21 @@ export const metadata: Metadata = {
   description:
     'Real-time whale intelligence on Polymarket. Track large trades, monitor top wallets, and spot market-moving activity as it happens.',
   alternates: { canonical: 'https://predictionsmarketfans.com/pulse' },
-  openGraph: {
-    type: 'website',
-    title: 'Polymarket Whale Tracker — Live Whale Feed',
-    description:
-      'Real-time whale intelligence on Polymarket. Track large trades, monitor top wallets, and spot market-moving activity.',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Polymarket Whale Tracker — Live Whale Feed',
-    description:
-      'Real-time whale intelligence on Polymarket. Track large trades, monitor top wallets, and spot market-moving activity.',
-  },
-};
+    openGraph: {
+      type: 'website',
+      title: 'Polymarket Whale Tracker — Live Whale Feed',
+      description:
+        'Real-time whale intelligence on Polymarket. Track large trades, monitor top wallets, and spot market-moving activity.',
+      images: [{ url: '/pulse/og', width: 1200, height: 630, type: 'image/png' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Polymarket Whale Tracker — Live Whale Feed',
+      description:
+        'Real-time whale intelligence on Polymarket. Track large trades, monitor top wallets, and spot market-moving activity.',
+      images: ['/pulse/og'],
+    },
+  };
 
 export default function PulsePage() {
   const jsonLd = {

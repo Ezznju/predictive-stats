@@ -27,11 +27,13 @@ export async function generateMetadata(): Promise<Metadata> {
       title: `Polymarket Trending Markets — Live Board (${month})`,
       description:
         'The most active Polymarket markets right now, ranked by 24-hour volume with live prices. Updated every minute.',
+      images: [{ url: '/polymarket-trending-markets/og', width: 1200, height: 630, type: 'image/png' }],
     },
     twitter: {
       card: 'summary_large_image',
       title: 'Polymarket Trending Markets — Live Board',
       description: 'The most active Polymarket markets right now, ranked by 24-hour volume. Updated every minute.',
+      images: ['/polymarket-trending-markets/og'],
     },
   };
 }

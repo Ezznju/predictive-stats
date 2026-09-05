@@ -49,11 +49,13 @@ export async function generateMetadata({ params }: WalletPageProps): Promise<Met
       type: 'profile',
       title: `${name} — Whale Profile`,
       description: `Whale wallet profile for ${name}.`,
+      images: [{ url: `/pulse/wallets/${params.address}/og`, width: 1200, height: 630, type: 'image/png' }],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${name} — Whale Profile`,
       description: `Whale wallet profile for ${name}.`,
+      images: [`/pulse/wallets/${params.address}/og`],
     },
   };
 }

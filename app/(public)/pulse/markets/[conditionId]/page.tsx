@@ -39,11 +39,13 @@ export async function generateMetadata({ params }: MarketPageProps): Promise<Met
       type: 'website',
       title: `${data.marketTitle} — Whale Activity`,
       description: `Whale trading activity for ${data.marketTitle}.`,
+      images: [{ url: `/pulse/markets/${params.conditionId}/og`, width: 1200, height: 630, type: 'image/png' }],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${data.marketTitle} — Whale Activity`,
       description: `Whale trading activity for ${data.marketTitle}.`,
+      images: [`/pulse/markets/${params.conditionId}/og`],
     },
   };
 }
