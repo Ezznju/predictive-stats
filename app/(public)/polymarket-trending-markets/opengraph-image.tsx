@@ -1,9 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { ogSize, loadOgFonts, OgCard } from '@/lib/og-template';
 
-import { ImageResponse } from 'next/og';
-import { ogSize, loadOgFonts, OgCard } from '@/lib/og-template';
-
 // Edge runtime for fast cold boots
 export const runtime = 'edge';
 export const size = ogSize;

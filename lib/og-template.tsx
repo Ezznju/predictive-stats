@@ -26,8 +26,8 @@ function b64ToUint8(b64: string): Uint8Array {
 export function loadOgFonts(): Promise<OgFont[]> {
   if (fontsPromise) return fontsPromise;
   fontsPromise = Promise.resolve([
-    { name: 'Space Grotesk', data: b64ToUint8(OG_FONTS_B64.bold).buffer, weight: 700 as const, style: 'normal' as const },
-    { name: 'Space Grotesk', data: b64ToUint8(OG_FONTS_B64.medium).buffer, weight: 500 as const, style: 'normal' as const },
+    { name: 'Space Grotesk', data: b64ToUint8(OG_FONTS_B64.bold).buffer as ArrayBuffer, weight: 700 as const, style: 'normal' as const },
+    { name: 'Space Grotesk', data: b64ToUint8(OG_FONTS_B64.medium).buffer as ArrayBuffer, weight: 500 as const, style: 'normal' as const },
   ]);
   return fontsPromise;
 }
