@@ -11,12 +11,14 @@ export const metadata: Metadata = {
     description:
       'Real-time Polymarket LP reward pool scanner with live order book data, sorting, and velocity calculator.',
     type: 'website',
+    images: [{ url: '/tools/lp-scanner/og', width: 1200, height: 630, type: 'image/png' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Polymarket LP Reward Scanner — Live APR, Net of Fees',
     description:
       'Scan active Polymarket LP reward pools. Daily rewards, spreads, volume, competitiveness, and live order books.',
+    images: ['/tools/lp-scanner/og'],
   },
 };
 

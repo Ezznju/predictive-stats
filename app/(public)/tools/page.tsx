@@ -21,6 +21,20 @@ export const metadata: Metadata = {
   description:
     'Free tools for prediction market traders — scan LP rewards on Polymarket and find cross-platform arbitrage between Polymarket and Kalshi.',
   alternates: { canonical: 'https://predictionsmarketfans.com/tools' },
+  openGraph: {
+    type: 'website',
+    title: 'Free Prediction Market Tools',
+    description:
+      'Free tools for prediction market traders — scan LP rewards on Polymarket and find cross-platform arbitrage between Polymarket and Kalshi.',
+    images: [{ url: '/tools/og', width: 1200, height: 630, type: 'image/png' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Free Prediction Market Tools',
+    description:
+      'Free tools for prediction market traders — scan LP rewards on Polymarket and find cross-platform arbitrage between Polymarket and Kalshi.',
+    images: ['/tools/og'],
+  },
 };
 
 const TOOLS = [
