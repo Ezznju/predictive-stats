@@ -1,3 +1,4 @@
+import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -49,7 +50,7 @@ export default function LPScannerLayout({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: ldJson(jsonLd)}}
       />
       {children}
     </>

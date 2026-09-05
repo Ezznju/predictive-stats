@@ -1,3 +1,4 @@
+import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Check, X as XIcon, ExternalLink } from 'lucide-react';
@@ -45,7 +46,7 @@ export default async function PlatformsPage() {
     <div className="relative">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: ldJson(itemListJsonLd)}}
       />
 
       {/* Header band */}

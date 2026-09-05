@@ -1,3 +1,4 @@
+import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { PulseHeader } from '@/components/pulse/PulseHeader';
@@ -63,11 +64,11 @@ export default function PulsePage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: ldJson(jsonLd)}}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+        dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd)}}
       />
 
       <main className="min-h-screen bg-surface">

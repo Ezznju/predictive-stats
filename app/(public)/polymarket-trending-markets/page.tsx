@@ -1,3 +1,4 @@
+import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronRight, ExternalLink } from 'lucide-react';
@@ -148,9 +149,9 @@ export default async function TrendingMarketsPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(itemJsonLd)}} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbJsonLd)}} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(faqJsonLd)}} />
       <TrendingRefresh intervalSec={60} />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">

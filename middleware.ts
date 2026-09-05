@@ -15,8 +15,9 @@ async function getExpectedToken(): Promise<string> {
 }
 
 // Public GET-only API routes (read-only access for frontend)
+// NOTE: /api/articles is intentionally NOT public — it returns drafts and
+// unpublished content. It is admin-only (session cookie).
 const PUBLIC_API_PREFIXES = [
-  '/api/articles',
   '/api/categories',
   '/api/authors',
   '/api/settings',

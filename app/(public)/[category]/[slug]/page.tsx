@@ -1,3 +1,4 @@
+import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -292,10 +293,10 @@ export default async function CategoryArticlePage({ params }: Props) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(jsonLd)}} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbJsonLd)}} />
       {faqJsonLd && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(faqJsonLd)}} />
       )}
       <ReadingProgressBar />
       <ReadingMiniBar title={article.title.replace(/<[^>]*>/g, '')} />

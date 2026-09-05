@@ -1,3 +1,4 @@
+import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { unstable_cache } from 'next/cache';
@@ -61,7 +62,7 @@ export default async function AuthorPage({ params }: Props) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(personJsonLd)}} />
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-2 text-xs text-ink-muted mb-6">
         <Link href="/" className="hover:text-ink transition-colors">Home</Link>

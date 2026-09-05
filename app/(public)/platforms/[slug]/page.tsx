@@ -1,3 +1,4 @@
+import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -67,7 +68,7 @@ export default async function PlatformReviewPage({ params }: PageProps) {
     <div className="relative">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: ldJson(reviewJsonLd)}}
       />
 
       {/* Header band */}

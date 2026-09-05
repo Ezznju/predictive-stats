@@ -1,3 +1,4 @@
+import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { PulseHeader } from '@/components/pulse/PulseHeader';
@@ -71,8 +72,8 @@ export default async function MarketPage({ params }: MarketPageProps) {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(jsonLd)}} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd)}} />
 
       <main className="min-h-screen bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
