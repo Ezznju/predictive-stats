@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { ArrowRight, TrendingUp, Zap, Activity, Flame, type LucideIcon } from 'lucide-react'
 import { CornerDotSquare, HalfCircle } from '@/components/GeometricShapes'
+import { ToolShareIcons } from '@/components/ToolShareBar'
 
 /* ── THE SEAM ──────────────────────────────────────────────────────────
    Keep USE_MOCK = true until fetchLiveOpportunities() returns real data.
@@ -154,6 +155,12 @@ function renderTrendCell(t: TrendCell) {
 
 const TOOL_LINK: Record<Tool, string> = { arb: '/tools/arbitrage-scanner', lp: '/tools/lp-scanner', pulse: '/pulse', trending: '/polymarket-trending-markets' }
 const TOOL_LABEL: Record<Tool, string> = { arb: 'Arbitrage Scanner', lp: 'LP Reward Scanner', pulse: 'Polymarket Whale Tracker', trending: 'Trending Markets' }
+const TOOL_SHARE: Record<Tool, string> = {
+  arb: 'Free Polymarket × Kalshi Arbitrage Scanner — live gaps, execution plans, no signup',
+  lp: 'Polymarket LP Reward Scanner — real APR net of fees, live order books',
+  pulse: 'Polymarket Whale Tracker — live whale trades, graded by skill',
+  trending: 'Polymarket Trending Markets — live board of the most active markets',
+}
 
 interface ToolMeta {
   name: string
@@ -216,13 +223,16 @@ function ToolCard({ tool, data, flashToken }: { tool: Tool; data: ArbCell | LpCe
           This tool answers: {meta.question}
         </p>
       </div>
-      <Link
-        href={TOOL_LINK[tool]}
-        aria-label={`Open ${TOOL_LABEL[tool]}`}
-        className="mt-auto inline-flex items-center justify-center gap-2 bg-black text-white font-display font-bold text-sm px-4 py-2.5 rounded-xl btn-pop"
-      >
-        {meta.cta} <ArrowRight className="w-4 h-4" />
-      </Link>
+      <div className="flex items-center justify-between gap-2 mt-auto">
+        <ToolShareIcons url={`https://predictionsmarketfans.com${TOOL_LINK[tool]}`} title={TOOL_SHARE[tool]} />
+        <Link
+          href={TOOL_LINK[tool]}
+          aria-label={`Open ${TOOL_LABEL[tool]}`}
+          className="inline-flex items-center justify-center gap-2 bg-black text-white font-display font-bold text-sm px-4 py-2.5 rounded-xl btn-pop"
+        >
+          {meta.cta} <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
     </div>
   )
 }

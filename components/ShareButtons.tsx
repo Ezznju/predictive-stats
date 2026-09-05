@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Twitter, Linkedin, Link2, Check } from 'lucide-react';
+import { Twitter, Linkedin, Send, MessageCircle, Link2, Check } from 'lucide-react';
 
 interface ShareButtonsProps {
   url: string;
@@ -35,6 +35,24 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
         className="p-2 bg-black/5 rounded-lg text-ink-secondary hover:text-black hover:bg-black/10 transition-all"
       >
         <Linkedin className="w-4 h-4" />
+      </a>
+      <a
+        href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="p-2 bg-black/5 rounded-lg text-ink-secondary hover:text-black hover:bg-black/10 transition-all"
+        aria-label="Share on Telegram"
+      >
+        <Send className="w-4 h-4" />
+      </a>
+      <a
+        href={`https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="p-2 bg-black/5 rounded-lg text-ink-secondary hover:text-black hover:bg-black/10 transition-all"
+        aria-label="Share on WhatsApp"
+      >
+        <MessageCircle className="w-4 h-4" />
       </a>
       <button
         onClick={handleCopy}

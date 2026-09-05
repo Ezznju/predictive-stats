@@ -6,6 +6,10 @@ export const size = ogSize;
 export const contentType = 'image/png';
 export const alt = 'Polymarket Whale Tracker — Live Whale Feed';
 
+const CACHE_HEADERS = {
+  'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
+};
+
 export default async function Image() {
   const fonts = await loadOgFonts();
 
@@ -19,6 +23,6 @@ export default async function Image() {
         metaRight="Polymarket"
       />
     ),
-    { ...ogSize, fonts }
+    { ...ogSize, fonts, headers: CACHE_HEADERS }
   );
 }

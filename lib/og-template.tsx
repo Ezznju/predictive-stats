@@ -10,18 +10,29 @@ export const ogSize = { width: 1200, height: 630 };
 
 export const OG_DOTS = ['#FF00B8', '#29C5F6', '#FFE642', '#2BD96E', '#9D5CFF', '#FF6B00'];
 
-export async function loadOgFonts() {
-  const [bold, medium] = await Promise.all([
-    readFile(join(process.cwd(), 'assets', 'SpaceGrotesk-Bold.woff')),
-    readFile(join(process.cwd(), 'assets', 'SpaceGrotesk-Medium.woff')),
-  ]);
-  // Convert Node.js Buffer to clean ArrayBuffer for @vercel/og
-  const boldData = bold.buffer.slice(bold.byteOffset, bold.byteOffset + bold.byteLength);
-  const mediumData = medium.buffer.slice(medium.byteOffset, medium.byteOffset + medium.byteLength);
-  return [
-    { name: 'Space Grotesk', data: boldData, weight: 700 as const, style: 'normal' as const },
-    { name: 'Space Grotesk', data: mediumData, weight: 500 as const, style: 'normal' as const },
-  ];
+// Module-level cache: read the woff files once per lambda instance instead of
+// on every OG render. Social crawlers time out (~3s) on slow image routes —
+// this is one of the two main cold-render costs (the other was the DB call).
+let fontsPromise: Promise<
+  { name: string; data: ArrayBuffer; weight: 700 | 500; style: 'normal' }[]
+> | null = null;
+
+export function loadOgFonts() {
+  if (fontsPromise) return fontsPromise;
+  fontsPromise = (async () => {
+    const [bold, medium] = await Promise.all([
+      readFile(join(process.cwd(), 'assets', 'SpaceGrotesk-Bold.woff')),
+      readFile(join(process.cwd(), 'assets', 'SpaceGrotesk-Medium.woff')),
+    ]);
+    // Convert Node.js Buffer to clean ArrayBuffer for @vercel/og
+    const boldData = bold.buffer.slice(bold.byteOffset, bold.byteOffset + bold.byteLength);
+    const mediumData = medium.buffer.slice(medium.byteOffset, medium.byteOffset + medium.byteLength);
+    return [
+      { name: 'Space Grotesk', data: boldData, weight: 700 as const, style: 'normal' as const },
+      { name: 'Space Grotesk', data: mediumData, weight: 500 as const, style: 'normal' as const },
+    ];
+  })();
+  return fontsPromise;
 }
 
 function truncate(text: string, max: number): string {

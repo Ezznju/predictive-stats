@@ -73,3 +73,68 @@ export function ToolShareBar({ url, title }: ToolShareBarProps) {
     </div>
   );
 }
+
+/**
+ * Compact icon-only variant for cards (homepage tools band): circles that
+ * pop on hover, no labels — fits a card row without crowding the CTA.
+ */
+export function ToolShareIcons({ url, title }: ToolShareBarProps) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(url).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  };
+
+  const btn =
+    'inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-black bg-white text-black hover:bg-brand-yellow hover:-translate-y-0.5 hover:shadow-pop-sm transition-all';
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <a
+        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={btn}
+        aria-label="Share on X"
+        title="Share on X"
+      >
+        <Twitter className="w-3.5 h-3.5" />
+      </a>
+      <a
+        href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={btn}
+        aria-label="Share on LinkedIn"
+        title="Share on LinkedIn"
+      >
+        <Linkedin className="w-3.5 h-3.5" />
+      </a>
+      <a
+        href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={btn}
+        aria-label="Share on Telegram"
+        title="Share on Telegram"
+      >
+        <Send className="w-3.5 h-3.5" />
+      </a>
+      <a
+        href={`https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={btn}
+        aria-label="Share on WhatsApp"
+        title="Share on WhatsApp"
+      >
+        <MessageCircle className="w-3.5 h-3.5" />
+      </a>
+      <button onClick={copy} className={`${btn} ${copied ? 'bg-neon-green' : ''}`} aria-label="Copy tool link" title="Copy tool link">
+        {copied ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
+      </button>
+    </div>
+  );
+}
