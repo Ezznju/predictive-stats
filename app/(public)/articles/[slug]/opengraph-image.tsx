@@ -2,12 +2,14 @@ import { ImageResponse } from 'next/og';
 import { getArticleBySlug, getCategoryBySlug, formatDate } from '@/lib/db';
 import { ogSize, loadOgFonts, OgCard } from '@/lib/og-template';
 
-// Edge runtime for fast cold boots (crawlers time out on slow OG routes).
-export const runtime = 'edge';
+// nodejs runtime: edge + file-convention image routes 404 on this Next
+// version (static prerender of ImageResponse fails) — keep node here.
+export const dynamic = 'force-dynamic';
 export const size = ogSize;
 export const contentType = 'image/png';
 export const alt = 'Predictions Market Fans article';
 
+// Per-isolate cache: OG renders were paying a D1 round-trip per request.
 const ogCache = new Map<string, { at: number; data: OgArticleData | null }>();
 const OG_TTL = 10 * 60 * 1000;
 
@@ -39,6 +41,8 @@ async function getOgArticle(slug: string): Promise<OgArticleData | null> {
   return data;
 }
 
+// Long CDN hold + stale-while-revalidate: crawlers get the cached copy
+// instantly even while a fresh one re-renders.
 const CACHE_HEADERS = {
   'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
 };

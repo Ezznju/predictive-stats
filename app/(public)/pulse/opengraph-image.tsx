@@ -1,8 +1,8 @@
 import { ImageResponse } from 'next/og';
 import { ogSize, loadOgFonts, OgCard } from '@/lib/og-template';
 
-// Edge runtime for fast cold boots
-export const runtime = 'edge';
+// nodejs runtime: edge + file-convention image routes 404 on this Next version.
+export const dynamic = 'force-dynamic';
 export const size = ogSize;
 export const contentType = 'image/png';
 export const alt = 'Polymarket Whale Tracker — Live Whale Feed';
