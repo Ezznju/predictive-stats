@@ -3,35 +3,32 @@
  * Matches the site's neo-brutalist "pop" brand: neon-lime canvas, thick
  * black borders, offset shadows, bright accent dots, Space Grotesk type.
  */
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { OG_FONTS_B64 } from './og-fonts-data';
 
 export const ogSize = { width: 1200, height: 630 };
 
 export const OG_DOTS = ['#FF00B8', '#29C5F6', '#FFE642', '#2BD96E', '#9D5CFF', '#FF6B00'];
 
-// Module-level cache: read the woff files once per lambda instance instead of
-// on every OG render. Social crawlers time out (~3s) on slow image routes —
-// this is one of the two main cold-render costs (the other was the DB call).
-let fontsPromise: Promise<
-  { name: string; data: ArrayBuffer; weight: 700 | 500; style: 'normal' }[]
-> | null = null;
+// Fonts are embedded as base64 so the OG routes can run on the Edge runtime
+// (no node:fs on edge; edge lambdas boot ~10x faster, which is what keeps
+// social crawlers from timing out on cold requests). Cached per isolate.
+type OgFont = { name: string; data: ArrayBuffer; weight: 700 | 500; style: 'normal' };
 
-export function loadOgFonts() {
+let fontsPromise: Promise<OgFont[]> | null = null;
+
+function b64ToUint8(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+export function loadOgFonts(): Promise<OgFont[]> {
   if (fontsPromise) return fontsPromise;
-  fontsPromise = (async () => {
-    const [bold, medium] = await Promise.all([
-      readFile(join(process.cwd(), 'assets', 'SpaceGrotesk-Bold.woff')),
-      readFile(join(process.cwd(), 'assets', 'SpaceGrotesk-Medium.woff')),
-    ]);
-    // Convert Node.js Buffer to clean ArrayBuffer for @vercel/og
-    const boldData = bold.buffer.slice(bold.byteOffset, bold.byteOffset + bold.byteLength);
-    const mediumData = medium.buffer.slice(medium.byteOffset, medium.byteOffset + medium.byteLength);
-    return [
-      { name: 'Space Grotesk', data: boldData, weight: 700 as const, style: 'normal' as const },
-      { name: 'Space Grotesk', data: mediumData, weight: 500 as const, style: 'normal' as const },
-    ];
-  })();
+  fontsPromise = Promise.resolve([
+    { name: 'Space Grotesk', data: b64ToUint8(OG_FONTS_B64.bold).buffer, weight: 700 as const, style: 'normal' as const },
+    { name: 'Space Grotesk', data: b64ToUint8(OG_FONTS_B64.medium).buffer, weight: 500 as const, style: 'normal' as const },
+  ]);
   return fontsPromise;
 }
 

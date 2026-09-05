@@ -1,32 +1,47 @@
 import { ImageResponse } from 'next/og';
-import { unstable_cache } from 'next/cache';
 import { getArticleBySlug, getCategoryBySlug, formatDate } from '@/lib/db';
 import { ogSize, loadOgFonts, OgCard } from '@/lib/og-template';
 
-export const runtime = 'nodejs';
+// Edge runtime: lambdas boot ~10x faster than Node here, keeping cold renders
+// inside the ~3s budget social crawlers give OG images before they give up.
+export const runtime = 'edge';
 export const revalidate = 3600;
 
-// Cached article lookup: OG renders were paying a D1 round-trip per request.
-// 10-min TTL, purged with the same 'articles' tag as the page cache.
-const getOgArticle = unstable_cache(
-  async (slug: string) => {
-    const article = await getArticleBySlug(slug);
-    if (!article) return null;
-    const category = await getCategoryBySlug(article.categorySlug);
-    return {
-      title: article.title,
-      badge: category?.name,
-      badgeColor: category?.color,
-      publishDate: article.publishDate,
-      readTime: article.readTime,
-    };
-  },
-  ['og-article'],
-  { revalidate: 600, tags: ['articles'] }
-);
+// Per-isolate cache (unstable_cache is node-only). Stale up to 10 min — fine
+// for share images; article edits reflect on the next isolate or after TTL.
+const ogCache = new Map<string, { at: number; data: OgArticleData | null }>();
+const OG_TTL = 10 * 60 * 1000;
 
-// Long CDN hold + stale-while-revalidate: social crawlers (Twitter ~3s
-// budget) get the cached copy instantly even while a fresh one re-renders.
+interface OgArticleData {
+  title: string;
+  badge?: string;
+  badgeColor?: string;
+  publishDate: string;
+  readTime: number;
+}
+
+async function getOgArticle(slug: string): Promise<OgArticleData | null> {
+  const hit = ogCache.get(slug);
+  if (hit && Date.now() - hit.at < OG_TTL) return hit.data;
+  const article = await getArticleBySlug(slug);
+  if (!article) {
+    ogCache.set(slug, { at: Date.now(), data: null });
+    return null;
+  }
+  const category = await getCategoryBySlug(article.categorySlug);
+  const data: OgArticleData = {
+    title: article.title,
+    badge: category?.name,
+    badgeColor: category?.color,
+    publishDate: article.publishDate,
+    readTime: article.readTime,
+  };
+  ogCache.set(slug, { at: Date.now(), data });
+  return data;
+}
+
+// Long CDN hold + stale-while-revalidate: crawlers get the cached copy
+// instantly even while a fresh one re-renders.
 const CACHE_HEADERS = {
   'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
 };

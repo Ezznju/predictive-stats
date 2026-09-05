@@ -1,7 +1,11 @@
 import { ImageResponse } from 'next/og';
 import { ogSize, loadOgFonts, OgCard } from '@/lib/og-template';
 
-export const dynamic = 'force-dynamic';
+import { ImageResponse } from 'next/og';
+import { ogSize, loadOgFonts, OgCard } from '@/lib/og-template';
+
+// Edge runtime for fast cold boots
+export const runtime = 'edge';
 export const size = ogSize;
 export const contentType = 'image/png';
 export const alt = 'Polymarket Trending Markets — Live Volume Board';
