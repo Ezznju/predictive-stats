@@ -4,9 +4,6 @@ import { fetchGammaEvents } from '@/lib/pulse/polymarket-data';
 
 // Edge runtime + custom route (file-convention images 404 in this group).
 export const runtime = 'edge';
-export const size = ogSize;
-export const contentType = 'image/png';
-export const alt = 'Market Whale Activity';
 
 // Per-isolate cache for the gamma event scan (up to 10 min staleness is fine
 // for a share image; the scan itself walks ~100 events).
@@ -17,7 +14,10 @@ const CACHE_HEADERS = {
   'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
 };
 
-export default async function Image({ params }: { params: { conditionId: string } }) {
+export async function GET(
+  _req: Request,
+  { params }: { params: { conditionId: string } }
+) {
   const [fonts] = await Promise.all([loadOgFonts()]);
   const cid = params.conditionId;
   let title = 'Market Whale Activity';

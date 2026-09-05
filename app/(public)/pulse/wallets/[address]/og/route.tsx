@@ -3,15 +3,15 @@ import { ogSize, loadOgFonts, OgCard } from '@/lib/og-template';
 
 // Edge runtime + custom route (file-convention images 404 in this group).
 export const runtime = 'edge';
-export const size = ogSize;
-export const contentType = 'image/png';
-export const alt = 'Whale Wallet Profile';
 
 const CACHE_HEADERS = {
   'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
 };
 
-export default async function Image({ params }: { params: { address: string } }) {
+export async function GET(
+  _req: Request,
+  { params }: { params: { address: string } }
+) {
   const fonts = await loadOgFonts();
   const addr = params.address;
   const shortAddr = addr.length > 12 ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : addr;
