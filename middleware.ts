@@ -32,6 +32,7 @@ const PUBLIC_API_PREFIXES = [
   '/api/reactions',
   '/api/trending',
   '/api/kalshi-trending',
+  '/api/kalshi-smart-money',
   '/api/indexnow',
   '/api/cron',
 ];

@@ -35,6 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/pulse`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/polymarket-trending-markets`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
     { url: `${baseUrl}/kalshi-trending-markets`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
+    { url: `${baseUrl}/kalshi-smart-money`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
   ];
 
   const articlePages = articles.map((a) => ({

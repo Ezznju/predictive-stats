@@ -76,6 +76,11 @@ const LINK_RULES: LinkRule[] = [
     href: '/kalshi-trending-markets',
     title: 'Live Kalshi trending markets board',
   },
+  {
+    terms: ['Kalshi smart money', 'Kalshi order book', 'Kalshi order book walls', 'where big money is resting on Kalshi'],
+    href: '/kalshi-smart-money',
+    title: 'Kalshi Smart Money Signals',
+  },
 ];
 
 /**
