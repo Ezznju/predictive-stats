@@ -9,7 +9,6 @@ import { fetchKalshiTrending } from '@/lib/kalshi-trending';
 import type { TrendingMarket } from '@/lib/trending';
 
 export const revalidate = 300;
-export const maxDuration = 60;
 
 const BASE = 'https://predictionsmarketfans.com';
 
