@@ -71,6 +71,11 @@ const LINK_RULES: LinkRule[] = [
     href: '/polymarket-trending-markets',
     title: 'Live Polymarket trending markets board',
   },
+  {
+    terms: ['most active Kalshi markets', 'active Kalshi markets', 'hot Kalshi markets', 'Kalshi trending markets'],
+    href: '/kalshi-trending-markets',
+    title: 'Live Kalshi trending markets board',
+  },
 ];
 
 /**

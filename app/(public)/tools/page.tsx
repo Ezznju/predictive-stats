@@ -8,6 +8,7 @@ import {
   Shield,
   Activity,
   Flame,
+  BarChart3,
 } from 'lucide-react';
 import {
   FlowerShape,
@@ -84,6 +85,18 @@ const TOOLS = [
       'The most active markets by 24-hour volume, <em>live</em>. Prices, liquidity and momentum — updated every minute.',
     icon: Flame,
     color: '#FF7900',
+    ctaLabel: 'OPEN BOARD',
+  },
+  {
+    slug: 'kalshi-trending-markets',
+    href: '/kalshi-trending-markets',
+    name: 'Kalshi Trending Markets',
+    platform: 'Kalshi · Live',
+    question: 'Which Kalshi markets are traders piling into right now?',
+    description:
+      'The most active Kalshi markets by 24-hour volume, <em>live</em>. Prices, spreads and momentum — updated every few minutes.',
+    icon: BarChart3,
+    color: '#00A36C',
     ctaLabel: 'OPEN BOARD',
   },
 ];

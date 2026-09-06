@@ -31,6 +31,7 @@ const PUBLIC_API_PREFIXES = [
   '/api/order-book',
   '/api/reactions',
   '/api/trending',
+  '/api/kalshi-trending',
   '/api/indexnow',
   '/api/cron',
 ];

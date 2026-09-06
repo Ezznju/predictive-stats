@@ -11,6 +11,8 @@ export interface TrendingMarket {
   endDate: string | null;
   oneDayChange: number | null;
   polyUrl: string;
+  /** Bid-ask spread in cents, when the source provides it (Kalshi). */
+  spreadCents?: number | null;
 }
 
 const GAMMA = 'https://gamma-api.polymarket.com/markets';

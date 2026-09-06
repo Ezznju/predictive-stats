@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, TrendingUp, Zap, Activity, Flame, type LucideIcon } from 'lucide-react'
+import { ArrowRight, TrendingUp, Zap, Activity, Flame, BarChart3, type LucideIcon } from 'lucide-react'
 import { CornerDotSquare, HalfCircle } from '@/components/GeometricShapes'
 
 /* ── THE SEAM ──────────────────────────────────────────────────────────
@@ -54,13 +54,13 @@ const MOCK = {
 }
 const cursor = { arb: 0, lp: 0, pulse: 0, trend: 0 }
 function mockTop(advance?: Tool): LiveOpportunities {
-  if (advance === 'trending') cursor.trend = (cursor.trend + 1) % MOCK.trend.length
+  if (advance === 'trending' || advance === 'kalshi') cursor.trend = (cursor.trend + 1) % MOCK.trend.length
   else if (advance) cursor[advance] = (cursor[advance] + 1) % MOCK[advance].length
   return { arb: MOCK.arb[cursor.arb], lp: MOCK.lp[cursor.lp], pulse: MOCK.pulse[cursor.pulse], trend: MOCK.trend[cursor.trend] }
 }
 
-type Tool = 'arb' | 'lp' | 'pulse' | 'trending'
-const TC: Record<Tool, string> = { arb: '#2EE6A6', lp: '#B794FF', pulse: '#D9F24B', trending: '#FF7900' }
+type Tool = 'arb' | 'lp' | 'pulse' | 'trending' | 'kalshi'
+const TC: Record<Tool, string> = { arb: '#2EE6A6', lp: '#B794FF', pulse: '#D9F24B', trending: '#FF7900', kalshi: '#00A36C' }
 
 const TONE: Record<'g' | 'r' | 'c' | 'k', string> = {
   g: 'text-black bg-[rgba(43,217,110,0.22)] border-black/60',
@@ -77,7 +77,7 @@ function Chip({ tone, children }: { tone: 'g' | 'r' | 'c' | 'k'; children: React
 }
 
 function renderCell(tool: Tool, d: ArbCell | LpCell | PulseCell | TrendCell) {
-  if (tool === 'trending') return renderTrendCell(d as TrendCell)
+  if (tool === 'trending' || tool === 'kalshi') return renderTrendCell(d as TrendCell)
   if (tool === 'arb') {
     const a = d as ArbCell
     return (
@@ -152,8 +152,8 @@ function renderTrendCell(t: TrendCell) {
   )
 }
 
-const TOOL_LINK: Record<Tool, string> = { arb: '/tools/arbitrage-scanner', lp: '/tools/lp-scanner', pulse: '/pulse', trending: '/polymarket-trending-markets' }
-const TOOL_LABEL: Record<Tool, string> = { arb: 'Arbitrage Scanner', lp: 'LP Reward Scanner', pulse: 'Polymarket Whale Tracker', trending: 'Trending Markets' }
+const TOOL_LINK: Record<Tool, string> = { arb: '/tools/arbitrage-scanner', lp: '/tools/lp-scanner', pulse: '/pulse', trending: '/polymarket-trending-markets', kalshi: '/kalshi-trending-markets' }
+const TOOL_LABEL: Record<Tool, string> = { arb: 'Arbitrage Scanner', lp: 'LP Reward Scanner', pulse: 'Polymarket Whale Tracker', trending: 'Trending Markets', kalshi: 'Kalshi Trending' }
 
 interface ToolMeta {
   name: string
@@ -188,6 +188,12 @@ const TOOL_META: Record<Tool, ToolMeta> = {
     iconBg: 'rgba(255,121,0,0.16)',
     question: '“Which Polymarket markets are traders piling into right now?”',
     cta: 'Open board', tint: 'rgba(255,121,0,0.10)',
+  },
+  kalshi: {
+    name: 'Kalshi Trending', sub: 'Kalshi · Live', icon: BarChart3,
+    iconBg: 'rgba(0,163,108,0.16)',
+    question: '“Which Kalshi markets are traders piling into right now?”',
+    cta: 'Open board', tint: 'rgba(0,163,108,0.10)',
   },
 }
 
@@ -231,9 +237,11 @@ function ToolCard({ tool, data, flashToken }: { tool: Tool; data: ArbCell | LpCe
 
 export function DecisionLabStrip() {
   const [top, setTop] = useState<LiveOpportunities>(() => mockTop())
-  const [flash, setFlash] = useState({ arb: 0, lp: 0, pulse: 0, trending: 0 })
+  const [flash, setFlash] = useState({ arb: 0, lp: 0, pulse: 0, trending: 0, kalshi: 0 })
   const [trendMarkets, setTrendMarkets] = useState<TrendCell[]>([])
   const trendIdx = useRef(0)
+  const [kalshiMarkets, setKalshiMarkets] = useState<TrendCell[]>([])
+  const kalshiIdx = useRef(0)
   const warned = useRef(false)
 
   // Real live data for the trending card (top market by 24h volume)
@@ -261,22 +269,48 @@ export function DecisionLabStrip() {
     return () => { mounted = false; clearInterval(t) }
   }, [])
 
+  // Real live data for the Kalshi trending card (top market by 24h volume)
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      try {
+        const res = await fetch('/api/kalshi-trending')
+        const json = await res.json()
+        if (mounted && Array.isArray(json.markets) && json.markets.length > 0) {
+          setKalshiMarkets(
+            json.markets.map((m: any) => ({
+              mkt: String(m.question ?? ''),
+              vol: Number(m.volume24hr ?? 0),
+              yes: Number((m.yesPrice ?? 0) * 100),
+            }))
+          )
+        }
+      } catch {
+        /* keep mock */
+      }
+    }
+    load()
+    const t = setInterval(load, 300_000)
+    return () => { mounted = false; clearInterval(t) }
+  }, [])
+
   useEffect(() => {
     let mounted = true
     const tick = async () => {
       if (!mounted) return
       if (USE_MOCK) {
-        const tools: Tool[] = ['arb', 'lp', 'pulse', 'trending']
+        const tools: Tool[] = ['arb', 'lp', 'pulse', 'trending', 'kalshi']
         const t = tools[Math.floor(Math.random() * tools.length)]
         setTop(mockTop(t))
         setFlash((f) => ({ ...f, [t]: f[t] + 1 }))
         if (trendMarkets.length > 0) trendIdx.current = (trendIdx.current + 1) % trendMarkets.length
+        if (kalshiMarkets.length > 0) kalshiIdx.current = (kalshiIdx.current + 1) % kalshiMarkets.length
       } else {
         try {
           const data = await fetchLiveOpportunities()
           if (data) {
             setTop(data)
-            setFlash((f) => ({ arb: f.arb + 1, lp: f.lp + 1, pulse: f.pulse + 1, trending: f.trending + 1 }))
+            setFlash((f) => ({ arb: f.arb + 1, lp: f.lp + 1, pulse: f.pulse + 1, trending: f.trending + 1, kalshi: f.kalshi + 1 }))
           } else if (!warned.current) {
             warned.current = true
             console.warn('[DecisionLabStrip] fetchLiveOpportunities() returned null — showing placeholder.')
@@ -290,10 +324,14 @@ export function DecisionLabStrip() {
     if (!USE_MOCK) tick()
     const liveTimer = setInterval(tick, 3800)
     return () => { mounted = false; clearInterval(liveTimer) }
-  }, [trendMarkets.length])
+  }, [trendMarkets.length, kalshiMarkets.length])
 
   const trendCell: TrendCell = trendMarkets.length > 0
     ? trendMarkets[trendIdx.current % trendMarkets.length]
+    : top.trend
+
+  const kalshiCell: TrendCell = kalshiMarkets.length > 0
+    ? kalshiMarkets[kalshiIdx.current % kalshiMarkets.length]
     : top.trend
 
   return (
@@ -316,9 +354,9 @@ export function DecisionLabStrip() {
             All tools <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-          {(['arb', 'lp', 'pulse', 'trending'] as Tool[]).map((t) => (
-            <ToolCard key={t} tool={t} data={t === 'trending' ? trendCell : top[t]} flashToken={flash[t]} />
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {(['arb', 'lp', 'pulse', 'trending', 'kalshi'] as Tool[]).map((t) => (
+            <ToolCard key={t} tool={t} data={t === 'trending' ? trendCell : t === 'kalshi' ? kalshiCell : top[t]} flashToken={flash[t]} />
           ))}
         </div>
       </div>
