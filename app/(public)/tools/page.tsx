@@ -9,6 +9,7 @@ import {
   Activity,
   Flame,
   BarChart3,
+  DollarSign,
 } from 'lucide-react';
 import {
   FlowerShape,
@@ -88,16 +89,16 @@ const TOOLS = [
     ctaLabel: 'OPEN BOARD',
   },
   {
-    slug: 'kalshi-trending-markets',
-    href: '/kalshi-trending-markets',
-    name: 'Kalshi Trending Markets',
+    slug: 'kalshi-smart-money',
+    href: '/kalshi-smart-money',
+    name: 'Kalshi Smart Money',
     platform: 'Kalshi · Live',
-    question: 'Which Kalshi markets are traders piling into right now?',
+    question: 'Where is serious capital resting in the Kalshi order book right now?',
     description:
-      'The most active Kalshi markets by 24-hour volume, <em>live</em>. Prices, spreads and momentum — updated every few minutes.',
-    icon: BarChart3,
+      'Order book <em>walls</em>, momentum moves, and decision week — the Kalshi markets with millions committed.',
+    icon: DollarSign,
     color: '#00A36C',
-    ctaLabel: 'OPEN BOARD',
+    ctaLabel: 'OPEN SIGNALS',
   },
 ];
 
