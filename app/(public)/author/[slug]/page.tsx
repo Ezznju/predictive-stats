@@ -78,7 +78,10 @@ export default async function AuthorPage({ params }: Props) {
         <div>
           <h1 className="font-display font-bold text-3xl text-ink">{author.name}</h1>
           <p className="text-black text-sm mt-1">{author.title}</p>
-          <p className="text-ink-secondary mt-3 leading-relaxed max-w-2xl">{author.bio}</p>
+          <p
+            className="text-ink-secondary mt-3 leading-relaxed max-w-2xl [&_a]:text-ink [&_a]:underline [&_a]:font-semibold [&_a:hover]:text-black"
+            dangerouslySetInnerHTML={{ __html: author.bio }}
+          />
           <div className="flex items-center gap-3 mt-4">
             {author.twitter && (
               <a href={`https://twitter.com/${author.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="p-2 bg-white/15 rounded-lg text-ink-secondary hover:text-black transition-colors">
