@@ -78,7 +78,7 @@ export default async function AuthorPage({ params }: Props) {
         <div>
           <h1 className="font-display font-bold text-3xl text-ink">{author.name}</h1>
           <p className="text-black text-sm mt-1">{author.title}</p>
-          <p
+          <div
             className="text-ink-secondary mt-3 leading-relaxed max-w-2xl [&_a]:text-ink [&_a]:underline [&_a]:font-semibold [&_a:hover]:text-black"
             dangerouslySetInnerHTML={{ __html: author.bio }}
           />

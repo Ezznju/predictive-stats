@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { PlusCircle, Edit, Trash2, Check, X, Loader2, Upload, User } from 'lucide-react';
+import { RichEditor } from '@/components/admin/RichEditor';
 
 const MAX_AUTHORS = 10;
 
@@ -157,13 +158,16 @@ function AuthorFields({
           placeholder="LinkedIn URL (optional)"
           className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-300 md:col-span-2"
         />
-        <textarea
-          value={form.bio}
-          onChange={(e) => setForm((p) => ({ ...p, bio: e.target.value }))}
-          placeholder="Short bio"
-          rows={3}
-          className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-300 md:col-span-2 resize-y"
-        />
+        <div className="md:col-span-2">
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+            Bio <span className="font-normal normal-case text-gray-400">(rich text — links work)</span>
+          </label>
+          <RichEditor
+            content={form.bio}
+            onChange={(html) => setForm((p) => ({ ...p, bio: html }))}
+            placeholder="Short bio — add links with the 🔗 button"
+          />
+        </div>
       </div>
     </div>
   );

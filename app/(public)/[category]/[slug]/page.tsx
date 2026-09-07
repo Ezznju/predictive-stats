@@ -447,7 +447,7 @@ export default async function CategoryArticlePage({ params }: Props) {
               <div>
                 <Link href={`/author/${author.slug}`} className="font-display font-bold text-ink hover:text-black transition-colors">{author.name}</Link>
                 <p className="text-xs text-black mt-0.5">{author.title}</p>
-                <p
+                <div
                   className="text-sm text-ink-secondary mt-2 leading-relaxed [&_a]:text-ink [&_a]:underline [&_a]:font-semibold [&_a:hover]:text-black"
                   dangerouslySetInnerHTML={{ __html: author.bio }}
                 />
