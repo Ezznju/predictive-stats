@@ -21,7 +21,7 @@ interface BoardCache {
 }
 
 let boardCache: BoardCache | null = null;
-const BOARD_TTL = 5 * 60 * 1000;
+const BOARD_TTL = 15 * 60 * 1000;
 
 async function fetchKalshiPage(cursor: string, cache: boolean): Promise<{ markets: any[]; cursor: string }> {
   const url =

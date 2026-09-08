@@ -18,14 +18,14 @@ export interface TrendingMarket {
 const GAMMA = 'https://gamma-api.polymarket.com/markets';
 
 async function fetchGamma(limit: number, cache: boolean): Promise<TrendingMarket[]> {
-  const res = await fetch(
-    `${GAMMA}?active=true&closed=false&order=volume24hr&ascending=false&limit=${limit}`,
-    {
-      ...(cache ? { next: { revalidate: 60 } } : {}),
-      headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(8000),
-    }
-  );
+    const res = await fetch(
+      `${GAMMA}?active=true&closed=false&order=volume24hr&ascending=false&limit=${limit}`,
+      {
+        next: { revalidate: 300 },
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(8000),
+      }
+    );
   if (!res.ok) throw new Error(`Gamma ${res.status}`);
   const raw = await res.json();
   const markets = (Array.isArray(raw) ? raw : raw?.data ?? []) as any[];

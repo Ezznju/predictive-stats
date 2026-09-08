@@ -8,7 +8,7 @@ import { ToolShareBar } from '@/components/ToolShareBar';
 import { fetchKalshiTrending } from '@/lib/kalshi-trending';
 import type { TrendingMarket } from '@/lib/trending';
 
-export const revalidate = 300;
+export const revalidate = 900;
 
 const BASE = 'https://predictionsmarketfans.com';
 

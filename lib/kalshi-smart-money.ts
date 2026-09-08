@@ -36,9 +36,12 @@ interface RawMarket {
   expiration_time: string | null;
 }
 
-// ── module-level server cache (10 min) ──────────────────────────────────
+// ── module-level server cache (30 min) ──────────────────────────────────
+// This page is the most CPU-hungry on the site (catalog walk + per-market
+// orderbook fan-out). The cache is the primary Vercel-cost control: the
+// full scan runs at most twice per hour total, not per visitor.
 let boardCache: { at: number; board: KalshiSmartMoneyBoard } | null = null;
-const BOARD_TTL = 10 * 60 * 1000;
+const BOARD_TTL = 30 * 60 * 1000;
 
 async function walkCatalog(): Promise<any[]> {
   const all: any[] = [];
@@ -81,9 +84,11 @@ export async function fetchKalshiSmartMoney(limit = 15): Promise<KalshiSmartMone
     .sort((a, b) => Number(b.volume_24h_fp) - Number(a.volume_24h_fp))
     .slice(0, limit * 2);
 
-  // Fetch orderbooks in parallel (top N by volume)
+  // Fetch orderbooks in parallel (top N by volume). Capped at 12: each
+  // orderbook is a separate upstream fetch + JSON parse, and this is the
+  // single biggest Active-CPU cost on the site.
   const signals: KalshiSignal[] = [];
-  const batch = candidates.slice(0, limit * 2);
+  const batch = candidates.slice(0, 12);
   const books = await Promise.all(
     batch.map((m) => fetchOrderbook(m.ticker))
   );

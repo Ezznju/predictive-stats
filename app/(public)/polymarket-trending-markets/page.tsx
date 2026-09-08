@@ -7,7 +7,7 @@ import { TrendingRefresh } from '@/components/TrendingRefresh';
 import { ToolShareBar } from '@/components/ToolShareBar';
 import { fetchTrendingMarkets, TrendingMarket } from '@/lib/trending';
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 const BASE = 'https://predictionsmarketfans.com';
 
