@@ -2,13 +2,12 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronRight, ExternalLink } from 'lucide-react';
 import { ScannerLiveStatus } from '@/components/ScannerLiveStatus';
-import { TrendingRefresh } from '@/components/TrendingRefresh';
 import { CopyLinkButton } from '@/components/CopyLinkButton';
 import { ToolShareBar } from '@/components/ToolShareBar';
 import { fetchKalshiTrending } from '@/lib/kalshi-trending';
 import type { TrendingMarket } from '@/lib/trending';
 
-export const revalidate = 900;
+export const revalidate = 7200; // 2h server board (usage control)
 
 const BASE = 'https://predictionsmarketfans.com';
 
@@ -21,19 +20,19 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `Kalshi Trending Markets — Live Board (${month})`,
     description:
-      "See Kalshi's most active markets right now — the top markets by 24-hour volume with live YES/NO prices, spreads and time remaining. Updated every few minutes. Free, no signup.",
+      "See Kalshi's most active markets right now — the top markets by 24-hour volume with live YES/NO prices, spreads and time remaining. Board refreshed regularly. Free, no signup.",
     alternates: { canonical: `${BASE}/kalshi-trending-markets` },
     openGraph: {
       type: 'website',
       title: `Kalshi Trending Markets — Live Board (${month})`,
       description:
-        'The most active Kalshi markets right now, ranked by 24-hour volume with live prices. Updated every few minutes.',
+        'The most active Kalshi markets right now, ranked by 24-hour volume with live prices. Board refreshed regularly.',
       images: [{ url: '/kalshi-trending-markets/og', width: 1200, height: 630, type: 'image/png' }],
     },
     twitter: {
       card: 'summary_large_image',
       title: 'Kalshi Trending Markets — Live Board',
-      description: 'The most active Kalshi markets right now, ranked by 24-hour volume. Updated every few minutes.',
+      description: 'The most active Kalshi markets right now, ranked by 24-hour volume. Board refreshed regularly.',
       images: ['/kalshi-trending-markets/og'],
     },
   };
@@ -105,11 +104,11 @@ export default async function KalshiTrendingMarketsPage() {
   const faq = [
     {
       q: 'What are Kalshi\u2019s most active markets today?',
-      a: 'The live board above ranks every open Kalshi market by 24-hour trading volume — the top rows are, by definition, today\u2019s most active markets. It refreshes automatically every few minutes.',
+      a: 'The live board above ranks every open Kalshi market by 24-hour trading volume — the top rows are, by definition, today\u2019s most active markets. The board regenerates several times daily.',
     },
     {
       q: 'How often does Kalshi volume update?',
-      a: 'Trades settle on Kalshi continuously, so 24-hour volume shifts throughout the day. This page re-reads Kalshi\u2019s public API every few minutes and re-ranks the board.',
+      a: 'Trades settle on Kalshi continuously, so 24-hour volume shifts throughout the day. This page re-reads Kalshi\u2019s public API several times a day and re-ranks the board.',
     },
     {
       q: 'What does the YES price on Kalshi mean?',
@@ -157,7 +156,8 @@ export default async function KalshiTrendingMarketsPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
-      <TrendingRefresh intervalSec={300} />
+      {/* No auto client refresh (usage control): the server board regenerates
+          every 2h and the age badge below always shows the data's true age. */}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         {/* Breadcrumbs */}
@@ -185,11 +185,11 @@ export default async function KalshiTrendingMarketsPage() {
           <p className="text-[16.5px] text-ink-secondary mt-4 leading-relaxed max-w-3xl">
             The <strong className="text-ink">most active Kalshi markets right now</strong>, ranked by 24-hour
             trading volume — with live YES/NO prices, spreads, and time remaining. This board re-reads Kalshi&apos;s
-            public API every few minutes, so what you see is always the current picture, not a stale article.
+            public API several times a day, so what you see is the current picture, not a stale article.
           </p>
           <ToolShareBar
             url="https://predictionsmarketfans.com/kalshi-trending-markets"
-            title="Kalshi Trending Markets — live board of the most active markets, updated every few minutes"
+            title="Kalshi Trending Markets — live board of the most active markets, refreshed regularly"
           />
         </header>
 
@@ -311,7 +311,7 @@ export default async function KalshiTrendingMarketsPage() {
             <div className="px-5 py-3 border-t-2 border-black bg-white/60 flex items-center gap-2 flex-wrap">
               <span className="font-mono text-[10.5px] font-bold bg-brand-yellow border-2 border-black rounded-md px-2 py-0.5">live data</span>
               <p className="text-xs text-ink-faint font-semibold">
-                Source: Kalshi public API · auto-refreshes every few minutes · prices are implied probabilities, not advice
+                Source: Kalshi public API · regenerates several times daily · prices are implied probabilities, not advice
               </p>
             </div>
           </div>
@@ -349,7 +349,7 @@ export default async function KalshiTrendingMarketsPage() {
             </p>
             <p>
               <strong className="text-ink">How often this page updates:</strong> the board re-reads Kalshi&apos;s public
-              API every few minutes, automatically. Prices are implied probabilities, not predictions from us, and nothing
+              API several times a day, automatically. Prices are implied probabilities, not predictions from us, and nothing
               here is financial advice.
             </p>
             <p>

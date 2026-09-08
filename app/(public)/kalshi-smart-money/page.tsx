@@ -5,7 +5,7 @@ import { ScannerLiveStatus } from '@/components/ScannerLiveStatus';
 import { ToolShareBar } from '@/components/ToolShareBar';
 import { fetchKalshiSmartMoney } from '@/lib/kalshi-smart-money';
 
-export const revalidate = 1800;
+export const revalidate = 7200; // 2h server board (usage control)
 export const maxDuration = 60;
 
 const BASE = 'https://predictionsmarketfans.com';

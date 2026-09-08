@@ -83,7 +83,7 @@ const TOOLS = [
     platform: 'Polymarket · Live',
     question: 'Which Polymarket markets are traders piling into right now?',
     description:
-      'The most active markets by 24-hour volume, <em>live</em>. Prices, liquidity and momentum — updated every minute.',
+      'The most active markets by 24-hour volume, <em>live</em>. Prices, liquidity and momentum — refreshed regularly.',
     icon: Flame,
     color: '#FF7900',
     ctaLabel: 'OPEN BOARD',

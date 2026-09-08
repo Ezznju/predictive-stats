@@ -21,7 +21,7 @@ async function fetchGamma(limit: number, cache: boolean): Promise<TrendingMarket
     const res = await fetch(
       `${GAMMA}?active=true&closed=false&order=volume24hr&ascending=false&limit=${limit}`,
       {
-        next: { revalidate: 300 },
+        next: { revalidate: 7200 },
         headers: { Accept: 'application/json' },
         signal: AbortSignal.timeout(8000),
       }

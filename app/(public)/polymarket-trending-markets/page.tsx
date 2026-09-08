@@ -3,11 +3,10 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronRight, ExternalLink } from 'lucide-react';
 import { ScannerLiveStatus } from '@/components/ScannerLiveStatus';
-import { TrendingRefresh } from '@/components/TrendingRefresh';
 import { ToolShareBar } from '@/components/ToolShareBar';
 import { fetchTrendingMarkets, TrendingMarket } from '@/lib/trending';
 
-export const revalidate = 300;
+export const revalidate = 7200; // 2h server board (usage control)
 
 const BASE = 'https://predictionsmarketfans.com';
 
@@ -20,19 +19,19 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `Polymarket Trending Markets — Live Board (${month})`,
     description:
-      "See Polymarket's most active markets right now — the top markets by 24-hour volume with live YES/NO prices, liquidity and time remaining. Updated every minute. Free, no signup.",
+      "See Polymarket's most active markets right now — the top markets by 24-hour volume with live YES/NO prices, liquidity and time remaining. Board refreshed regularly. Free, no signup.",
     alternates: { canonical: `${BASE}/polymarket-trending-markets` },
     openGraph: {
       type: 'website',
       title: `Polymarket Trending Markets — Live Board (${month})`,
       description:
-        'The most active Polymarket markets right now, ranked by 24-hour volume with live prices. Updated every minute.',
+        'The most active Polymarket markets right now, ranked by 24-hour volume with live prices. Board refreshed regularly.',
       images: [{ url: '/polymarket-trending-markets/og', width: 1200, height: 630, type: 'image/png' }],
     },
     twitter: {
       card: 'summary_large_image',
       title: 'Polymarket Trending Markets — Live Board',
-      description: 'The most active Polymarket markets right now, ranked by 24-hour volume. Updated every minute.',
+      description: 'The most active Polymarket markets right now, ranked by 24-hour volume. Board refreshed regularly.',
       images: ['/polymarket-trending-markets/og'],
     },
   };
@@ -103,11 +102,11 @@ export default async function TrendingMarketsPage() {
   const faq = [
     {
       q: 'What are Polymarket\u2019s most active markets today?',
-      a: 'The live board above ranks every active Polymarket market by 24-hour trading volume — the top rows are, by definition, today\u2019s most active markets. It refreshes automatically every 60 seconds.',
+      a: 'The live board above ranks every active Polymarket market by 24-hour trading volume — the top rows are, by definition, today\u2019s most active markets. The board regenerates several times daily.',
     },
     {
       q: 'How often does Polymarket volume update?',
-      a: 'Trades settle on Polymarket continuously, so 24-hour volume shifts minute by minute. This page re-reads Polymarket\u2019s public API every 60 seconds and re-ranks the board.',
+      a: 'Trades settle on Polymarket continuously, so 24-hour volume shifts minute by minute. This page re-reads Polymarket\u2019s public API several times a day and re-ranks the board.',
     },
     {
       q: 'What does the YES price on Polymarket mean?',
@@ -155,7 +154,8 @@ export default async function TrendingMarketsPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(itemJsonLd)}} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbJsonLd)}} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(faqJsonLd)}} />
-      <TrendingRefresh intervalSec={60} />
+      {/* No auto client refresh (usage control): the server board regenerates
+          every 2h and the age badge below always shows the data's true age. */}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         {/* Breadcrumbs */}
@@ -183,11 +183,11 @@ export default async function TrendingMarketsPage() {
           <p className="text-[16.5px] text-ink-secondary mt-4 leading-relaxed max-w-3xl">
             The <strong className="text-ink">most active Polymarket markets right now</strong>, ranked by 24-hour
             trading volume — with live YES/NO prices, liquidity, and time remaining. This board re-reads Polymarket&apos;s
-            public API every minute, so what you see is always the current picture, not a stale article.
+            public API several times a day, so what you see is the current picture, not a stale article.
           </p>
           <ToolShareBar
             url="https://predictionsmarketfans.com/polymarket-trending-markets"
-            title="Polymarket Trending Markets — live board of the most active markets, updated every minute"
+            title="Polymarket Trending Markets — live board of the most active markets, refreshed regularly"
           />
         </header>
 
@@ -312,7 +312,7 @@ export default async function TrendingMarketsPage() {
             <div className="px-5 py-3 border-t-2 border-black bg-white/60 flex items-center gap-2 flex-wrap">
               <span className="font-mono text-[10.5px] font-bold bg-brand-yellow border-2 border-black rounded-md px-2 py-0.5">live data</span>
               <p className="text-xs text-ink-faint font-semibold">
-                Source: Polymarket public API · auto-refreshes every 60 seconds · prices are implied probabilities, not advice
+                Source: Polymarket public API · regenerates several times daily · prices are implied probabilities, not advice
               </p>
             </div>
           </div>
@@ -343,7 +343,7 @@ export default async function TrendingMarketsPage() {
             </p>
             <p>
               <strong className="text-ink">How often this page updates:</strong> the board re-reads Polymarket&apos;s public
-              API every 60 seconds, automatically. Prices are implied probabilities, not predictions from us, and nothing
+              API several times a day, automatically. Prices are implied probabilities, not predictions from us, and nothing
               here is financial advice.
             </p>
             <p>

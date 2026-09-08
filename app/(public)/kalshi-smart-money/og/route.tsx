@@ -17,7 +17,7 @@ export async function GET() {
         badge="ORDER BOOK INTEL"
         badgeColor="#00A36C"
         metaLeft="Order book walls · Momentum · Decision week"
-        metaRight="Updated every 10 minutes"
+        metaRight="Order book intel"
       />
     ),
     { ...ogSize, fonts, headers: CACHE_HEADERS }

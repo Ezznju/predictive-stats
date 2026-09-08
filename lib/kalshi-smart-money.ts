@@ -41,7 +41,7 @@ interface RawMarket {
 // orderbook fan-out). The cache is the primary Vercel-cost control: the
 // full scan runs at most twice per hour total, not per visitor.
 let boardCache: { at: number; board: KalshiSmartMoneyBoard } | null = null;
-const BOARD_TTL = 30 * 60 * 1000;
+const BOARD_TTL = 2 * 60 * 60 * 1000; // 2h: orderbook fan-out is the main CPU cost
 
 async function walkCatalog(): Promise<any[]> {
   const all: any[] = [];

@@ -21,7 +21,7 @@ interface BoardCache {
 }
 
 let boardCache: BoardCache | null = null;
-const BOARD_TTL = 15 * 60 * 1000;
+const BOARD_TTL = 2 * 60 * 60 * 1000; // 2h: catalog walk is the main CPU cost
 
 async function fetchKalshiPage(cursor: string, cache: boolean): Promise<{ markets: any[]; cursor: string }> {
   const url =

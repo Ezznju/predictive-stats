@@ -271,7 +271,9 @@ export function DecisionLabStrip() {
       }
     }
     load()
-    const t = setInterval(load, 60_000)
+    // 30-min poll: the card rotates mock/top data locally every few seconds
+    // anyway; re-fetching the source list more often only burns usage.
+    const t = setInterval(load, 1800_000)
     return () => { mounted = false; clearInterval(t) }
   }, [])
 
@@ -296,7 +298,8 @@ export function DecisionLabStrip() {
       }
     }
     load()
-    const t = setInterval(load, 600_000)
+    // 30-min poll (usage control), same reasoning as above.
+    const t = setInterval(load, 1800_000)
     return () => { mounted = false; clearInterval(t) }
   }, [])
 

@@ -19,7 +19,7 @@ export async function GET() {
         badge="LIVE"
         badgeColor="#2BD96E"
         metaLeft="Top markets by 24h volume"
-        metaRight="Updated every minute"
+        metaRight="Live 24h volume board"
       />
     ),
     { ...ogSize, fonts, headers: CACHE_HEADERS }
