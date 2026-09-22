@@ -48,7 +48,7 @@ const nextConfig = {
     return [
       // Article renamed (slug + category) â€” Google still has the old URL indexed.
       {
-        source: '/political-markets/polymarket-lp-rewards-explained-:path*',
+        source: '/political-markets/polymarket-lp-rewards-explained(.*)',
         destination: '/prediction-markets/polymarket-lp-rewards-guide',
         permanent: true,
       },
