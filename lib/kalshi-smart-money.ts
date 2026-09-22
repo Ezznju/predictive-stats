@@ -1,5 +1,10 @@
 const KALSHI_EVENTS = 'https://api.elections.kalshi.com/trade-api/v2/events';
 const KALSHI_ORDERBOOK = 'https://api.elections.kalshi.com/trade-api/v2/markets';
+// Small catalog walk on purpose: ~4 pages / ~50 heavily-traded markets plus
+// up to 8 orderbooks keeps a full board build around a dozen Kalshi requests,
+// well clear of their rate limits (Code 429 from shared datacenter egress).
+const MAX_PAGES = 4;
+const MAX_ORDERBOOKS = 8;
 
 export interface KalshiSignal {
   ticker: string;
@@ -46,7 +51,7 @@ const BOARD_TTL = 2 * 60 * 60 * 1000; // 2h: orderbook fan-out is the main CPU c
 async function walkCatalog(): Promise<any[]> {
   const all: any[] = [];
   let cursor = '';
-  for (let page = 0; page < 8; page++) {
+  for (let page = 0; page < MAX_PAGES; page++) {
     const url =
       `${KALSHI_EVENTS}?limit=100&status=open&with_nested_markets=true` +
       (cursor ? `&cursor=${encodeURIComponent(cursor)}` : '');
@@ -98,11 +103,11 @@ export async function fetchKalshiSmartMoney(limit = 15): Promise<KalshiSmartMone
     .sort((a, b) => Number(b.volume_24h_fp) - Number(a.volume_24h_fp))
     .slice(0, limit * 2);
 
-  // Fetch orderbooks in parallel (top N by volume). Capped at 12: each
-  // orderbook is a separate upstream fetch + JSON parse, and this is the
-  // single biggest Active-CPU cost on the site.
+  // Fetch orderbooks in parallel (top N by volume). Capped small: each
+  // orderbook is a separate upstream request, and this is where rate-limit
+  // risk concentrates.
   const signals: KalshiSignal[] = [];
-  const batch = candidates.slice(0, 12);
+  const batch = candidates.slice(0, MAX_ORDERBOOKS);
   const books = await Promise.all(
     batch.map((m) => fetchOrderbook(m.ticker))
   );
