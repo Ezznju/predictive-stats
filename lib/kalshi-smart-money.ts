@@ -74,7 +74,21 @@ export async function fetchKalshiSmartMoney(limit = 15): Promise<KalshiSmartMone
   // serve from cache
   if (boardCache && Date.now() - boardCache.at < BOARD_TTL) return boardCache.board;
 
-  const raw = await walkCatalog();
+  // Never throw: the Kalshi API can rate-limit shared datacenter egress
+  // (seen as 429s from Cloudflare Workers). Pages must degrade to the
+  // "catching its breath" fallback, not 500.
+  let raw: any[];
+  try {
+    raw = await walkCatalog();
+  } catch {
+    try {
+      raw = await walkCatalog();
+    } catch {
+      return (
+        boardCache?.board ?? { bigMoney: [], momentum: [], decisionWeek: [], updatedAt: new Date().toISOString() }
+      );
+    }
+  }
   const candidates = raw
     .filter((m) => {
       const title = String(m.title ?? '');
