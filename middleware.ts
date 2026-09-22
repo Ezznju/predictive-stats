@@ -29,6 +29,7 @@ const PUBLIC_API_PREFIXES = [
   '/api/gamma-rewards',
   '/api/lp-rewards',
   '/api/order-book',
+  '/api/media',
   '/api/reactions',
   '/api/trending',
   '/api/kalshi-trending',
