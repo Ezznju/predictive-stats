@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { d1Query, d1Execute, checkRateLimit } from '@/lib/d1';
+export const runtime = 'edge';
 
 const ALLOWED = ['fire', 'smart', 'accurate', 'watching', 'bullish'];
 

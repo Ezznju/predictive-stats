@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { gradeMarketTrades } from '@/lib/pulse/outcome';
 import { getPulseWhaleTrades } from '@/lib/db';
 import { fetchTrades } from '@/lib/pulse/polymarket-data';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 

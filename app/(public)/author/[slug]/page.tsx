@@ -1,19 +1,21 @@
 import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { unstable_cache } from 'next/cache';
 import Link from 'next/link';
 import { Twitter, Linkedin, ChevronRight } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { getAuthorBySlug, getArticlesByAuthor, getAuthors, getCategories } from '@/lib/db';
+import { cachedByKey, slimArticles } from '@/lib/isolate-cache';
 
 export const dynamic = 'force-dynamic';
 
 interface Props { params: { slug: string } }
 
-// Cache the listing bundle for 10 min (same pattern as the article page).
-// Tag-purged on article writes; author profile edits can lag up to 10 min.
-const getCachedAuthorPage = unstable_cache(
+// Cache the listing bundle per isolate for 10 min (Edge-safe). Slimmed
+// (content stripped) to stay inside Worker memory limits.
+const getCachedAuthorPage = cachedByKey(
+  'author-page',
+  10 * 60 * 1000,
   async (slug: string) => {
     const author = await getAuthorBySlug(slug);
     if (!author) return null;
@@ -22,10 +24,8 @@ const getCachedAuthorPage = unstable_cache(
       getAuthors(),
       getCategories(),
     ]);
-    return { author, authorArticles, allAuthors, categories };
-  },
-  ['author-page'],
-  { revalidate: 600, tags: ['articles'] }
+    return { author, authorArticles: slimArticles(authorArticles), allAuthors, categories };
+  }
 );
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

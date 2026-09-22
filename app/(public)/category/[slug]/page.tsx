@@ -1,18 +1,20 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { unstable_cache } from 'next/cache';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { getCategoryBySlug, getArticlesByCategory, getAuthors, getCategories } from '@/lib/db';
+import { cachedByKey, slimArticles } from '@/lib/isolate-cache';
 
 export const dynamic = 'force-dynamic';
 
 interface Props { params: { slug: string } }
 
-// Cache the listing bundle for 10 min (same pattern as the article page).
-// Tag-purged on article writes; category renames can lag up to 10 min.
-const getCachedCategoryPage = unstable_cache(
+// Cache the listing bundle per isolate for 10 min (Edge-safe). List payloads
+// are slimmed (content stripped) to stay inside Worker memory limits.
+const getCachedCategoryPage = cachedByKey(
+  'category-page',
+  10 * 60 * 1000,
   async (slug: string) => {
     const category = await getCategoryBySlug(slug);
     if (!category) return null;
@@ -21,10 +23,8 @@ const getCachedCategoryPage = unstable_cache(
       getAuthors(),
       getCategories(),
     ]);
-    return { category, categoryArticles, authors, categories };
-  },
-  ['category-page'],
-  { revalidate: 600, tags: ['articles'] }
+    return { category, categoryArticles: slimArticles(categoryArticles), authors, categories };
+  }
 );
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

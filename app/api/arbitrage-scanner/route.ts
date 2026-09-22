@@ -5,6 +5,7 @@ import {
 } from '@/lib/arbitrage';
 import { scanArbitrage } from '@/lib/arbitrage-scan';
 import { withSharedCache } from '@/lib/scanner-cache';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;

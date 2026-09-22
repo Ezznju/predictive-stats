@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { safeFetchJson } from '@/lib/safe-fetch';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;

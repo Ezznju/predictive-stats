@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { setCacheEntry } from '@/lib/scanner-cache';
 import { scanArbitrage } from '@/lib/arbitrage-scan';
 import { fetchRewardMarkets } from '@/lib/polymarket';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchLeaderboard } from '@/lib/pulse/polymarket-data';
 import { withPulseCache, PULSE_KEYS } from '@/lib/pulse/cache';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 

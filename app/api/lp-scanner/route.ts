@@ -3,6 +3,7 @@ import { fetchRewardMarkets, fetchOrderBook } from '@/lib/polymarket';
 import type { ScannerMarket } from '@/lib/polymarket';
 import { withSharedCache } from '@/lib/scanner-cache';
 import { scoreLP } from '@/lib/lp-scoring';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { fetchLeaderboard, fetchTrades } from '@/lib/pulse/polymarket-data';
 import { classifyWhalesFromLeaderboard } from '@/lib/pulse/whale-detection';
 import { upsertPulseWallet, insertPulseWhaleTrade } from '@/lib/db';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;

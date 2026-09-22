@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { submitIndexNow } from '@/lib/indexnow';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { waitUntil } from '@vercel/functions';
 import { getPlatformBySlug, getOutboundUrl } from '@/lib/platforms';
 import { insertOutboundClick } from '@/lib/db';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 

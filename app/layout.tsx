@@ -3,6 +3,8 @@ import { Inter, Sora } from 'next/font/google';
 import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
 
+export const runtime = 'edge';
+
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchKalshiTrending } from '@/lib/kalshi-trending';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 

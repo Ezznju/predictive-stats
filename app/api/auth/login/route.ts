@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { setAuthCookie } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/db';
+export const runtime = 'edge';
 
 function getClientIp(request: NextRequest): string {
   const fwd = request.headers.get('x-forwarded-for');

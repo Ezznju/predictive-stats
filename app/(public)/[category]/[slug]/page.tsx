@@ -3,7 +3,6 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
-import { unstable_cache } from 'next/cache';
 import { Clock, Calendar, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
@@ -30,6 +29,7 @@ import {
 } from '@/lib/db';
 import { autoLink } from '@/lib/auto-linker';
 import { embedTools } from '@/lib/tool-embed';
+import { cachedByKey, slimArticles } from '@/lib/isolate-cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,10 +37,13 @@ interface Props {
   params: { category: string; slug: string };
 }
 
-// Article views previously fired ~7 D1 REST round-trips each. Cache the whole
-// data bundle for 10 min. Tag-purged on admin create/update/delete (see
-// app/api/articles/route.ts + [id]/route.ts), so edits go live instantly.
-const getCachedArticlePage = unstable_cache(
+// Article views fired ~7 D1 REST round-trips each. Cache the whole data
+// bundle per isolate for 10 min (Edge-safe: Cloudflare Workers don't support
+// unstable_cache). List payloads are slimmed before caching because worker
+// isolates have ~128MB and full article rows are ~60KB each.
+const getCachedArticlePage = cachedByKey(
+  'article-page',
+  10 * 60 * 1000,
   async (slug: string) => {
     const article = await getArticleBySlug(slug);
     if (!article) return null;
@@ -58,10 +61,18 @@ const getCachedArticlePage = unstable_cache(
     const idx = allPublished.findIndex((a) => a.id === article.id);
     const nextArticle = idx > 0 ? allPublished[idx - 1] : null;
     const prevArticle = idx >= 0 && idx < allPublished.length - 1 ? allPublished[idx + 1] : null;
-    return { article, author, category, related, settings, allAuthors, allCategories, prevArticle, nextArticle };
-  },
-  ['article-page'],
-  { revalidate: 600, tags: ['articles'] }
+    return {
+      article,
+      author,
+      category,
+      related: slimArticles(related),
+      settings,
+      allAuthors,
+      allCategories,
+      prevArticle: prevArticle ? slimArticles([prevArticle])[0] : null,
+      nextArticle: nextArticle ? slimArticles([nextArticle])[0] : null,
+    };
+  }
 );
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

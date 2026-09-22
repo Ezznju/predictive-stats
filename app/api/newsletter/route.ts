@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { newsletterSubscribe, checkRateLimit } from '@/lib/db';
 import { sendWelcomeEmail } from '@/lib/newsletter-email';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 

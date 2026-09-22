@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthors, insertAuthor, countAuthors } from '@/lib/db';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 

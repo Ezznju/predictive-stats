@@ -3,6 +3,7 @@ import { fetchTrades, fetchLeaderboard, fetchGammaEvents } from '@/lib/pulse/pol
 import { withPulseCache, PULSE_KEYS } from '@/lib/pulse/cache';
 import { classifyWhalesFromLeaderboard, scoreWhaleTrade, aggregateWhaleFlow } from '@/lib/pulse/whale-detection';
 import type { WhaleFeedItem, AggregatedWhaleCard } from '@/lib/pulse/types';
+export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 15;
