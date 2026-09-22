@@ -6,7 +6,8 @@ import { ToolShareBar } from '@/components/ToolShareBar';
 import { fetchKalshiSmartMoney } from '@/lib/kalshi-smart-money';
 
 export const revalidate = 7200; // 2h server board (usage control)
-export const maxDuration = 60;
+// NOTE: no maxDuration here — it's Vercel-only route config and breaks the
+// Cloudflare Pages runtime for this page (500). Timeouts live in the fetcher.
 
 const BASE = 'https://predictionsmarketfans.com';
 
