@@ -72,9 +72,9 @@ export default async function EmbedWidgetPage({
   const utm = `utm_source=embed&utm_medium=widget&utm_campaign=${params.widget}`;
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-screen flex flex-col">
       <TrendingRefresh intervalSec={300} />
-      <div className="border-2 border-black m-2 rounded-xl overflow-hidden shadow-pop-sm">
+      <div className="border-2 border-black m-2 rounded-xl overflow-hidden shadow-pop-sm flex-1 flex flex-col">
         {/* Header strip */}
         <div className="bg-black text-white px-3.5 py-2.5 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-neon-green animate-pulse shrink-0" />
@@ -93,7 +93,7 @@ export default async function EmbedWidgetPage({
 
         {/* Rows */}
         {data.length === 0 ? (
-          <div className="px-4 py-6 text-center">
+          <div className="flex-1 flex items-center justify-center px-4 py-6">
             <p className="text-xs text-ink-faint font-semibold">Live data refreshing — check back in a moment.</p>
           </div>
         ) : (
@@ -123,7 +123,7 @@ export default async function EmbedWidgetPage({
           href={`${BASE}/?${utm}`}
           target="_blank"
           rel="noopener"
-          className="block bg-[#FFE642] border-t-2 border-black px-3.5 py-2 text-[10.5px] font-bold text-black hover:bg-brand-yellow transition-colors"
+          className="block mt-auto bg-[#FFE642] border-t-2 border-black px-3.5 py-2 text-[10.5px] font-bold text-black hover:bg-brand-yellow transition-colors"
         >
           Powered by Predictions Market Fans — live prediction market data →
         </a>
