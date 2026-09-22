@@ -42,6 +42,16 @@ const nextConfig = {
           },
         ],
       },
+      {
+        // Embeddable widgets (/embed/*) must be frameable by third-party
+        // sites. A CSP frame-ancestors directive overrides the global
+        // X-Frame-Options in every modern browser, so only these paths
+        // become embeddable while the rest of the site stays protected.
+        source: '/embed/:path*',
+        headers: [
+          { key: 'Content-Security-Policy', value: 'frame-ancestors *' },
+        ],
+      },
     ];
   },
   async redirects() {
