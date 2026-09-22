@@ -21,7 +21,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install dependencies (needed for the arbitrage scan)
+        run: npm ci --no-audit --no-fund
       - name: Refresh Kalshi boards
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: node scripts/refresh-kalshi-data.mjs
+      - name: Refresh arbitrage board
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: npx tsx scripts/refresh-arbitrage.ts

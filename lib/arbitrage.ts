@@ -102,19 +102,22 @@ interface KalshiMarketInput {
  * Match threshold. Kept moderate so newer/quieter categories (Climate,
  * Entertainment, Companies…) still surface — the strict 0.45 used before
  * isolated to long-tail only Elections, since those titles correlate
- * strongly. Category-aware top-N caps below keep the total market fetches
- * within the scan's time budget.
+ * strongly. Lowered again (0.17) to widen the candidate pool toward a
+ * 15-20 pair board; per-pair plausibility floors in findArbitragePairs
+ * keep weak matches from becoming phantom rows.
  */
-const EVENT_MATCH_THRESHOLD = 0.22;
+const EVENT_MATCH_THRESHOLD = 0.17;
 
 /**
  * Cap the number of Kalshi events we fetch markets for across all
- * categories (the scan shares an overall deadline).
+ * categories (the scan shares an overall deadline). Raised to 500: the
+ * funnel is roughly 120 fetched events → 6 pairs, so a 15-20 pair board
+ * needs a few hundred. Runs on the GitHub refresh job (no serverless cap).
  */
-const MAX_EVENT_FETCHES = 60;
+const MAX_EVENT_FETCHES = 500;
 
 /** Max events to pre-match from a single category per pass (diversity). */
-const PER_CATEGORY_FETCH_CAP = 8;
+const PER_CATEGORY_FETCH_CAP = 100;
 
 export function preMatchEvents(
   polyEvents: PolymarketEvent[],
@@ -250,6 +253,15 @@ export function findArbitragePairs(
       const costToLock = cheapYes + (1 - expensiveYes);
       const arbPercent =
         costToLock > 0 ? (priceDiff / costToLock) * 100 : 0;
+
+      // ── Plausibility floors ─────────────────────────────────────
+      // Genuine cross-venue gaps are small (typically <10%). A "30%+ arb"
+      // is virtually always a mismatched pair, a stale quote, or a dead
+      // market — showing them destroys trust in the board. Same for weak
+      // matches and zero-volume pairs.
+      if (arbPercent > 30 || matchConfidence < 0.3) continue;
+      const kalshiVolume = parseFloat(km.volume_fp) || 0;
+      if ((polyMarket.volume24hr || 0) <= 0 && kalshiVolume <= 0) continue;
 
       // ── Integrity & anomaly detection ───────────────────────────
       const polySpread = polyBestAsk > 0 && polyBestBid > 0 ? polyBestAsk - polyBestBid : 0;

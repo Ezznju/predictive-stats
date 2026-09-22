@@ -17,7 +17,7 @@
  *                 (optional; direct-to-D1 mode for local runs)
  */
 
-const INGEST_URL = process.env.INGEST_URL || 'https://predictive-stats.pages.dev/api/kalshi-ingest';
+const INGEST_URL = process.env.INGEST_URL || 'https://predictive-stats.pages.dev/api/board-ingest';
 const CRON_SECRET = process.env.CRON_SECRET || '';
 const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || '';
 const DATABASE_ID = process.env.D1_DATABASE_ID || '';

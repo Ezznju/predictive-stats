@@ -128,7 +128,9 @@ export async function fetchKalshiMarketsForEvent(
       url.toString(),
       KalshiMarketsResponseSchema,
       { next: { revalidate: 0 } } as RequestInit,
-      { label: `kalshi markets ${eventTicker}`, retries: 2 }
+      // Anonymous Kalshi reads are token-bucket limited per IP; patient
+      // retries (4) with a wider backoff dramatically cut the 429 drop-rate.
+      { label: `kalshi markets ${eventTicker}`, retries: 4, backoffBaseMs: 800, maxRetryAfterMs: 8000 }
     );
     return json.markets;
   } catch (err) {

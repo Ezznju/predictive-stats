@@ -39,7 +39,7 @@ const PUBLIC_API_PREFIXES = [
 ];
 
 // Public POST routes (visitor-facing forms + one-tap reactions + gated ingest)
-const PUBLIC_POST_ROUTES = ['/api/contact', '/api/newsletter', '/api/reactions', '/api/kalshi-ingest'];
+const PUBLIC_POST_ROUTES = ['/api/contact', '/api/newsletter', '/api/reactions', '/api/board-ingest'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

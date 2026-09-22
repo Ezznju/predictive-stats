@@ -23,10 +23,9 @@ export async function scanArbitrage(): Promise<ArbitragePair[]> {
   ]);
 
   // Step 2: pre-match events by title similarity so we only fetch markets
-  // for events that plausibly match (saves 150+ API calls)
-  const relevantKalshiEvents = kalshiEvents.filter(
-    (ev) => ev.category !== 'Sports'
-  );
+  // for events that plausibly match (saves 150+ API calls). Sports included:
+  // it's the largest overlapping category and where most live pairs are.
+  const relevantKalshiEvents = kalshiEvents;
   const matchedTickers = preMatchEvents(polyEvents, relevantKalshiEvents);
 
   // Step 3: fetch markets only for matched Kalshi events, with bounded
@@ -38,7 +37,9 @@ export async function scanArbitrage(): Promise<ArbitragePair[]> {
   const results = await pMap(
     eventsToFetch,
     (ev) => fetchKalshiMarketsForEvent(ev.event_ticker),
-    8
+    // 3-way concurrency: Kalshi's anonymous per-IP bucket is small, and
+    // burst-firing 8 parallel requests tripped 429s for ~half the events.
+    3
   );
 
   const kalshiMarketsByEvent = new Map<string, KalshiMarket[]>();
@@ -47,6 +48,10 @@ export async function scanArbitrage(): Promise<ArbitragePair[]> {
       kalshiMarketsByEvent.set(eventsToFetch[i].event_ticker, markets);
     }
   });
+
+  console.log(
+    `[arb-scan] poly=${polyEvents.length} kalshi=${kalshiEvents.length} pre-matched=${matchedTickers.size} to-fetch=${eventsToFetch.length} fetched-ok=${kalshiMarketsByEvent.size}`
+  );
 
   return findArbitragePairs(
     polyEvents,
