@@ -38,8 +38,8 @@ const PUBLIC_API_PREFIXES = [
   '/api/cron',
 ];
 
-// Public POST routes (visitor-facing forms + one-tap reactions)
-const PUBLIC_POST_ROUTES = ['/api/contact', '/api/newsletter', '/api/reactions'];
+// Public POST routes (visitor-facing forms + one-tap reactions + gated ingest)
+const PUBLIC_POST_ROUTES = ['/api/contact', '/api/newsletter', '/api/reactions', '/api/kalshi-ingest'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

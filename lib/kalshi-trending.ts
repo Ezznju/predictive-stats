@@ -1,19 +1,30 @@
 import type { TrendingMarket } from './trending';
+import { d1Query } from './d1';
 
 const KALSHI_EVENTS = 'https://api.elections.kalshi.com/trade-api/v2/events';
-const MAX_PAGES = 8;
+const MAX_PAGES = 4;
 const MIN_VOLUME_24H = 500;
 const BOARD_LIMIT = 25;
 
-/**
- * Live "trending on Kalshi" board: open markets ranked by 24h volume.
- * Walks the events feed (nested markets), drops combo-shard titles, and
- * sorts by volume. Two layers of cache:
- *   1. module-level server cache (5 min TTL) so repeat renders are instant
- *   2. fetch-layer revalidate so repeat cold-starts in the same window are
- *      served by the fetch cache rather than re-walking the catalog
- */
-type OgFont = { name: string; data: ArrayBuffer; weight: 700 | 500; style: 'normal' };
+// Kalshi persistently 429s Cloudflare Workers' shared egress, so the site
+// reads D1 snapshots written by the GitHub refresh action
+// (scripts/refresh-kalshi-data.mjs) every 30 minutes. Direct Kalshi fetches
+// remain as fallback in case egress access is restored.
+const SNAPSHOT_KEY = 'kalshi-trending-board';
+const SNAPSHOT_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+
+async function readSnapshot<T>(key: string): Promise<{ data: T; ageMs: number } | null> {
+  try {
+    const rows = await d1Query<{ payload: string; updated_at: string }>(
+      `SELECT payload, updated_at FROM scanner_cache WHERE cache_key = ? LIMIT 1`,
+      [key]
+    );
+    if (!rows.length) return null;
+    return { data: JSON.parse(rows[0].payload) as T, ageMs: Date.now() - new Date(rows[0].updated_at).getTime() };
+  } catch {
+    return null;
+  }
+}
 
 interface BoardCache {
   at: number;
@@ -79,7 +90,14 @@ function mapMarket(m: any): TrendingMarket | null {
 }
 
 export async function fetchKalshiTrending(limit = 25): Promise<TrendingMarket[]> {
-  // Serve from module cache if fresh enough
+  // 1. Prefer the D1 snapshot written by the GitHub refresh action (Kalshi
+  //    blocks/rate-limits Cloudflare's shared egress).
+  const snap = await readSnapshot<TrendingMarket[]>(SNAPSHOT_KEY);
+  if (snap && snap.data.length >= 10 && snap.ageMs < SNAPSHOT_MAX_AGE_MS) {
+    return snap.data.slice(0, limit);
+  }
+
+  // 2. Serve from module cache if fresh enough
   if (boardCache && Date.now() - boardCache.at < BOARD_TTL && boardCache.markets.length >= 10) {
     return boardCache.markets.slice(0, limit);
   }
@@ -113,8 +131,9 @@ export async function fetchKalshiTrending(limit = 25): Promise<TrendingMarket[]>
       if (retry.length >= 10) boardCache = { at: Date.now(), markets: retry };
       return retry;
     } catch {
-      // Serve the stale cached board if it exists (better than nothing)
+      // 3. Stale fallbacks: module cache, then any snapshot (even old)
       if (boardCache && boardCache.markets.length >= 10) return boardCache.markets;
+      if (snap && snap.data.length >= 10) return snap.data.slice(0, limit);
       return [];
     }
   }

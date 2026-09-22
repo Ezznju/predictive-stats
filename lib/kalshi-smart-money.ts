@@ -1,3 +1,5 @@
+import { d1Query } from './d1';
+
 const KALSHI_EVENTS = 'https://api.elections.kalshi.com/trade-api/v2/events';
 const KALSHI_ORDERBOOK = 'https://api.elections.kalshi.com/trade-api/v2/markets';
 // Small catalog walk on purpose: ~4 pages / ~50 heavily-traded markets plus
@@ -5,6 +7,25 @@ const KALSHI_ORDERBOOK = 'https://api.elections.kalshi.com/trade-api/v2/markets'
 // well clear of their rate limits (Code 429 from shared datacenter egress).
 const MAX_PAGES = 4;
 const MAX_ORDERBOOKS = 8;
+
+// Kalshi persistently 429s Cloudflare Workers' shared egress, so the site
+// reads D1 snapshots written by the GitHub refresh action
+// (scripts/refresh-kalshi-data.mjs) every 30 minutes.
+const SNAPSHOT_KEY = 'kalshi-smart-money-board';
+const SNAPSHOT_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+
+async function readSnapshot<T>(key: string): Promise<{ data: T; ageMs: number } | null> {
+  try {
+    const rows = await d1Query<{ payload: string; updated_at: string }>(
+      `SELECT payload, updated_at FROM scanner_cache WHERE cache_key = ? LIMIT 1`,
+      [key]
+    );
+    if (!rows.length) return null;
+    return { data: JSON.parse(rows[0].payload) as T, ageMs: Date.now() - new Date(rows[0].updated_at).getTime() };
+  } catch {
+    return null;
+  }
+}
 
 export interface KalshiSignal {
   ticker: string;
@@ -76,6 +97,13 @@ async function fetchOrderbook(ticker: string): Promise<{ yes: [number, number][]
 
 
 export async function fetchKalshiSmartMoney(limit = 15): Promise<KalshiSmartMoneyBoard> {
+  // 1. Prefer the D1 snapshot written by the GitHub refresh action (Kalshi
+  //    blocks/rate-limits Cloudflare's shared egress).
+  const snap = await readSnapshot<KalshiSmartMoneyBoard>(SNAPSHOT_KEY);
+  if (snap && snap.data.bigMoney.length >= 3 && snap.ageMs < SNAPSHOT_MAX_AGE_MS) {
+    return snap.data;
+  }
+
   // serve from cache
   if (boardCache && Date.now() - boardCache.at < BOARD_TTL) return boardCache.board;
 
@@ -89,9 +117,9 @@ export async function fetchKalshiSmartMoney(limit = 15): Promise<KalshiSmartMone
     try {
       raw = await walkCatalog();
     } catch {
-      return (
-        boardCache?.board ?? { bigMoney: [], momentum: [], decisionWeek: [], updatedAt: new Date().toISOString() }
-      );
+      if (boardCache?.board) return boardCache.board;
+      if (snap) return snap.data; // any snapshot beats an empty board
+      return { bigMoney: [], momentum: [], decisionWeek: [], updatedAt: new Date().toISOString() };
     }
   }
   const candidates = raw

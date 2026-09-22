@@ -1,0 +1,27 @@
+name: Refresh Kalshi data
+
+# WHY: Kalshi's API rate-limits Cloudflare Workers' shared egress (persistent
+# 429s) and the site runs on Cloudflare Pages. GitHub's runners fetch Kalshi
+# from a normal datacenter IP, build the boards, and POST them to the site's
+# /api/kalshi-ingest endpoint (Bearer CRON_SECRET), which persists them to D1.
+# This job holds no Cloudflare credentials. Runs hourly; can also be triggered
+# manually from the Actions tab.
+
+on:
+  schedule:
+    - cron: '15 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Refresh Kalshi boards
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: node scripts/refresh-kalshi-data.mjs
