@@ -62,6 +62,7 @@ export function Footer({ settings, categories }: FooterProps) {
               <li><Link href="/articles" className="text-sm text-white/60 hover:text-white transition-colors">All Articles</Link></li>
               <li><Link href="/platforms" className="text-sm text-white/60 hover:text-white transition-colors">Platform Reviews</Link></li>
               <li><Link href="/tools" className="text-sm text-white/60 hover:text-white transition-colors">Free Tools</Link></li>
+              <li><Link href="/embed" className="text-sm text-white/60 hover:text-white transition-colors">Embed Widgets</Link></li>
             </ul>
           </div>
 
