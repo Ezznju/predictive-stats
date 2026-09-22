@@ -1,8 +1,8 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
-import { randomUUID } from 'crypto';
 import { getR2Config, publicMediaUrl, r2ObjectUrl, signedR2Headers } from '@/lib/r2';
 
-export const runtime = 'nodejs';
+// Edge runtime (Cloudflare Pages compatibility — no node:crypto/Buffer).
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 function extensionFromContentType(contentType: string) {
@@ -48,15 +48,15 @@ export async function POST(request: NextRequest) {
     const r2 = getR2Config();
     const ext = extensionFromContentType(file.type);
     const datePath = new Date().toISOString().slice(0, 10);
-    const key = `articles/${datePath}/${randomUUID()}-${slugifyFilePart(file.name)}.${ext}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const key = `articles/${datePath}/${crypto.randomUUID()}-${slugifyFilePart(file.name)}.${ext}`;
+    const bytes = new Uint8Array(await file.arrayBuffer());
     const url = r2ObjectUrl(key, r2);
-    const headers = signedR2Headers('PUT', url, buffer, r2, {
+    const headers = await signedR2Headers('PUT', url, bytes, r2, {
       'content-type': file.type,
       'cache-control': 'public, max-age=31536000, immutable',
     });
 
-    const upload = await fetch(url, { method: 'PUT', headers, body: buffer as unknown as BodyInit });
+    const upload = await fetch(url, { method: 'PUT', headers, body: bytes as unknown as BodyInit });
     if (!upload.ok) {
       const text = await upload.text().catch(() => '');
       return NextResponse.json({ error: `R2 upload failed: ${text}` }, { status: 502 });

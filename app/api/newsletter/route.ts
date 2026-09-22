@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { newsletterSubscribe, checkRateLimit } from '@/lib/db';
 import { sendWelcomeEmail } from '@/lib/newsletter-email';
-import { randomUUID } from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Too many signups. Please try again later.' }, { status: 429 });
     }
 
-    const token = randomUUID();
+    const token = crypto.randomUUID();
     const inserted = await newsletterSubscribe(email, String(body.source || 'site'), token);
 
     if (!inserted) {

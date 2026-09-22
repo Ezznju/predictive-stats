@@ -1,28 +1,31 @@
 import { cookies } from 'next/headers';
-import { createHash } from 'crypto';
 
 const AUTH_COOKIE = 'pv_admin_session';
 
-function hashToken(password: string): string {
+async function hashToken(password: string): Promise<string> {
   const secret = process.env.AUTH_SECRET || 'fallback';
-  return createHash('sha256').update(password + secret).digest('hex');
+  const data = new TextEncoder().encode(password + secret);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
-export function getExpectedToken(): string {
+export async function getExpectedToken(): Promise<string> {
   const password = process.env.ADMIN_PASSWORD || '';
   return hashToken(password);
 }
 
-export function isAuthenticated(): boolean {
+export async function isAuthenticated(): Promise<boolean> {
   const cookieStore = cookies();
   const session = cookieStore.get(AUTH_COOKIE);
   if (!session) return false;
-  return session.value === getExpectedToken();
+  return session.value === (await getExpectedToken());
 }
 
-export function setAuthCookie(): void {
+export async function setAuthCookie(): Promise<void> {
   const cookieStore = cookies();
-  cookieStore.set(AUTH_COOKIE, getExpectedToken(), {
+  cookieStore.set(AUTH_COOKIE, await getExpectedToken(), {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -31,7 +34,7 @@ export function setAuthCookie(): void {
   });
 }
 
-export function clearAuthCookie(): void {
+export async function clearAuthCookie(): Promise<void> {
   const cookieStore = cookies();
   cookieStore.delete(AUTH_COOKIE);
 }

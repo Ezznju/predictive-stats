@@ -1,6 +1,4 @@
-﻿import { createHash, createHmac } from "crypto";
-
-export type R2Config = {
+﻿export type R2Config = {
   accountId: string;
   accessKeyId: string;
   secretAccessKey: string;
@@ -39,25 +37,42 @@ export function r2ObjectUrl(key: string, config: R2Config) {
     .join("/")}`;
 }
 
-function hmac(key: Buffer | string, value: string) {
-  return createHmac("sha256", key).update(value).digest();
+/* ── Web Crypto helpers (Edge-compatible: no node:crypto) ────────────── */
+const enc = new TextEncoder();
+
+function toHex(buf: ArrayBuffer): string {
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
-function hash(value: Buffer | string) {
-  return createHash("sha256").update(value).digest("hex");
+async function sha256Hex(value: Uint8Array | string): Promise<string> {
+  const data = (typeof value === "string" ? enc.encode(value) : value) as unknown as BufferSource;
+  return toHex(await crypto.subtle.digest("SHA-256", data));
 }
 
-function signingKey(secretAccessKey: string, date: string) {
-  const kDate = hmac(`AWS4${secretAccessKey}`, date);
-  const kRegion = hmac(kDate, "auto");
-  const kService = hmac(kRegion, "s3");
+async function hmac(key: Uint8Array | ArrayBuffer, value: string): Promise<ArrayBuffer> {
+  const cryptoKey = await crypto.subtle.importKey(
+    "raw",
+    key as unknown as BufferSource,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  return crypto.subtle.sign("HMAC", cryptoKey, enc.encode(value) as unknown as BufferSource);
+}
+
+async function signingKey(secretAccessKey: string, date: string): Promise<ArrayBuffer> {
+  const kDate = await hmac(enc.encode(`AWS4${secretAccessKey}`), date);
+  const kRegion = await hmac(kDate, "auto");
+  const kService = await hmac(kRegion, "s3");
   return hmac(kService, "aws4_request");
 }
 
-export function signedR2Headers(
+export async function signedR2Headers(
   method: "GET" | "PUT",
   url: string,
-  body: Buffer | string,
+  body: Uint8Array | string,
   config: R2Config,
   extraHeaders: Record<string, string> = {},
 ) {
@@ -65,7 +80,7 @@ export function signedR2Headers(
   const now = new Date();
   const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
   const dateStamp = amzDate.slice(0, 8);
-  const payloadHash = hash(body);
+  const payloadHash = await sha256Hex(body);
   const rawHeaders: Record<string, string> = {
     host: parsed.host,
     "x-amz-content-sha256": payloadHash,
@@ -74,8 +89,7 @@ export function signedR2Headers(
   };
   const headers = Object.fromEntries(Object.entries(rawHeaders).map(([key, value]) => [key.toLowerCase(), value]));
 
-  const sortedHeaderNames = Object.keys(headers)
-    .sort();
+  const sortedHeaderNames = Object.keys(headers).sort();
   const canonicalHeaders = sortedHeaderNames.map((name) => `${name}:${headers[name]}\n`).join("");
   const signedHeaders = sortedHeaderNames.join(";");
   const canonicalRequest = [
@@ -87,8 +101,8 @@ export function signedR2Headers(
     payloadHash,
   ].join("\n");
   const credentialScope = `${dateStamp}/auto/s3/aws4_request`;
-  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, credentialScope, hash(canonicalRequest)].join("\n");
-  const signature = createHmac("sha256", signingKey(config.secretAccessKey, dateStamp)).update(stringToSign).digest("hex");
+  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, credentialScope, await sha256Hex(canonicalRequest)].join("\n");
+  const signature = toHex(await hmac(await signingKey(config.secretAccessKey, dateStamp), stringToSign));
 
   return {
     ...headers,

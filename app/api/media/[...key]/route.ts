@@ -1,7 +1,8 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { getR2Config, r2ObjectUrl, signedR2Headers } from '@/lib/r2';
 
-export const runtime = 'nodejs';
+// Edge runtime (Cloudflare Pages compatibility — no node:crypto/Buffer).
+export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
 
 export async function GET(
@@ -16,7 +17,7 @@ export async function GET(
     }
 
     const url = r2ObjectUrl(key, r2);
-    const headers = signedR2Headers('GET', url, '', r2);
+    const headers = await signedR2Headers('GET', url, '', r2);
     const object = await fetch(url, { headers });
 
     if (object.status === 404) {
