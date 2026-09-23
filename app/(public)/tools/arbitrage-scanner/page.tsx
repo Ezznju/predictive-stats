@@ -1149,7 +1149,9 @@ function ExpandedDetail({ pair }: { pair: ArbitragePair }) {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
             <div className="rounded-lg bg-surface/40 border border-black/10 p-2">
               <div className="text-ink-faint mb-0.5">Gross / contract</div>
-              <div className="font-mono font-bold">{pair.depth.grossPerContractCents.toFixed(1)}¢</div>
+              <div className="font-mono font-bold">
+                {(pair.depth.grossPerContractCents ?? pair.priceDiffCents).toFixed(1)}¢
+              </div>
               <div className="text-[10px] text-ink-faint">real ask prices</div>
             </div>
             <div className="rounded-lg bg-brand-pink/10 border border-brand-pink/30 p-2">
