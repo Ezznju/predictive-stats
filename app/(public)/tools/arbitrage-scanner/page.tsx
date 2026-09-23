@@ -61,6 +61,8 @@ interface ArbitrageDepth {
   netArbPercent: number;
   netPerContractCents: number;
   grossPerContractCents: number;
+  topFeePerContractCents: number;
+  topNetPerContractCents: number;
   kalshiFeePerContractCents: number;
   avgYesPrice: number;
   avgNoPrice: number;
@@ -1152,28 +1154,33 @@ function ExpandedDetail({ pair }: { pair: ArbitragePair }) {
               <div className="font-mono font-bold">
                 {(pair.depth.grossPerContractCents ?? pair.priceDiffCents).toFixed(1)}¢
               </div>
-              <div className="text-[10px] text-ink-faint">real ask prices</div>
+              <div className="text-[10px] text-ink-faint">best level · real asks</div>
             </div>
             <div className="rounded-lg bg-brand-pink/10 border border-brand-pink/30 p-2">
               <div className="text-ink-faint mb-0.5">Kalshi fee</div>
-              <div className="font-mono font-bold text-brand-pink">-{pair.depth.kalshiFeePerContractCents.toFixed(1)}¢</div>
+              <div className="font-mono font-bold text-brand-pink">
+                -{(pair.depth.topFeePerContractCents ?? pair.depth.kalshiFeePerContractCents).toFixed(1)}¢
+              </div>
               <div className="text-[10px] text-ink-faint">7% × p × (1−p)</div>
             </div>
             <div className="rounded-lg bg-neon-lime/10 border border-neon-lime/30 p-2">
               <div className="text-ink-faint mb-0.5">Net / contract</div>
-              <div className="font-mono font-bold text-neon-green">+{pair.depth.netPerContractCents.toFixed(1)}¢</div>
-              <div className="text-[10px] text-ink-faint">after fees</div>
+              <div className="font-mono font-bold text-neon-green">
+                +{(pair.depth.topNetPerContractCents ?? pair.depth.netPerContractCents).toFixed(1)}¢
+              </div>
+              <div className="text-[10px] text-ink-faint">best level, after fees</div>
             </div>
             <div className="rounded-lg bg-neon-green/10 border border-neon-green/30 p-2">
               <div className="text-ink-faint mb-0.5">Net ROI</div>
               <div className="font-mono font-bold text-neon-green">{fmtPercent(pair.depth.netArbPercent)}</div>
-              <div className="text-[10px] text-ink-faint">on capital</div>
+              <div className="text-[10px] text-ink-faint">whole fill</div>
             </div>
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-ink-faint">
             <span>Fillable size: <strong className="text-ink">{pair.depth.maxContracts} contracts</strong></span>
             <span>Capital: <strong className="text-ink">${pair.depth.capitalUsd.toFixed(0)}</strong></span>
             <span>Net profit at that size: <strong className="text-neon-green">${pair.depth.profitUsd.toFixed(0)}</strong></span>
+            <span>Avg net across fills: <strong className="text-ink">+{pair.depth.netPerContractCents.toFixed(1)}¢/contract</strong></span>
             <span>
               Avg fill: YES {(pair.depth.avgYesPrice * 100).toFixed(1)}¢ on{' '}
               {pair.depth.yesVenue === 'polymarket' ? 'Polymarket' : 'Kalshi'} · NO {(pair.depth.avgNoPrice * 100).toFixed(1)}¢

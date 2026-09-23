@@ -172,16 +172,23 @@ function walkBooks(
   if (contracts < 1) return null;
 
   const capital = yesCost + noCost;
-  // Top-of-book gross from the REAL asks (not mids) so the fee waterfall in
-  // the UI adds up: gross − fee = net (for the first fill level).
-  const topGross = 1 - yesAsks[0].price - noAsks[0].price;
+  // Top-of-book math from the REAL asks (not mids) so the fee waterfall in
+  // the UI adds up exactly for the best fill level: gross − fee = net.
+  const topYes = yesAsks[0].price;
+  const topNo = noAsks[0].price;
+  const topGross = 1 - topYes - topNo;
+  const topKalshiPrice = kalshiLeg === 'yes' ? topYes : topNo;
+  const topFee = KALSHI_FEE_RATE * topKalshiPrice * (1 - topKalshiPrice);
   return {
     maxContracts: Math.round(contracts),
     capitalUsd: round(capital, 2),
     profitUsd: round(profit, 2),
     netArbPercent: round((profit / capital) * 100, 2),
+    /** Volume-weighted net across every level the walk consumed. */
     netPerContractCents: round((profit / contracts) * 100, 2),
     grossPerContractCents: round(topGross * 100, 2),
+    topFeePerContractCents: round(topFee * 100, 2),
+    topNetPerContractCents: round((topGross - topFee) * 100, 2),
     kalshiFeePerContractCents: round((fees / contracts) * 100, 2),
     avgYesPrice: round(yesCost / contracts, 4),
     avgNoPrice: round(noCost / contracts, 4),

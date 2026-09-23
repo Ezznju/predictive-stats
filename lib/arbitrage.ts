@@ -52,9 +52,13 @@ export interface ArbitrageDepth {
   profitUsd: number;
   /** Net return on capital, %. */
   netArbPercent: number;
+  /** Volume-weighted net per contract across all filled levels. */
   netPerContractCents: number;
-  /** Top-of-book gross from real asks (mid gaps can be larger). */
+  /** Best-level (top-of-book) math, from real asks — mid gaps can be larger. */
   grossPerContractCents: number;
+  topFeePerContractCents: number;
+  topNetPerContractCents: number;
+  /** Averages across every level the walk consumed. */
   kalshiFeePerContractCents: number;
   /** Volume-weighted average fill prices (0..1). */
   avgYesPrice: number;
