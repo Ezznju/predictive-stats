@@ -15,6 +15,11 @@ import { pMap } from '@/lib/async-utils';
    Shared by the /api/arbitrage-scanner route and the pre-warm cron
    (/api/cron/warm-scanners) so both compute identically. */
 
+function envInt(name: string, fallback: number): number {
+  const v = Number(process.env[name]);
+  return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
+}
+
 export async function scanArbitrage(): Promise<ArbitragePair[]> {
   // Step 1: fetch events from both platforms in parallel
   const [polyEvents, kalshiEvents] = await Promise.all([
@@ -30,16 +35,22 @@ export async function scanArbitrage(): Promise<ArbitragePair[]> {
 
   // Step 3: fetch markets only for matched Kalshi events, with bounded
   // concurrency so we never burst-fire requests and trip rate limits.
-  const eventsToFetch = relevantKalshiEvents.filter((ev) =>
+  let eventsToFetch = relevantKalshiEvents.filter((ev) =>
     matchedTickers.has(ev.event_ticker)
   );
+
+  // Optional cap for IPs Kalshi throttles harder (GitHub runners): a smaller
+  // event set keeps the whole scan inside the per-IP bucket.
+  const maxEvents = envInt('ARB_SCAN_MAX_EVENTS', 0);
+  if (maxEvents > 0) eventsToFetch = eventsToFetch.slice(0, maxEvents);
 
   const results = await pMap(
     eventsToFetch,
     (ev) => fetchKalshiMarketsForEvent(ev.event_ticker),
-    // 3-way concurrency: Kalshi's anonymous per-IP bucket is small, and
-    // burst-firing 8 parallel requests tripped 429s for ~half the events.
-    3
+    // 3-way concurrency by default: Kalshi's anonymous per-IP bucket is
+    // small, and burst-firing 8 parallel requests tripped 429s for ~half
+    // the events. The refresh job lowers this further via ARB_SCAN_CONCURRENCY.
+    envInt('ARB_SCAN_CONCURRENCY', 3)
   );
 
   const kalshiMarketsByEvent = new Map<string, KalshiMarket[]>();

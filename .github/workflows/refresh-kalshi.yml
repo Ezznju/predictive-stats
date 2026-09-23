@@ -3,19 +3,25 @@ name: Refresh Kalshi data
 # WHY: Kalshi's API rate-limits Cloudflare Workers' shared egress (persistent
 # 429s) and the site runs on Cloudflare Pages. GitHub's runners fetch Kalshi
 # from a normal datacenter IP, build the boards, and POST them to the site's
-# /api/kalshi-ingest endpoint (Bearer CRON_SECRET), which persists them to D1.
-# This job holds no Cloudflare credentials. Runs hourly; can also be triggered
-# manually from the Actions tab.
+# /api/board-ingest endpoint (Bearer CRON_SECRET), which persists them to D1.
+# This job holds no Cloudflare credentials.
+#
+# TWO SLOTS, ON PURPOSE: Kalshi's anonymous rate limit is a per-IP token
+# bucket, so the small board refresh and the heavy arbitrage scan run 30
+# minutes apart instead of back-to-back on the same runner IP. The arb scan
+# is paced slower still (single-flight, patient retry-after waits) because
+# GitHub's shared datacenter IPs get throttled harder than a home IP.
 
 on:
   schedule:
-    - cron: '15 * * * *'
+    - cron: '15 * * * *' # Kalshi boards
+    - cron: '45 * * * *' # arbitrage scan
   workflow_dispatch: {}
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,10 +30,18 @@ jobs:
       - name: Install dependencies (needed for the arbitrage scan)
         run: npm ci --no-audit --no-fund
       - name: Refresh Kalshi boards
+        if: github.event.schedule != '45 * * * *'
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: node scripts/refresh-kalshi-data.mjs
       - name: Refresh arbitrage board
+        if: github.event.schedule != '15 * * * *'
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          # Stay inside Kalshi's per-IP bucket from shared GitHub IPs.
+          ARB_SCAN_CONCURRENCY: '1'
+          ARB_SCAN_MAX_EVENTS: '260'
+          ARB_FETCH_RETRIES: '5'
+          ARB_FETCH_BACKOFF_MS: '1500'
+          ARB_FETCH_MAX_RETRY_AFTER_MS: '30000'
         run: npx tsx scripts/refresh-arbitrage.ts

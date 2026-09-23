@@ -74,6 +74,11 @@ const PAGE_DELAY_MS = 120; // politeness gap between pages — Kalshi rate-limit
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+function envInt(name: string, fallback: number): number {
+  const v = Number(process.env[name]);
+  return Number.isFinite(v) && v > 0 ? Math.floor(v) : fallback;
+}
+
 /* ── Fetch all events ──────────────────────────────────────────────── */
 
 export async function fetchKalshiEvents(): Promise<KalshiEvent[]> {
@@ -130,7 +135,14 @@ export async function fetchKalshiMarketsForEvent(
       { next: { revalidate: 0 } } as RequestInit,
       // Anonymous Kalshi reads are token-bucket limited per IP; patient
       // retries (4) with a wider backoff dramatically cut the 429 drop-rate.
-      { label: `kalshi markets ${eventTicker}`, retries: 4, backoffBaseMs: 800, maxRetryAfterMs: 8000 }
+      // GitHub runners act on shared datacenter IPs that Kalshi throttles
+      // harder, so the refresh job raises these via env (ARB_FETCH_*).
+      {
+        label: `kalshi markets ${eventTicker}`,
+        retries: envInt('ARB_FETCH_RETRIES', 4),
+        backoffBaseMs: envInt('ARB_FETCH_BACKOFF_MS', 800),
+        maxRetryAfterMs: envInt('ARB_FETCH_MAX_RETRY_AFTER_MS', 8000),
+      }
     );
     return json.markets;
   } catch (err) {
