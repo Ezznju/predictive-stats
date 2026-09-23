@@ -34,6 +34,34 @@ export interface PolymarketMarket {
   slug: string;
   image: string;
   groupItemTitle: string;
+  /** CLOB token ids, [YES token, NO token] — needed to read order books. */
+  clobTokenIds: string[];
+}
+
+/**
+ * Real executable depth for a pair, computed by walking both live order
+ * books (Kalshi book + Polymarket CLOB) net of Kalshi's trading fee.
+ * Attached by `enrichPairsWithDepth`; absent when books can't be read.
+ */
+export interface ArbitrageDepth {
+  /** Contracts fillable while the trade stays profitable after fees. */
+  maxContracts: number;
+  /** Total cost of both legs at that size, in USD. */
+  capitalUsd: number;
+  /** Net profit at that size after Kalshi fees, in USD. */
+  profitUsd: number;
+  /** Net return on capital, %. */
+  netArbPercent: number;
+  netPerContractCents: number;
+  /** Top-of-book gross from real asks (mid gaps can be larger). */
+  grossPerContractCents: number;
+  kalshiFeePerContractCents: number;
+  /** Volume-weighted average fill prices (0..1). */
+  avgYesPrice: number;
+  avgNoPrice: number;
+  /** Where the YES leg is bought. */
+  yesVenue: 'polymarket' | 'kalshi';
+  checkedAt: string;
 }
 
 export interface ArbitragePair {
@@ -48,7 +76,10 @@ export interface ArbitragePair {
     bestAsk: number;
     volume24h: number;
     slug: string;
+    /** Parent event slug — what polymarket.com/event/<slug> needs. */
+    eventSlug: string;
     image: string;
+    clobTokenIds: string[];
   };
 
   kalshi: {
@@ -75,6 +106,9 @@ export interface ArbitragePair {
   anomalies: AnomalyFlag[];
   /** Exact trade sequence + Kelly sizing for max profit. */
   plan: ExecutionPlan | null;
+
+  /** Real order-book depth, net of fees. Absent when books are unreadable. */
+  depth?: ArbitrageDepth;
 }
 
 /* ── Kalshi types for matching ─────────────────────────────────────── */
@@ -303,7 +337,9 @@ export function findArbitragePairs(
           bestAsk: polyBestAsk,
           volume24h: polyMarket.volume24hr || 0,
           slug: polyMarket.slug || polyEvent.slug,
+          eventSlug: polyEvent.slug || polyMarket.slug,
           image: polyMarket.image || '',
+          clobTokenIds: polyMarket.clobTokenIds || [],
         },
 
         kalshi: {
@@ -411,6 +447,9 @@ export async function fetchPolymarketEvents(): Promise<PolymarketEvent[]> {
         slug: String(m.slug ?? ''),
         image: String(m.image ?? ''),
         groupItemTitle: String(m.groupItemTitle ?? ''),
+        // Gamma sends clobTokenIds as a JSON-encoded string array
+        // ([YES token id, NO token id]) — same encoding as outcomePrices.
+        clobTokenIds: parseOutcomePrices(m.clobTokenIds),
       }));
 
       allEvents.push({

@@ -54,6 +54,20 @@ interface ExecutionPlan {
   steps: string[];
 }
 
+interface ArbitrageDepth {
+  maxContracts: number;
+  capitalUsd: number;
+  profitUsd: number;
+  netArbPercent: number;
+  netPerContractCents: number;
+  grossPerContractCents: number;
+  kalshiFeePerContractCents: number;
+  avgYesPrice: number;
+  avgNoPrice: number;
+  yesVenue: 'polymarket' | 'kalshi';
+  checkedAt: string;
+}
+
 interface ArbitragePair {
   eventName: string;
   category: string;
@@ -62,38 +76,8 @@ interface ArbitragePair {
   opportunityScore: number;
   anomalies: AnomalyFlag[];
   plan: ExecutionPlan | null;
-  executable?: {
-    legs: { venue: string; action: string; avgPrice: number; size: number }[];
-    bestYes: number;
-    bestNo: number;
-    topGrossEdge: number;
-    executableSize: number;
-    targetSize: number;
-    grossProfitUsd: number;
-    feesUsd: number;
-    stressCostUsd: number;
-    netProfitUsd: number;
-    stressNetProfitUsd: number;
-    capitalRequiredUsd: number;
-    roi: number;
-    annualizedRoi: number;
-    stressRoi: number;
-    grossPerShare: number;
-    feesPerShare: number;
-    netPerShare: number;
-    confidence: number;
-    score100: number;
-    riskFlags: { severity: number; message: string }[];
-    confidenceParts: {
-      match: number;
-      liquidity: number;
-      freshness: number;
-      profitQuality: number;
-      resolution: number;
-    };
-    daysToResolution: number;
-    professorNotes: string[];
-  } | null;
+  /** Real order-book depth, net of fees. Absent when books are unreadable. */
+  depth?: ArbitrageDepth;
   poly: {
     question: string;
     yesPrice: number;
@@ -101,6 +85,7 @@ interface ArbitragePair {
     bestAsk: number;
     volume24h: number;
     slug: string;
+    eventSlug?: string;
     image: string;
   };
   kalshi: {
@@ -153,6 +138,10 @@ function matchLabel(score: number): { text: string; color: string } {
   if (score >= 0.7) return { text: 'Exact', color: 'text-neon-green' };
   if (score >= 0.5) return { text: 'Strong', color: 'text-brand-amber' };
   return { text: 'Likely', color: 'text-ink-faint' };
+}
+
+function polyEventUrl(pair: ArbitragePair): string {
+  return `https://polymarket.com/event/${pair.poly.eventSlug || pair.poly.slug}`;
 }
 
 /* ── Main Page Component ───────────────────────────────────────────── */
@@ -255,7 +244,12 @@ export default function ArbitrageScannerPage() {
       event: p.eventName,
       category: p.category,
       arb_pct: +(p.arbPercent ?? 0).toFixed(2),
+      net_arb_pct: p.depth ? +p.depth.netArbPercent.toFixed(2) : '',
       diff_cents: p.priceDiffCents,
+      net_per_contract_cents: p.depth ? +p.depth.netPerContractCents.toFixed(1) : '',
+      max_contracts: p.depth?.maxContracts ?? '',
+      capital_usd: p.depth?.capitalUsd ?? '',
+      net_profit_usd: p.depth?.profitUsd ?? '',
       poly_yes_cents: +((p.poly?.yesPrice ?? 0) * 100).toFixed(1),
       kalshi_yes_cents: +((p.kalshi?.yesPrice ?? 0) * 100).toFixed(1),
       cheaper_yes: p.cheaperYes ?? '',
@@ -701,6 +695,14 @@ export default function ArbitrageScannerPage() {
                             >
                               {fmtPercent(pair.arbPercent)}
                             </span>
+                            {pair.depth && (
+                              <span
+                                className="block text-[10px] font-bold text-neon-green mt-0.5"
+                                title="Net of Kalshi fees, from live order books"
+                              >
+                                net {pair.depth.netArbPercent.toFixed(1)}%
+                              </span>
+                            )}
                           </td>
                           <td className="px-3 py-3 text-center font-mono text-sm font-semibold">
                             {fmtCents(pair.priceDiffCents)}
@@ -754,7 +756,7 @@ export default function ArbitrageScannerPage() {
                           <td className="px-3 py-3 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <a
-                                href={`https://polymarket.com/event/${pair.poly.slug}`}
+                                href={polyEventUrl(pair)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
@@ -1032,7 +1034,7 @@ function ExpandedDetail({ pair }: { pair: ArbitragePair }) {
           </div>
         </div>
         <a
-          href={`https://polymarket.com/event/${pair.poly.slug}`}
+          href={polyEventUrl(pair)}
           target="_blank"
           rel="noopener noreferrer"
           className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#7B3FE4] hover:underline"
@@ -1115,115 +1117,100 @@ function ExpandedDetail({ pair }: { pair: ArbitragePair }) {
             <strong>Strategy:</strong> Buy YES on{' '}
             {pair.cheaperYes === 'polymarket' ? 'Polymarket' : 'Kalshi'} + Buy NO
             on {pair.cheaperYes === 'polymarket' ? 'Kalshi' : 'Polymarket'}.
-            {pair.priceDiffCents >= 3 && (
+            {pair.depth ? (
               <span className="text-neon-green font-semibold">
                 {' '}
-                Potential {fmtCents(pair.priceDiffCents)} profit per contract
-                (before fees).
+                Net of fees: +{pair.depth.netPerContractCents.toFixed(1)}¢ per
+                contract ({fmtPercent(pair.depth.netArbPercent)} on capital).
               </span>
+            ) : (
+              pair.priceDiffCents >= 3 && (
+                <span className="text-ink-faint font-semibold">
+                  {' '}
+                  Potential {fmtCents(pair.priceDiffCents)} per contract before
+                  fees — depth not verified.
+                </span>
+              )
             )}
           </p>
         </div>
       </div>
 
-      {/* Executable Arbitrage — Golden Professor Engine */}
-      {pair.executable && (
-        <>
-          {/* Profit Waterfall */}
-          <div className="md:col-span-2 rounded-lg bg-white border border-gray-200 p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Target className="w-4 h-4 text-neon-green" />
-              <span className="font-display font-bold text-sm">Executable Profit Waterfall</span>
-              <span className="text-[10px] font-bold bg-neon-green text-black rounded px-1.5 py-0.5 border border-black">
-                Score {pair.executable.score100}
-              </span>
+      {/* Real depth — what you can actually trade (net of fees) */}
+      {pair.depth ? (
+        <div className="md:col-span-2 rounded-lg bg-white border-2 border-neon-green/40 p-3">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <Target className="w-4 h-4 text-neon-green" />
+            <span className="font-display font-bold text-sm">What you can actually trade</span>
+            <span className="text-[10px] font-bold bg-neon-green text-black rounded px-1.5 py-0.5 border border-black">
+              LIVE ORDER BOOKS · AFTER FEES
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div className="rounded-lg bg-surface/40 border border-black/10 p-2">
+              <div className="text-ink-faint mb-0.5">Gross / contract</div>
+              <div className="font-mono font-bold">{pair.depth.grossPerContractCents.toFixed(1)}¢</div>
+              <div className="text-[10px] text-ink-faint">real ask prices</div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              <div className="rounded-lg bg-neon-green/10 border border-neon-green/30 p-2">
-                <div className="text-ink-faint mb-0.5">Gross Profit</div>
-                <div className="font-mono font-bold text-neon-green">${pair.executable.grossProfitUsd.toFixed(2)}</div>
-                <div className="text-[10px] text-ink-faint">{pair.executable.grossPerShare.toFixed(3)}/share</div>
-              </div>
-              <div className="rounded-lg bg-brand-pink/10 border border-brand-pink/30 p-2">
-                <div className="text-ink-faint mb-0.5">Fees</div>
-                <div className="font-mono font-bold text-brand-pink">-${pair.executable.feesUsd.toFixed(2)}</div>
-                <div className="text-[10px] text-ink-faint">{pair.executable.feesPerShare.toFixed(3)}/share</div>
-              </div>
-              <div className="rounded-lg bg-brand-orange/10 border border-brand-orange/30 p-2">
-                <div className="text-ink-faint mb-0.5">Stress Cost</div>
-                <div className="font-mono font-bold text-brand-orange">-${pair.executable.stressCostUsd.toFixed(2)}</div>
-                <div className="text-[10px] text-ink-faint">extra slippage</div>
-              </div>
-              <div className="rounded-lg bg-neon-lime/10 border border-neon-lime/30 p-2">
-                <div className="text-ink-faint mb-0.5">Net Profit</div>
-                <div className="font-mono font-bold text-neon-lime">${pair.executable.netProfitUsd.toFixed(2)}</div>
-                <div className="text-[10px] text-ink-faint">{pair.executable.netPerShare.toFixed(3)}/share</div>
-              </div>
+            <div className="rounded-lg bg-brand-pink/10 border border-brand-pink/30 p-2">
+              <div className="text-ink-faint mb-0.5">Kalshi fee</div>
+              <div className="font-mono font-bold text-brand-pink">-{pair.depth.kalshiFeePerContractCents.toFixed(1)}¢</div>
+              <div className="text-[10px] text-ink-faint">7% × p × (1−p)</div>
             </div>
-            <div className="flex gap-4 mt-2 text-[11px] text-ink-faint">
-              <span>Executable: <strong className="text-ink">{pair.executable.executableSize} / {pair.executable.targetSize} shares</strong></span>
-              <span>Capital: <strong className="text-ink">${pair.executable.capitalRequiredUsd.toFixed(0)}</strong></span>
-              <span>ROI: <strong className="text-neon-green">{(pair.executable.roi * 100).toFixed(1)}%</strong></span>
-              <span>Annualized: <strong className="text-neon-green">{(pair.executable.annualizedRoi * 100).toFixed(1)}%</strong></span>
+            <div className="rounded-lg bg-neon-lime/10 border border-neon-lime/30 p-2">
+              <div className="text-ink-faint mb-0.5">Net / contract</div>
+              <div className="font-mono font-bold text-neon-green">+{pair.depth.netPerContractCents.toFixed(1)}¢</div>
+              <div className="text-[10px] text-ink-faint">after fees</div>
+            </div>
+            <div className="rounded-lg bg-neon-green/10 border border-neon-green/30 p-2">
+              <div className="text-ink-faint mb-0.5">Net ROI</div>
+              <div className="font-mono font-bold text-neon-green">{fmtPercent(pair.depth.netArbPercent)}</div>
+              <div className="text-[10px] text-ink-faint">on capital</div>
             </div>
           </div>
-
-          {/* Confidence Breakdown */}
-          <div className="rounded-lg bg-surface/30 border border-black/10 p-3">
-            <div className="text-[11px] font-display font-bold text-ink-faint uppercase tracking-wide mb-2">Confidence</div>
-            <div className="space-y-1.5">
-              {[
-                { label: 'Match', value: pair.executable.confidenceParts.match },
-                { label: 'Liquidity', value: pair.executable.confidenceParts.liquidity },
-                { label: 'Freshness', value: pair.executable.confidenceParts.freshness },
-                { label: 'Profit Quality', value: pair.executable.confidenceParts.profitQuality },
-                { label: 'Resolution', value: pair.executable.confidenceParts.resolution },
-              ].map((c) => (
-                <div key={c.label} className="flex items-center gap-2 text-[11px]">
-                  <span className="w-16 text-ink-faint">{c.label}</span>
-                  <div className="flex-1 h-1.5 rounded-full bg-black/5">
-                    <div
-                      className={`h-full rounded-full ${c.value >= 0.7 ? 'bg-neon-green' : c.value >= 0.4 ? 'bg-brand-yellow' : 'bg-brand-pink'}`}
-                      style={{ width: `${c.value * 100}%` }}
-                    />
-                  </div>
-                  <span className="font-mono w-8 text-right">{(c.value * 100).toFixed(0)}%</span>
-                </div>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-[11px] text-ink-faint">
+            <span>Fillable size: <strong className="text-ink">{pair.depth.maxContracts} contracts</strong></span>
+            <span>Capital: <strong className="text-ink">${pair.depth.capitalUsd.toFixed(0)}</strong></span>
+            <span>Net profit at that size: <strong className="text-neon-green">${pair.depth.profitUsd.toFixed(0)}</strong></span>
+            <span>
+              Avg fill: YES {(pair.depth.avgYesPrice * 100).toFixed(1)}¢ on{' '}
+              {pair.depth.yesVenue === 'polymarket' ? 'Polymarket' : 'Kalshi'} · NO {(pair.depth.avgNoPrice * 100).toFixed(1)}¢
+            </span>
           </div>
-
-          {/* Risk Flags */}
-          {pair.executable.riskFlags.length > 0 && (
-            <div className="rounded-lg bg-brand-orange/5 border border-brand-orange/20 p-3">
-              <div className="text-[11px] font-display font-bold text-ink-faint uppercase tracking-wide mb-2">Risk Flags</div>
-              <div className="space-y-1">
-                {pair.executable.riskFlags.map((flag, i) => (
-                  <div key={i} className="flex items-start gap-2 text-[11px]">
-                    <AlertTriangle className={`w-3 h-3 mt-0.5 flex-shrink-0 ${flag.severity >= 3 ? 'text-brand-pink' : flag.severity >= 2 ? 'text-brand-orange' : 'text-brand-yellow'}`} />
-                    <span className="text-ink-muted">{flag.message}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Professor Notes */}
-          {pair.executable.professorNotes.length > 0 && (
-            <div className="md:col-span-2 rounded-lg bg-black/[0.03] border border-black/10 p-3">
-              <div className="text-[11px] font-display font-bold text-ink-faint uppercase tracking-wide mb-1.5">Analysis Notes</div>
-              <ul className="space-y-1 text-[11px] text-ink-muted">
-                {pair.executable.professorNotes.map((note, i) => (
-                  <li key={i} className="flex items-start gap-1.5">
-                    <span className="text-brand-orange font-bold mt-0.5">›</span>
-                    <span>{note}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </>
+          <p className="text-[10px] text-ink-faint mt-1.5">
+            Walked both live order books at {new Date(pair.depth.checkedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}.
+            Kalshi rounds fees up per order; Polymarket currently charges no trading fee.
+          </p>
+        </div>
+      ) : (
+        <div className="md:col-span-2 rounded-lg bg-white border border-gray-200 p-3">
+          <div className="flex items-center gap-2 text-xs text-ink-muted">
+            <AlertTriangle className="w-3.5 h-3.5 text-brand-yellow flex-shrink-0" />
+            <span>
+              Live order-book depth isn&apos;t available for this pair right now — the gap shown is mid-price based.
+              Verify current prices on both venues before trading.
+            </span>
+          </div>
+        </div>
       )}
+
+      {/* Match confidence */}
+      <div className="rounded-lg bg-surface/30 border border-black/10 p-3">
+        <div className="text-[11px] font-display font-bold text-ink-faint uppercase tracking-wide mb-2">Match confidence</div>
+        <div className="flex items-center gap-2 text-[11px]">
+          <span className="w-16 text-ink-faint">Same event?</span>
+          <div className="flex-1 h-1.5 rounded-full bg-black/5">
+            <div
+              className={`h-full rounded-full ${pair.matchConfidence >= 0.7 ? 'bg-neon-green' : pair.matchConfidence >= 0.4 ? 'bg-brand-yellow' : 'bg-brand-pink'}`}
+              style={{ width: `${Math.min(100, pair.matchConfidence * 100)}%` }}
+            />
+          </div>
+          <span className="font-mono w-8 text-right">{(pair.matchConfidence * 100).toFixed(0)}%</span>
+        </div>
+        <p className="text-[10px] text-ink-faint mt-1.5">
+          How confident we are that both markets ask the same question. Higher = safer to treat the gap as real.
+        </p>
+      </div>
 
       {/* Execution Plan */}
       {pair.plan && pair.plan.viable && (
@@ -1361,6 +1348,11 @@ function MobileCard({
 
       <div className="flex items-center justify-between mt-2 text-xs text-ink-faint">
         <span>Diff: {fmtCents(pair.priceDiffCents)}</span>
+        {pair.depth && (
+          <span className="font-bold text-neon-green">
+            net {fmtPercent(pair.depth.netArbPercent)} · {pair.depth.maxContracts} contracts
+          </span>
+        )}
         <span className={matchLabel(pair.matchScore).color}>
           {matchLabel(pair.matchScore).text} match
         </span>

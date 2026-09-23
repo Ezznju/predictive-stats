@@ -9,6 +9,7 @@ import {
   preMatchEvents,
   type ArbitragePair,
 } from '@/lib/arbitrage';
+import { enrichPairsWithDepth } from '@/lib/arb-depth';
 import { pMap } from '@/lib/async-utils';
 
 /* ── Heavy scan: Polymarket × Kalshi cross-platform arbitrage ────────
@@ -64,9 +65,20 @@ export async function scanArbitrage(): Promise<ArbitragePair[]> {
     `[arb-scan] poly=${polyEvents.length} kalshi=${kalshiEvents.length} pre-matched=${matchedTickers.size} to-fetch=${eventsToFetch.length} fetched-ok=${kalshiMarketsByEvent.size}`
   );
 
-  return findArbitragePairs(
+  const pairs = findArbitragePairs(
     polyEvents,
     relevantKalshiEvents,
     kalshiMarketsByEvent
   );
+
+  // Step 4: attach real order-book depth (net of fees) to the top pairs so
+  // rows are actionable, not just mid-price gaps. Best-effort: failures
+  // leave the pair without depth and the UI degrades gracefully.
+  const depthLimit = envInt('ARB_DEPTH_LIMIT', 12);
+  const enriched = await enrichPairsWithDepth(pairs, depthLimit);
+  console.log(
+    `[arb-scan] depth enriched=${enriched}/${Math.min(depthLimit, pairs.length)}`
+  );
+
+  return pairs;
 }

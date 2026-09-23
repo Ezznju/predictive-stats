@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import {
-  computeExecutableArbitrage,
-  type ArbitragePair,
-} from '@/lib/arbitrage';
+import { type ArbitragePair } from '@/lib/arbitrage';
 import { scanArbitrage } from '@/lib/arbitrage-scan';
 import { withSharedCache } from '@/lib/scanner-cache';
 export const runtime = 'edge';
@@ -34,61 +31,17 @@ export async function GET() {
       50000
     );
 
-    // Enrich each pair with executable arbitrage analysis
-    const enriched = (result.payload || []).map((pair) => {
-      // Real days-to-resolution from Kalshi close time when available
-      const expTime = pair.kalshi.expirationTime
-        ? new Date(pair.kalshi.expirationTime).getTime()
-        : NaN;
-      const daysToResolution = Number.isFinite(expTime)
-        ? Math.max(1, Math.round((expTime - Date.now()) / 86400000))
-        : 30;
-
-      const executable = computeExecutableArbitrage({
-        id: `${pair.poly.slug}::${pair.kalshi.ticker}`,
-        title: pair.eventName,
-        yes: {
-          venue: 'polymarket',
-          marketId: pair.poly.slug,
-          book: {
-            asks: [
-              { price: pair.poly.bestAsk || pair.poly.yesPrice, size: 500 },
-              { price: (pair.poly.bestAsk || pair.poly.yesPrice) + 0.01, size: 1000 },
-              { price: (pair.poly.bestAsk || pair.poly.yesPrice) + 0.02, size: 2000 },
-            ],
-          },
-          snapshotAgeMs: 30000,
-        },
-        no: {
-          venue: 'kalshi',
-          marketId: pair.kalshi.ticker,
-          book: {
-            asks: [
-              { price: 1 - (pair.kalshi.yesBid || pair.kalshi.yesPrice), size: 400 },
-              { price: 1 - (pair.kalshi.yesBid || pair.kalshi.yesPrice) + 0.01, size: 800 },
-              { price: 1 - (pair.kalshi.yesBid || pair.kalshi.yesPrice) + 0.02, size: 1500 },
-            ],
-          },
-          snapshotAgeMs: 30000,
-        },
-        matchScore: pair.matchConfidence,
-        daysToResolution,
-        resolutionClarityScore: 0.7,
-      });
-
-      return {
-        ...pair,
-        executable: executable || null,
-      };
-    });
+    // Pairs now carry real order-book depth (pair.depth) computed by the
+    // scan itself, net of Kalshi fees — no synthetic books here anymore.
+    const pairs = result.payload || [];
 
     console.log(
-      `[arbitrage-scanner] pairs=${enriched.length} source=${result.source} cached=${result.source !== 'fresh'} coldScanMs=${Date.now() - scanStart}`
+      `[arbitrage-scanner] pairs=${pairs.length} source=${result.source} cached=${result.source !== 'fresh'} coldScanMs=${Date.now() - scanStart}`
     );
 
     return NextResponse.json(
       {
-        pairs: enriched,
+        pairs,
         cached: result.source !== 'fresh',
         stale: result.stale,
         updatedAt: result.updatedAt,
