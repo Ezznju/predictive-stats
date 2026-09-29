@@ -9,8 +9,10 @@ export const maxDuration = 60;
 export async function GET() {
   try {
     const result = await withSharedCache('gamma-rewards', fetchGammaRewards, {
-      softTtlMs: 5 * 60_000,
-      hardTtlMs: 30 * 60_000,
+      // Long soft TTL: in-isolate recomputes burn the 10ms free CPU budget.
+      // Data comes from the shared D1 cache; 6h is the disaster backstop.
+      softTtlMs: 55 * 60_000,
+      hardTtlMs: 6 * 60 * 60_000,
     });
 
     return NextResponse.json(

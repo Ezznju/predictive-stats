@@ -24,11 +24,12 @@ export async function GET() {
   const scanStart = Date.now();
   try {
     const result = await withTimeout(
-      // 48h hard TTL backstop: the daily pre-warm cron guarantees an entry
-      // <24h old, so visitors always get instant data + background refresh
-      // and never sit through a cold 10-25s scan.
-      withSharedCache<ArbitragePair[]>(CACHE_KEY, scanArbitrage, { hardTtlMs: 48 * 60 * 60 * 1000 }),
-      50000
+      // The scan is refreshed hourly by the GitHub action (Kalshi rate-limits
+      // Cloudflare's egress anyway). serveStaleOnly keeps this route READ-ONLY
+      // in the isolate: the multi-second scan never runs inside a Worker
+      // (free tier = 10ms CPU/request, it would die mid-scan).
+      withSharedCache<ArbitragePair[]>(CACHE_KEY, scanArbitrage, { serveStaleOnly: true }),
+      15000
     );
 
     // Pairs now carry real order-book depth (pair.depth) computed by the
@@ -53,10 +54,12 @@ export async function GET() {
       }
     );
   } catch (err) {
-    console.error('Arbitrage Scanner fetch error:', err);
+    // Empty cache + compute disabled — the hourly GitHub refresh hasn't
+    // landed yet. Return a soft "warming" state instead of a 502.
+    console.warn('[arbitrage-scanner] serving warming state:', String(err));
     return NextResponse.json(
-      { error: 'Failed to fetch market data' },
-      { status: 502 }
+      { pairs: [], cached: false, warming: true, updatedAt: null },
+      { headers: { 'Cache-Control': 'public, s-maxage=60' } }
     );
   }
 }

@@ -117,10 +117,34 @@ function scheduleBackground(p: Promise<unknown>): void {
 export async function withSharedCache<T>(
   key: string,
   compute: () => Promise<T>,
-  opts: { softTtlMs?: number; hardTtlMs?: number } = {}
+  opts: { softTtlMs?: number; hardTtlMs?: number; serveStaleOnly?: boolean } = {}
 ): Promise<CachedResult<T>> {
   const softTtl = opts.softTtlMs ?? DEFAULT_SOFT_TTL_MS;
   const hardTtl = opts.hardTtlMs ?? DEFAULT_HARD_TTL_MS;
+
+  // serveStaleOnly: for scans that are refreshed by an EXTERNAL worker
+  // (the hourly GitHub action posting to /api/board-ingest). Cloudflare's
+  // free tier gives a Worker 10ms of CPU per request, and these scans cost
+  // seconds — computing them in the isolate blows the limit and kills the
+  // response. With this flag the isolate only ever READS; on a complete
+  // miss it throws so the route can return a friendly warming state.
+  if (opts.serveStaleOnly) {
+    const mem = l1.get(key);
+    if (mem) {
+      return {
+        payload: mem.payload as T,
+        updatedAt: new Date(mem.ts).toISOString(),
+        stale: true,
+        source: 'memory',
+      };
+    }
+    const entry = await getCacheEntry<T>(key);
+    if (entry) {
+      l1.set(key, { payload: entry.payload, ts: Date.now() - entry.ageMs });
+      return { payload: entry.payload, updatedAt: entry.updatedAt, stale: true, source: 'shared' };
+    }
+    throw new Error(`[scanner-cache] ${key} is empty and compute is disabled`);
+  }
 
   const mem = l1.get(key);
   if (mem && Date.now() - mem.ts < softTtl) {

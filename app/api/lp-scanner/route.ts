@@ -34,9 +34,12 @@ export async function GET(request: NextRequest) {
     const result = await withSharedCache<ScannerMarket[]>(
       CACHE_KEY,
       fetchRewardMarkets,
-      // Same 48h backstop as arbitrage: daily cron keeps an entry <24h old,
-      // so cold visitors get instant data instead of a 60s+ paginated crawl.
-      { hardTtlMs: 48 * 60 * 60 * 1000 }
+      // Long soft TTL on purpose: the free Cloudflare tier allows 10ms of
+      // CPU per request, and re-running the paginated crawl in the isolate
+      // can blow that. Data refreshes hourly-ish from the shared cache; the
+      // 48h hard TTL is the disaster backstop (compute is allowed then, since
+      // Polymarket — unlike Kalshi — is reachable from Cloudflare).
+      { softTtlMs: 55 * 60 * 1000, hardTtlMs: 48 * 60 * 60 * 1000 }
     );
 
     // Enrich each market with risk-adjusted LP scoring

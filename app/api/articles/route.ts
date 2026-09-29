@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { getArticles, insertArticle } from '@/lib/db';
 import { submitIndexNow } from '@/lib/indexnow';
+import { purgeArticleUrls } from '@/lib/cache-purge';
 export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +68,9 @@ export async function POST(request: NextRequest) {
 
   await insertArticle(row);
   revalidateTag('articles');
+
+  // Edge cache (7d TTL) must be purged or a new article won't appear.
+  purgeArticleUrls(row.category_slug, row.slug).catch(() => {});
 
   if (row.category_slug && row.slug) {
     const url = `https://predictionsmarketfans.com/${row.category_slug}/${row.slug}`;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import { getArticleById, updateArticle, deleteArticle } from '@/lib/db';
 import { submitIndexNow } from '@/lib/indexnow';
+import { purgeArticleUrls } from '@/lib/cache-purge';
 export const runtime = 'edge';
 
 export const dynamic = 'force-dynamic';
@@ -56,8 +57,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   await updateArticle(params.id, row);
   revalidateTag('articles');
 
-  if (row.category_slug && row.slug) {
-    const url = `https://predictionsmarketfans.com/${row.category_slug}/${row.slug}`;
+  // Edge cache (7d TTL) must be purged on edit or the change won't show.
+  const finalArticle = await getArticleById(params.id).catch(() => null);
+  const slug = finalArticle?.slug ?? row.slug;
+  const categorySlug = finalArticle?.categorySlug ?? row.category_slug;
+  purgeArticleUrls(categorySlug, slug).catch(() => {});
+
+  if (categorySlug && slug) {
+    const url = `https://predictionsmarketfans.com/${categorySlug}/${slug}`;
     submitIndexNow([url]).catch(() => {});
   }
 
@@ -65,7 +72,15 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  // Grab slug/category before the row is gone so the edge cache can be purged.
+  const article = await getArticleById(params.id).catch(() => null);
+
   await deleteArticle(params.id);
   revalidateTag('articles');
+
+  if (article) {
+    purgeArticleUrls(article.categorySlug, article.slug).catch(() => {});
+  }
+
   return NextResponse.json({ ok: true });
 }

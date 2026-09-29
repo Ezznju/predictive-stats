@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter, Sora } from 'next/font/google';
 import './globals.css';
-import { Analytics } from '@vercel/analytics/react';
 
 export const runtime = 'edge';
 
@@ -107,7 +106,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="font-body min-h-screen flex flex-col">
         {children}
-        <Analytics />
+
       </body>
     </html>
   );

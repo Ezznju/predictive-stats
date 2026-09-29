@@ -21,10 +21,16 @@ export const PULSE_KEYS = {
     `pulse:wallet-trades:${address}`,
 } as const;
 
-/* ── TTLs (shorter than scanner tools — data changes fast) ── */
+/* ── TTLs ──
+ *
+ * These were 30s soft / 2min hard, which meant a full whale-data recompute
+ * ran inside the isolate constantly — and on Cloudflare's free tier a Worker
+ * gets 10ms CPU per request, so those recomputes were dying mid-run and
+ * spamming the CPU-limit notifications. 5min/30min keeps the tracker fresh
+ * enough (the feed also ticks client-side) at a fraction of the CPU. */
 
-const PULSE_SOFT_TTL_MS = 30 * 1000;   // 30 sec soft TTL
-const PULSE_HARD_TTL_MS = 2 * 60 * 1000;  // 2 min hard TTL
+const PULSE_SOFT_TTL_MS = 5 * 60 * 1000;   // 5 min soft TTL
+const PULSE_HARD_TTL_MS = 30 * 60 * 1000;  // 30 min hard TTL
 
 /** Wrapper around withSharedCache with Pulse-specific defaults. */
 export async function withPulseCache<T>(
