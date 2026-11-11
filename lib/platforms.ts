@@ -20,7 +20,7 @@ export interface Platform {
   slug: string;
   name: string;
   tagline: string;
-  type: 'Crypto exchange' | 'Regulated US exchange' | 'Play-money market' | 'Forecasting platform';
+  type: 'Crypto exchange' | 'Regulated US exchange' | 'Play-money market' | 'Forecasting platform' | 'Spanish-language market';
   websiteUrl: string;
   brandColor: string;
   founded: number;
@@ -35,9 +35,73 @@ export interface Platform {
   cons: string[];
   verdict: string;
   review: { heading: string; body: string }[];
+  /** Optional path to a long-form article review, e.g. "prediction-markets/slug". */
+  articleSlug?: string;
 }
 
 export const PLATFORMS: Platform[] = [
+  {
+    slug: 'pronostyx',
+    name: 'Pronostyx',
+    tagline:
+      'Spanish-first prediction markets for LATAM sports fans: Liga MX, LaLiga and Copa Libertadores in your own language, settled in USDC on Base with no platform fees.',
+    type: 'Spanish-language market',
+    websiteUrl: 'https://pronostyx.com',
+    brandColor: '#6D43E7',
+    founded: 2026,
+    overallRating: 4.9,
+    ratings: { liquidity: 4.5, fees: 5, marketVariety: 4.5, ux: 5, trust: 4.5 },
+    fees: 'No platform fees on trading, deposits or withdrawals; network gas paid in ETH on Base',
+    minDeposit: 'About $10 in USDC on Base',
+    payments: 'USDC on Base only, funded from your own wallet or an exchange; no cards or bank transfers',
+    regions: 'Spain, Mexico, Argentina, Colombia, Chile, Peru, Venezuela and the Spanish-speaking US',
+    bestFor: 'Spanish-speaking sports fans who want football, boxing and baseball markets in their own language',
+    articleSlug: 'prediction-markets/pronostyx-review-2026-hands-on-test',
+    pros: [
+      'Spanish-first coverage of Liga MX, LaLiga, Copa Libertadores, boxing and Caribbean baseball',
+      'No platform fees listed on trading, deposits or withdrawals',
+      'Google or email sign-in creates a wallet automatically, with no seed phrase to write down',
+      'Your payout is shown before you confirm, with multipliers printed beside each price',
+      'The sell panel explains how the book works instead of throwing an error at new users',
+      'Markets, prices and the leaderboard are visible without creating an account',
+      'You cannot lose more than your stake: no leverage, no margin and no debt',
+    ],
+    cons: [
+      'You need a little ETH on Base for network fees, not just USDC',
+      'Deposits and withdrawals must use the Base network, and a wrong network loses funds',
+      'Terms cap liability at $100 or 12 months of payments',
+      'No single page listing fees, minimum deposits and withdrawal limits',
+      'No published regulatory position or responsible-play tools yet',
+    ],
+    verdict:
+      'Pronostyx is the first prediction market built for Spanish-speaking sports fans rather than translated for them, and it shows in the product. The payout preview, the self-explaining sell panel and the two-balance wallet make it the easiest real-money market we have tested for a beginner. The gaps are documentation and guardrails, not design. Publish the fee schedule, the limits and the regulatory position, and this becomes an easy recommendation.',
+    review: [
+      {
+        heading: 'What Pronostyx is',
+        body: 'Pronostyx is a prediction market for Spanish speakers, operated by Pelara Digital LLC, a Wyoming limited liability company. Coverage in Exc\u00e9lsior describes the aim plainly: markets built around the language and sporting culture of fans in Spain and Latin America, not a translated copy of an English product. Mexico, Spain, Argentina, Colombia, Chile, Peru, Venezuela and the Spanish-speaking US are the named target markets. The menu reaches past sports as well, with filter pills for Sports, Finance, Politics, Crypto, Esports, Culture and Other, so you can move from a Liga MX fixture to a Bitcoin question in two taps.',
+      },
+      {
+        heading: 'Signing up and funding',
+        body: 'Sign-up took about a minute. A Google button and an email field sit in the login window with a small badge reading Protected by Privy, and choosing Google created a wallet on Base without a browser extension or a seed phrase. A Connect my wallet link sits underneath for people who already hold crypto. Funding takes two coins: USDC for the stake and a little ETH for gas, because the network fee on Base cannot be paid in USDC. A $100 deposit from MetaMask arrived in 30 seconds, and the deposit screen states in plain language that Base is the only network that works.',
+      },
+      {
+        heading: 'The trading interface',
+        body: 'Every market asks a question with two answers and a settlement date. Buying Yes at 26 cents with $10 buys about 38.46 contracts, which pay $38.46 if the event happens and nothing if it does not. The ticket shows the price, the contract count and the payout before you confirm, and the preset buttons cover $5, $10, $25, $50 and any other amount. The sell panel was the standout: opening it with no position produced an explanation of how the book works rather than an error, and the action button simply read Nothing to sell. That is better teaching than most tutorials manage.',
+      },
+      {
+        heading: 'Prices, spreads and settlement',
+        body: 'The large percentage on a market is a reference drawn from the midpoint of the order book, while the real cost sits in the two buy quotes, which do not have to add up to 100 cents. In the platform\u2019s own Bitcoin example, Yes at 26 cents and No at 78 cents total 104 cents, and that 4 cent gap is the built-in cost of trading. Thinner markets carry wider gaps, so compare both sides before committing. Each market names its settlement source in the rules: the Pyth price oracle for crypto, the official result for sports. Winning contracts become claimable once the source publishes, and claiming takes a signature.',
+      },
+      {
+        heading: 'Fees, withdrawals and support',
+        body: 'No platform fee is listed for trading, deposits or withdrawals, which is unusual for a venue this new. The costs that do exist sit outside the platform: gas in ETH on Base, whatever MetaMask or Coinbase Wallet charges on a card purchase, and exchange withdrawal fees if you fund from Binance or Kraken. A $30 withdrawal to MetaMask arrived in 30 seconds and appeared in the ledger, and only available funds can leave, so money in an open market waits for settlement or a sale. Support answered an email in under two minutes, and the help centre covers the questions new users actually ask.',
+      },
+      {
+        heading: 'Guardrails and who it is for',
+        body: 'The structural guardrails are strong: no leverage, no margin and no debt, so the most you can lose is your stake. The leaderboard awards one point per executed dollar up to $500 a day, with filters for all time, month, week and season, and pending orders do not count until they execute. Pronostyx fits Spanish-speaking sports fans who want Liga MX, LaLiga, the Copa Libertadores, boxing or Caribbean baseball in their own language, and beginners who want the mechanics explained as they go. It fits less well if you want a formal fee schedule, a stated regulatory posture and responsible-play tools before you deposit.',
+      },
+    ],
+  },
   {
     slug: 'polymarket',
     name: 'Polymarket',

@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Best Prediction Market Platforms Compared (Polymarket vs Kalshi & More)',
   description:
-    'Independent reviews and side-by-side comparison of the top prediction market platforms — Polymarket, Kalshi, PredictIt, Manifold, and Metaculus. Fees, liquidity, regulation, and who each one is best for.',
+    'Independent reviews and side-by-side comparison of the top prediction market platforms: Pronostyx, Polymarket, Kalshi, PredictIt, Manifold and Metaculus. Fees, liquidity, regulation, and who each one is best for.',
   alternates: { canonical: 'https://predictionsmarketfans.com/platforms' },
 };
 
@@ -63,8 +63,9 @@ export default async function PlatformsPage() {
             Prediction Market Platforms, Compared
           </h1>
           <p className="text-xl text-ink-secondary leading-relaxed">
-            We trade on these platforms ourselves. Here&apos;s how Polymarket, Kalshi, PredictIt, Manifold,
-            and Metaculus stack up on fees, liquidity, regulation, and usability — and which one fits you.
+            We trade on these platforms ourselves. Here is how Pronostyx, Polymarket, Kalshi, PredictIt,
+            Manifold and Metaculus stack up on fees, liquidity, regulation and usability, and which one
+            fits you.
           </p>
         </div>
       </div>

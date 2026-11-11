@@ -150,6 +150,24 @@ export default async function PlatformReviewPage({ params }: PageProps) {
           ))}
         </div>
 
+        {/* Full hands-on review article, when one exists */}
+        {platform.articleSlug && (
+          <Link
+            href={`/${platform.articleSlug}`}
+            className="flex items-center justify-between gap-4 bg-brand-yellow rounded-2xl border-2 border-black shadow-pop p-5 mb-12 hover:-translate-y-0.5 transition-transform"
+          >
+            <span>
+              <span className="font-display font-bold text-ink block">
+                Read the full hands-on review of {platform.name}
+              </span>
+              <span className="text-sm text-ink-muted">
+                Sign-up, deposits, a live trade, a withdrawal and every fee, tested on a real account.
+              </span>
+            </span>
+            <ArrowRight className="w-5 h-5 text-black flex-shrink-0" aria-hidden="true" />
+          </Link>
+        )}
+
         {/* Verdict + CTA */}
         <div className="relative overflow-hidden bg-white rounded-2xl border-2 border-black shadow-pop-lg p-6 sm:p-8 mb-12">
           <ZigzagLine width={90} className="absolute top-4 right-4 opacity-40 hidden sm:block" />
