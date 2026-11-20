@@ -2,13 +2,16 @@
  * Auto-linker for article HTML content.
  *
  * Scans rendered article HTML and injects internal links for key terms,
- * tools, and platform names — but only when the term isn't already inside
- * an <a>, <h1-h6>, or <code> tag. Each term is linked at most once per
- * article to keep things clean.
+ * tools, and platform names — strictly on plain text nodes outside HTML tags,
+ * attributes, <a>, <h1-h6>, <code>, <pre>, <script>, and <style>.
+ *
+ * Multi-word specific rules run BEFORE single-word platform rules so phrases
+ * like "most active Polymarket markets" or "Kalshi smart money" link to the
+ * dedicated tool page rather than being preempted by "Polymarket" / "Kalshi".
  */
 
 interface LinkRule {
-  /** Regex-safe terms (case-insensitive). First match wins per article. */
+  /** Plain-text terms (case-insensitive). First match wins per article. */
   terms: string[];
   href: string;
   /** Optional title attribute for the link */
@@ -16,9 +19,9 @@ interface LinkRule {
 }
 
 const LINK_RULES: LinkRule[] = [
-  // Tools
+  // Multi-word tool & live-board phrases FIRST so they aren't preempted by single platform names
   {
-    terms: ['LP scanner', 'LP reward scanner', 'liquidity reward scanner'],
+    terms: ['LP reward scanner', 'liquidity reward scanner', 'LP scanner'],
     href: '/tools/lp-scanner',
     title: 'Free LP Reward Scanner tool',
   },
@@ -27,7 +30,53 @@ const LINK_RULES: LinkRule[] = [
     href: '/tools/arbitrage-scanner',
     title: 'Free Arbitrage Scanner tool',
   },
-  // Platforms (only link to our review, not external)
+  {
+    terms: [
+      'most active Polymarket markets',
+      'active Polymarket markets',
+      'hot Polymarket markets',
+      'Polymarket trending markets',
+      'trending markets',
+    ],
+    href: '/polymarket-trending-markets',
+    title: 'Live Polymarket trending markets board',
+  },
+  {
+    terms: [
+      'most active Kalshi markets',
+      'active Kalshi markets',
+      'hot Kalshi markets',
+      'Kalshi trending markets',
+    ],
+    href: '/kalshi-trending-markets',
+    title: 'Live Kalshi trending markets board',
+  },
+  {
+    terms: [
+      'where big money is resting on Kalshi',
+      'Kalshi order book walls',
+      'Kalshi smart money',
+      'Kalshi order book',
+    ],
+    href: '/kalshi-smart-money',
+    title: 'Kalshi Smart Money Signals',
+  },
+  {
+    terms: ['prediction market platforms', 'prediction market sites', 'best prediction markets'],
+    href: '/platforms',
+    title: 'Compare prediction market platforms',
+  },
+  {
+    terms: ['liquidity provider rewards', 'liquidity rewards', 'LP rewards'],
+    href: '/tools/lp-scanner',
+    title: 'Scan current LP rewards',
+  },
+  {
+    terms: ['cross-platform arbitrage', 'prediction market arbitrage'],
+    href: '/tools/arbitrage-scanner',
+    title: 'Find arbitrage opportunities',
+  },
+  // Single-word platform review links LAST
   {
     terms: ['Polymarket'],
     href: '/platforms/polymarket',
@@ -48,99 +97,76 @@ const LINK_RULES: LinkRule[] = [
     href: '/platforms/predictit',
     title: 'PredictIt review',
   },
-  // Key pages
-  {
-    terms: ['prediction market platforms', 'prediction market sites', 'best prediction markets'],
-    href: '/platforms',
-    title: 'Compare prediction market platforms',
-  },
-  {
-    terms: ['LP rewards', 'liquidity provider rewards', 'liquidity rewards'],
-    href: '/tools/lp-scanner',
-    title: 'Scan current LP rewards',
-  },
-  {
-    terms: ['cross-platform arbitrage', 'prediction market arbitrage'],
-    href: '/tools/arbitrage-scanner',
-    title: 'Find arbitrage opportunities',
-  },
-  // Before the platform rules so "Polymarket trending markets" links here,
-  // not to the Polymarket review.
-  {
-    terms: ['trending markets', 'most active Polymarket markets', 'active Polymarket markets', 'hot Polymarket markets'],
-    href: '/polymarket-trending-markets',
-    title: 'Live Polymarket trending markets board',
-  },
-  {
-    terms: ['most active Kalshi markets', 'active Kalshi markets', 'hot Kalshi markets', 'Kalshi trending markets'],
-    href: '/kalshi-trending-markets',
-    title: 'Live Kalshi trending markets board',
-  },
-  {
-    terms: ['Kalshi smart money', 'Kalshi order book', 'Kalshi order book walls', 'where big money is resting on Kalshi'],
-    href: '/kalshi-smart-money',
-    title: 'Kalshi Smart Money Signals',
-  },
 ];
 
+const SKIP_TAGS = new Set(['a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'code', 'pre', 'script', 'style', 'figcaption']);
+
 /**
- * Inject internal links into article HTML.
- *
- * Rules:
- * - Each rule fires at most once (first occurrence only)
- * - Never links inside existing <a>, heading, or <code> tags
- * - Skips if the term already links to the same href elsewhere
+ * Inject internal links into article HTML safely on text nodes only.
  */
 export function autoLink(html: string): string {
-  let result = html;
+  // Extract existing hrefs so we don't double-link to a destination already present
+  const existingHrefs = new Set(
+    Array.from(html.matchAll(/href=["']([^"']+)["']/gi)).map((m) => m[1])
+  );
   const alreadyLinked = new Set<string>();
 
-  // Extract existing hrefs so we don't double-link
-  const existingHrefs = new Set(
-    Array.from(html.matchAll(/href=["']([^"']+)["']/g)).map((m) => m[1])
-  );
+  // Split HTML into tag tokens (<...>) and plain text tokens
+  const tokens = html.split(/(<[^>]+>)/g);
 
   for (const rule of LINK_RULES) {
-    if (existingHrefs.has(rule.href)) {
-      // Article already links to this destination — skip
+    if (existingHrefs.has(rule.href) || alreadyLinked.has(rule.href)) {
       continue;
     }
-    if (alreadyLinked.has(rule.href)) continue;
+
+    let linkedThisRule = false;
 
     for (const term of rule.terms) {
-      // Build a regex that matches the term only when NOT inside a tag attribute
-      // or inside <a>...</a>, <h1-6>...</h6>, <code>...</code>
+      if (linkedThisRule) break;
       const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const pattern = new RegExp(
-        `(?<![<\\/\\w])(?<!<a[^>]*>.*?)\\b(${escaped})\\b(?![^<]*<\\/a>)(?![^<]*<\\/h[1-6]>)(?![^<]*<\\/code>)`,
-        'i'
-      );
+      const regex = new RegExp(`\\b(${escaped})\\b`, 'i');
 
-      const match = result.match(pattern);
-      if (match && match.index !== undefined) {
-        // Check we're not inside a tag
-        const before = result.slice(0, match.index);
-        const openA = (before.match(/<a[\s>]/gi) || []).length;
-        const closeA = (before.match(/<\/a>/gi) || []).length;
-        if (openA > closeA) continue; // inside an <a> tag
+      const depth: Record<string, number> = {};
 
-        const openH = (before.match(/<h[1-6][\s>]/gi) || []).length;
-        const closeH = (before.match(/<\/h[1-6]>/gi) || []).length;
-        if (openH > closeH) continue; // inside a heading
+      for (let i = 0; i < tokens.length; i++) {
+        const tok = tokens[i];
+        if (!tok) continue;
 
-        const openCode = (before.match(/<code[\s>]/gi) || []).length;
-        const closeCode = (before.match(/<\/code>/gi) || []).length;
-        if (openCode > closeCode) continue; // inside <code>
+        if (tok.startsWith('<')) {
+          const closeMatch = tok.match(/^<\/([a-z0-9]+)/i);
+          if (closeMatch) {
+            const tag = closeMatch[1].toLowerCase();
+            if (SKIP_TAGS.has(tag) && depth[tag] > 0) depth[tag]--;
+          } else if (!tok.endsWith('/>')) {
+            const openMatch = tok.match(/^<([a-z0-9]+)[\s>]/i);
+            if (openMatch) {
+              const tag = openMatch[1].toLowerCase();
+              if (SKIP_TAGS.has(tag)) depth[tag] = (depth[tag] || 0) + 1;
+            }
+          }
+          continue;
+        }
 
-        const original = match[0];
-        const titleAttr = rule.title ? ` title="${rule.title}"` : '';
-        const link = `<a href="${rule.href}"${titleAttr}>${original}</a>`;
-        result = result.slice(0, match.index) + link + result.slice(match.index + original.length);
-        alreadyLinked.add(rule.href);
-        break; // move to next rule
+        // Skip text inside forbidden tags
+        const inSkipped = Object.values(depth).some((d) => d > 0);
+        if (inSkipped) continue;
+
+        const m = tok.match(regex);
+        if (m && m.index !== undefined) {
+          const original = m[0];
+          const titleAttr = rule.title ? ` title="${rule.title}"` : '';
+          const before = tok.slice(0, m.index);
+          const after = tok.slice(m.index + original.length);
+          // Replace the single text token with [before, <a>, original, </a>, after]
+          // so subsequent rules see the newly inserted <a> tag as forbidden!
+          tokens.splice(i, 1, before, `<a href="${rule.href}"${titleAttr}>`, original, '</a>', after);
+          alreadyLinked.add(rule.href);
+          linkedThisRule = true;
+          break;
+        }
       }
     }
   }
 
-  return result;
+  return tokens.join('');
 }

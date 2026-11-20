@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Twitter, Linkedin, Send, MessageCircle, Link2, Check } from 'lucide-react';
+import { stripHtml } from '@/lib/seo-utils';
 
 interface ShareButtonsProps {
   url: string;
@@ -10,6 +11,7 @@ interface ShareButtonsProps {
 
 export function ShareButtons({ url, title }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
+  const cleanTitle = stripHtml(title);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(url);
@@ -18,41 +20,43 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
   };
 
   return (
-    <div className="flex items-center gap-3 mt-6 pb-8 border-b border-black/10">
+    <div className="flex flex-wrap items-center gap-3 mt-6 pb-2">
       <span className="text-sm text-ink-muted font-medium">Share:</span>
       <a
-        href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`}
+        href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(cleanTitle)}`}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="Share on X (Twitter)"
         className="p-2 bg-black/5 rounded-lg text-ink-secondary hover:text-black hover:bg-black/10 transition-all"
       >
-        <Twitter className="w-4 h-4" />
+        <Twitter className="w-4 h-4" aria-hidden="true" />
       </a>
       <a
-        href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`}
+        href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(url)}&title=${encodeURIComponent(cleanTitle)}`}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="Share on LinkedIn"
         className="p-2 bg-black/5 rounded-lg text-ink-secondary hover:text-black hover:bg-black/10 transition-all"
       >
-        <Linkedin className="w-4 h-4" />
+        <Linkedin className="w-4 h-4" aria-hidden="true" />
       </a>
       <a
-        href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`}
+        href={`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(cleanTitle)}`}
         target="_blank"
         rel="noopener noreferrer"
         className="p-2 bg-black/5 rounded-lg text-ink-secondary hover:text-black hover:bg-black/10 transition-all"
         aria-label="Share on Telegram"
       >
-        <Send className="w-4 h-4" />
+        <Send className="w-4 h-4" aria-hidden="true" />
       </a>
       <a
-        href={`https://wa.me/?text=${encodeURIComponent(`${title} ${url}`)}`}
+        href={`https://wa.me/?text=${encodeURIComponent(`${cleanTitle} ${url}`)}`}
         target="_blank"
         rel="noopener noreferrer"
         className="p-2 bg-black/5 rounded-lg text-ink-secondary hover:text-black hover:bg-black/10 transition-all"
         aria-label="Share on WhatsApp"
       >
-        <MessageCircle className="w-4 h-4" />
+        <MessageCircle className="w-4 h-4" aria-hidden="true" />
       </a>
       <button
         onClick={handleCopy}

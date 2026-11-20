@@ -9,6 +9,7 @@ import { AffiliateDisclosure } from '@/components/AffiliateDisclosure';
 import { TrackedLink } from '@/components/TrackedLink';
 import { RatingBadge, RatingBars } from '@/components/PlatformRating';
 import { BoldCircle, DaisyShape, HalfCircle, ZigzagLine } from '@/components/GeometricShapes';
+import { DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,10 +20,25 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const platform = getPlatformBySlug(params.slug);
   if (!platform) return {};
+  const title = `${platform.name} Review ${new Date().getFullYear()}: Fees, Liquidity & Verdict`;
+  const description = `${platform.name} review: ${platform.tagline} Rated ${platform.overallRating}/5 after hands-on testing. Fees, deposits, regulation, pros and cons.`;
   return {
-    title: `${platform.name} Review ${new Date().getFullYear()}: Fees, Liquidity & Verdict`,
-    description: `${platform.name} review: ${platform.tagline} Rated ${platform.overallRating}/5 after hands-on testing. Fees, deposits, regulation, pros and cons.`,
-    alternates: { canonical: `https://predictionsmarketfans.com/platforms/${platform.slug}` },
+    title,
+    description,
+    alternates: { canonical: `${SITE_URL}/platforms/${platform.slug}` },
+    openGraph: {
+      type: 'article',
+      url: `${SITE_URL}/platforms/${platform.slug}`,
+      title,
+      description,
+      images: [DEFAULT_OG_IMAGE],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/twitter-image'],
+    },
   };
 }
 
@@ -140,14 +156,16 @@ export default async function PlatformReviewPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Review body */}
-        <div className="prose prose-lg max-w-none mb-12 prose-headings:font-display prose-headings:text-ink prose-p:text-ink-secondary">
-          {platform.review.map((section) => (
-            <section key={section.heading}>
-              <h2>{section.heading}</h2>
-              <p>{section.body}</p>
-            </section>
-          ))}
+        {/* Review body — white reading sheet for comfortable long-form reading */}
+        <div className="bg-white rounded-2xl border-2 border-black shadow-pop-lg p-6 sm:p-10 mb-12">
+          <div className="prose prose-lg max-w-[66ch] mx-auto prose-headings:font-display prose-headings:font-bold prose-headings:text-ink prose-p:text-ink-secondary prose-p:leading-relaxed">
+            {platform.review.map((section) => (
+              <section key={section.heading}>
+                <h2>{section.heading}</h2>
+                <p>{section.body}</p>
+              </section>
+            ))}
+          </div>
         </div>
 
         {/* Full hands-on review article, when one exists */}

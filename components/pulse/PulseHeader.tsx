@@ -16,16 +16,16 @@ export function PulseHeader({
     <div className="mb-8">
       {/* Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav className="flex items-center gap-1.5 text-xs text-ink-faint mb-3">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-medium text-black/80 mb-3">
           {breadcrumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1.5">
-              {i > 0 && <ChevronRight className="w-3 h-3" />}
+              {i > 0 && <ChevronRight className="w-3 h-3" aria-hidden="true" />}
               {crumb.href ? (
-                <Link href={crumb.href} className="hover:text-black transition-colors">
+                <Link href={crumb.href} className="hover:text-black hover:underline transition-colors">
                   {crumb.label}
                 </Link>
               ) : (
-                <span className="text-ink font-medium">{crumb.label}</span>
+                <span className="text-black font-bold">{crumb.label}</span>
               )}
             </span>
           ))}

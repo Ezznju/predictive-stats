@@ -17,13 +17,30 @@ import {
   DiamondShape,
 } from '@/components/GeometricShapes';
 
+import { DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo-utils';
+
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Best Prediction Market Platforms Compared (Polymarket vs Kalshi & More)',
   description:
     'Independent reviews and side-by-side comparison of the top prediction market platforms: Pronostyx, Polymarket, Kalshi, PredictIt, Manifold and Metaculus. Fees, liquidity, regulation, and who each one is best for.',
-  alternates: { canonical: 'https://predictionsmarketfans.com/platforms' },
+  alternates: { canonical: `${SITE_URL}/platforms` },
+  openGraph: {
+    type: 'website',
+    url: `${SITE_URL}/platforms`,
+    title: 'Best Prediction Market Platforms Compared (Polymarket vs Kalshi & More)',
+    description:
+      'Independent reviews and side-by-side comparison of Pronostyx, Polymarket, Kalshi, PredictIt, Manifold and Metaculus.',
+    images: [DEFAULT_OG_IMAGE],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Best Prediction Market Platforms Compared (Polymarket vs Kalshi & More)',
+    description:
+      'Independent reviews and side-by-side comparison of Pronostyx, Polymarket, Kalshi, PredictIt, Manifold and Metaculus.',
+    images: ['/twitter-image'],
+  },
 };
 
 export default async function PlatformsPage() {

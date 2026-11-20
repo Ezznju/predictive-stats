@@ -87,7 +87,7 @@ export default async function WalletPage({ params }: WalletPageProps) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(jsonLd)}} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd)}} />
 
-      <main className="min-h-screen bg-surface">
+      <div className="min-h-screen bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
           <PulseHeader
             title={data.username}
@@ -174,7 +174,7 @@ export default async function WalletPage({ params }: WalletPageProps) {
             )}
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }

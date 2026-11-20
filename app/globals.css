@@ -176,19 +176,20 @@
 
 .prose table th {
   background: #0b1120;
-  color: #FF00B8 !important;
+  color: #FFE642 !important;
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 12px 18px;
-  border-bottom: 2px solid #000;
+  border-bottom: 3px solid #FF00B8;
   text-align: left;
 }
 
 .prose table th strong,
 .prose table th p {
-  color: #FF00B8;
+  color: #FFE642;
   margin: 0;
 }
 
@@ -250,17 +251,16 @@
 /* ── Pull quotes in article prose ── */
 .prose blockquote {
   margin: 2em 0;
-  padding: 6px 0 6px 24px;
-  border-left: 10px solid #000;
+  padding: 10px 0 10px 24px;
+  border-left: 6px solid #000;
   background: transparent;
 }
 
 .prose blockquote p {
-  font-family: 'Sora', system-ui, sans-serif;
+  font-family: var(--font-sora), system-ui, sans-serif;
   font-weight: 700;
-  font-size: clamp(20px, 3vw, 30px);
-  line-height: 1.3;
-  text-transform: uppercase;
+  font-size: clamp(19px, 2.4vw, 25px);
+  line-height: 1.4;
   color: #0b1120;
   margin: 0;
 }
@@ -300,13 +300,14 @@
 
 .prose ul:not(.list-none):not(.timeline-list) li,
 .prose ol:not(.list-none) li {
-  padding: 12px 18px 12px 50px;
+  padding: 12px 18px 12px 52px;
   border-bottom: 2px solid rgba(0,0,0,0.1);
-  font-size: 17px;
+  font-size: 16.5px;
+  line-height: 1.65;
   font-weight: 500;
   color: #1d1606;
   position: relative;
-  transition: background 0.15s, padding-left 0.15s;
+  transition: background 0.15s;
 }
 
 .prose ul:not(.list-none):not(.timeline-list) li:last-child,
@@ -317,7 +318,6 @@
 .prose ul:not(.list-none):not(.timeline-list) li:hover,
 .prose ol:not(.list-none) li:hover {
   background: #FFFDF3;
-  padding-left: 58px;
 }
 
 /* Colored dots for ul */
@@ -325,10 +325,9 @@
   content: "";
   position: absolute;
   left: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
+  top: 1.05em;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   border: 2px solid #000;
 }
@@ -339,28 +338,34 @@
 .prose ul:not(.list-none):not(.timeline-list) li:nth-child(5n+4)::before { background: #2BD96E; }
 .prose ul:not(.list-none):not(.timeline-list) li:nth-child(5n+5)::before { background: #9D5CFF; }
 
-/* Colored dots for ol — same colors, ignores numbering */
+/* Numbered colored badges for ol (preserves step order!) */
 .prose ol:not(.list-none) li {
   counter-increment: styled-ol;
 }
 
 .prose ol:not(.list-none) li::before {
-  content: "";
+  content: counter(styled-ol);
   position: absolute;
-  left: 18px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
+  left: 14px;
+  top: 0.78em;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
   border-radius: 50%;
   border: 2px solid #000;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: #0b1120;
 }
 
-.prose ol:not(.list-none) li:nth-child(5n+1)::before { background: #FF00B8; }
-.prose ol:not(.list-none) li:nth-child(5n+2)::before { background: #29C5F6; }
-.prose ol:not(.list-none) li:nth-child(5n+3)::before { background: #FFE642; }
-.prose ol:not(.list-none) li:nth-child(5n+4)::before { background: #2BD96E; }
-.prose ol:not(.list-none) li:nth-child(5n+5)::before { background: #9D5CFF; }
+.prose ol:not(.list-none) li:nth-child(5n+1)::before { background: #FF00B8; color: #fff; }
+.prose ol:not(.list-none) li:nth-child(5n+2)::before { background: #29C5F6; color: #0b1120; }
+.prose ol:not(.list-none) li:nth-child(5n+3)::before { background: #FFE642; color: #0b1120; }
+.prose ol:not(.list-none) li:nth-child(5n+4)::before { background: #2BD96E; color: #0b1120; }
+.prose ol:not(.list-none) li:nth-child(5n+5)::before { background: #9D5CFF; color: #fff; }
 
 /* ── Figure cards in article prose ── */
 .prose figure {
@@ -386,7 +391,7 @@
 }
 
 .prose figcaption {
-  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.1em;
@@ -400,7 +405,7 @@
 }
 
 .prose figure p.fig-note {
-  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 12px;
   color: #5b4521;
   margin-top: 14px;
@@ -426,7 +431,7 @@
   }
 
   .article-layout-toc .toc-label {
-    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-family: var(--font-mono), ui-monospace, monospace;
     font-weight: 700;
     font-size: 9.5px;
     letter-spacing: 0.18em;
@@ -443,7 +448,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-family: var(--font-mono), ui-monospace, monospace;
     font-size: 11px;
     color: #1d1606;
     text-decoration: none;
@@ -482,20 +487,56 @@
   .dl-cell, .dl-cell:hover { transform: none; }
 }
 
-/* ── Article title — bold condensed uppercase ── */
+/* ── Article title — bold display Sora ── */
 .article-title {
   color: #0b1120;
-  text-transform: uppercase;
-  font-family: 'Sora', system-ui, sans-serif;
+  font-family: var(--font-sora), system-ui, sans-serif;
   font-weight: 800;
-  font-size: clamp(32px, 4vw, 56px);
-  line-height: 0.98;
-  letter-spacing: -0.04em;
+  font-size: clamp(30px, 4vw, 50px);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
 }
 
 .article-title .hl-yellow {
   color: #FF00B8;
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.15);
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.12);
+}
+
+/* ── Editorial article reading measure & link polish ── */
+.article-prose > p,
+.article-prose > h2,
+.article-prose > h3,
+.article-prose > h4,
+.article-prose > ul,
+.article-prose > ol,
+.article-prose > blockquote,
+.article-prose > .auto-pullquote,
+.article-prose > hr {
+  max-width: 66ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.article-prose > p {
+  font-size: 1.075rem;
+  line-height: 1.78;
+  color: #1A1A1A;
+}
+
+.article-prose a:not(.heading-anchor) {
+  color: #0b1120;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 121, 0, 0.85);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  border-radius: 3px;
+}
+
+.article-prose a:not(.heading-anchor):hover {
+  background-color: rgba(255, 230, 66, 0.55);
+  color: #000;
 }
 
 /* ── Highlight marker effect ── */
@@ -507,19 +548,28 @@
   -webkit-box-decoration-break: clone;
 }
 
-/* ── Drop cap for first paragraph ── */
-.prose > p:first-of-type::first-letter {
-  font-family: 'Sora', system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 70px;
-  line-height: 0.78;
+/* ── Drop cap for first paragraph (editorial articles ONLY, not legal/about pages) ── */
+.article-prose > p:first-of-type::first-letter {
+  font-family: var(--font-sora), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 62px;
+  line-height: 0.82;
   float: left;
   color: #0b1120;
   background: #FFE642;
   border: 2px solid #000;
   padding: 8px 12px;
-  margin: 6px 14px 0 0;
+  margin: 4px 14px 2px 0;
   box-shadow: 4px 4px 0 #000;
+}
+
+@media (max-width: 640px) {
+  .article-prose > p:first-of-type::first-letter {
+    font-size: 46px;
+    padding: 6px 10px;
+    margin: 2px 10px 0 0;
+    box-shadow: 3px 3px 0 #000;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -617,81 +667,60 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Global h2 — numbered chapter format
-   Counter resets per <main> so each page starts at 01.
-   Scoped to .prose so it only affects article content, not cards.
+   Editorial h2 — numbered chapter format
+   Scoped strictly to .article-prose so legal/about/platform pages stay clean.
    ══════════════════════════════════════════════════════════════════════ */
 
 main {
   counter-reset: h2-section;
 }
 
-.prose h2 {
+.article-prose h2 {
   counter-increment: h2-section !important;
   display: flex !important;
   align-items: center !important;
-  gap: 18px !important;
-  font-family: 'Sora', system-ui, sans-serif !important;
-  font-weight: 700 !important;
-  font-size: clamp(20px, 2.8vw, 32px) !important;
-  letter-spacing: -0.01em !important;
-  text-transform: uppercase !important;
+  gap: 14px !important;
+  font-family: var(--font-sora), system-ui, sans-serif !important;
+  font-weight: 800 !important;
+  font-size: clamp(21px, 2.5vw, 29px) !important;
+  letter-spacing: -0.02em !important;
   color: #0b1120 !important;
   background: none !important;
   padding: 0 !important;
-  margin: 0 0 22px !important;
-  line-height: 1.12 !important;
+  margin-top: 2.5rem !important;
+  margin-bottom: 1.1rem !important;
+  line-height: 1.2 !important;
   position: relative !important;
 }
 
-.prose h2::before {
+.article-prose h2::before {
   content: counter(h2-section, decimal-leading-zero) !important;
   flex-shrink: 0 !important;
   display: grid !important;
   place-items: center !important;
-  width: 54px !important;
-  height: 54px !important;
-  font-family: 'Sora', system-ui, sans-serif !important;
+  width: 44px !important;
+  height: 44px !important;
+  font-family: var(--font-mono), ui-monospace, monospace !important;
   font-weight: 700 !important;
-  font-size: 22px !important;
-  letter-spacing: 0.04em !important;
+  font-size: 16px !important;
+  letter-spacing: 0.02em !important;
   color: #0b1120 !important;
   border: 2px solid #000 !important;
-  box-shadow: 4px 4px 0 #000 !important;
-  transform: rotate(-4deg) !important;
+  border-radius: 10px !important;
+  box-shadow: 3px 3px 0 #000 !important;
+  transform: rotate(-3deg) !important;
 }
 
-/* Cycle badge colors: magenta → cyan → yellow → green → orange */
-.prose h2:nth-of-type(5n+1)::before { background: #FF00B8 !important; color: #fff !important; }
-.prose h2:nth-of-type(5n+2)::before { background: #29C5F6 !important; }
-.prose h2:nth-of-type(5n+3)::before { background: #FFE642 !important; }
-.prose h2:nth-of-type(5n+4)::before { background: #2BD96E !important; color: #fff !important; }
-.prose h2:nth-of-type(5n+5)::before { background: #FF7900 !important; color: #fff !important; }
-
-/* Colored left accent bar */
-.prose h2::after {
-  content: "" !important;
-  position: absolute !important;
-  left: -22px !important;
-  top: 6px !important;
-  bottom: 6px !important;
-  width: 8px !important;
-  border-radius: 4px !important;
-}
-
-.prose h2:nth-of-type(5n+1)::after { background: #FF00B8 !important; }
-.prose h2:nth-of-type(5n+2)::after { background: #29C5F6 !important; }
-.prose h2:nth-of-type(5n+3)::after { background: #FFE642 !important; }
-.prose h2:nth-of-type(5n+4)::after { background: #2BD96E !important; }
-.prose h2:nth-of-type(5n+5)::after { background: #FF7900 !important; }
-
-@media (max-width: 520px) {
-  .prose h2::after { display: none !important; }
-  .prose h2 { padding-left: 0 !important; }
-}
+/* Cycle badge colors with WCAG AA+ ink contrast:
+   magenta (white ink), cyan/yellow/green/orange (dark #0b1120 ink) */
+.article-prose h2:nth-of-type(5n+1)::before { background: #FF00B8 !important; color: #fff !important; }
+.article-prose h2:nth-of-type(5n+2)::before { background: #29C5F6 !important; color: #0b1120 !important; }
+.article-prose h2:nth-of-type(5n+3)::before { background: #FFE642 !important; color: #0b1120 !important; }
+.article-prose h2:nth-of-type(5n+4)::before { background: #2BD96E !important; color: #0b1120 !important; }
+.article-prose h2:nth-of-type(5n+5)::before { background: #FF7900 !important; color: #0b1120 !important; }
 
 /* s2-root overrides */
-.s2-root .prose h2::before { color: #0b1120 !important; }
+.s2-root .article-prose h2::before { color: #0b1120 !important; }
 
 /* ══════════════════════════════════════════════════════════════════════
    SIDE·TWO — Esports Second-Half LP Desk
@@ -720,7 +749,7 @@ main {
   --s2-mag:  #FF00B8;
   --s2-disp: 'Space Grotesk', var(--font-sora), system-ui, sans-serif;
   --s2-body: 'Inter', var(--font-inter), system-ui, sans-serif;
-  --s2-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --s2-mono: var(--font-mono), ui-monospace, 'Courier New', monospace;
 
   background: var(--s2-bg);
   color: var(--s2-ink);

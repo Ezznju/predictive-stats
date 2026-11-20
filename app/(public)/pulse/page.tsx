@@ -32,13 +32,17 @@ export const metadata: Metadata = {
 export default function PulsePage() {
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
+    '@type': 'WebApplication',
     name: 'Polymarket Whale Tracker — Live Whale Feed',
     description:
-      'Real-time whale intelligence on Polymarket. Track large trades, monitor top wallets, and spot market-moving activity.',
+      'Real-time whale intelligence on Polymarket. Track large trades, monitor top wallets, and spot market-moving activity as it happens.',
     url: 'https://predictionsmarketfans.com/pulse',
+    applicationCategory: 'FinanceApplication',
+    operatingSystem: 'Any',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
     isPartOf: {
       '@type': 'WebSite',
+      '@id': 'https://predictionsmarketfans.com/#website',
       name: 'Predictions Market Fans',
       url: 'https://predictionsmarketfans.com',
     },
@@ -74,7 +78,7 @@ export default function PulsePage() {
         dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd)}}
       />
 
-      <main className="min-h-screen bg-surface">
+      <div className="min-h-screen bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
           <PulseHeader
             breadcrumbs={[
@@ -127,7 +131,7 @@ export default function PulsePage() {
             </section>
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }

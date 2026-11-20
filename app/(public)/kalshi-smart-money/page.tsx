@@ -65,19 +65,27 @@ function SignalRow({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="font-display font-bold text-[14px] leading-tight line-clamp-2 text-black">{s.question}</div>
-          <div className="flex flex-wrap items-center gap-2.5 mt-1.5 text-xs">
-            <span className="font-mono font-bold text-neon-green">{(s.yesPrice * 100).toFixed(0)}¢ YES</span>
-            <span className="font-mono text-ink-faint">{fmtVol(s.volume24h)} vol/24h</span>
+          <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs">
+            <span className="font-mono font-bold text-black bg-neon-green/35 border border-black/40 rounded px-1.5 py-0.5">
+              {(s.yesPrice * 100).toFixed(0)}¢ YES
+            </span>
+            <span className="font-mono font-medium text-ink-muted">{fmtVol(s.volume24h)} vol/24h</span>
             {showResting && (
               <span className="font-mono font-bold text-ink">{fmtVol(s.totalResting)} resting</span>
             )}
             {showChange && s.priceChangeCents != null && (
-              <span className={`font-mono font-bold ${s.priceChangeCents >= 0 ? 'text-neon-green' : 'text-brand-pink'}`}>
+              <span
+                className={`font-mono font-bold px-1.5 py-0.5 rounded border border-black/25 ${
+                  s.priceChangeCents >= 0 ? 'bg-neon-green/30 text-[#0B5D2A]' : 'bg-brand-pink/15 text-[#9D174D]'
+                }`}
+              >
                 {s.priceChangeCents >= 0 ? '+' : ''}{s.priceChangeCents.toFixed(1)}¢
               </span>
             )}
             {showDays && s.daysLeft != null && (
-              <span className="font-mono text-brand-orange font-bold">{s.daysLeft}d left</span>
+              <span className="font-mono font-bold text-[#9A3412] bg-brand-amber/30 border border-black/25 rounded px-1.5 py-0.5">
+                {s.daysLeft}d left
+              </span>
             )}
           </div>
           {showResting && s.biggestWall && (
@@ -168,9 +176,12 @@ export default async function KalshiSmartMoneyPage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org',
-        '@type': 'WebPage',
+        '@type': 'WebApplication',
         name: 'Kalshi Smart Money Signals',
         url: `${BASE}/kalshi-smart-money`,
+        applicationCategory: 'FinanceApplication',
+        operatingSystem: 'Any',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
       }) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
         '@context': 'https://schema.org',
@@ -192,23 +203,23 @@ export default async function KalshiSmartMoneyPage() {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         {/* Breadcrumbs */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-ink-muted mb-5">
-          <Link href="/" className="hover:text-ink transition-colors">Home</Link>
-          <ChevronRight className="w-3 h-3" />
-          <span className="text-ink-secondary font-semibold">Kalshi Smart Money</span>
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-black/80 mb-5">
+          <Link href="/" className="hover:text-black hover:underline transition-colors">Home</Link>
+          <ChevronRight className="w-3 h-3" aria-hidden="true" />
+          <span className="text-black font-bold">Kalshi Smart Money</span>
         </nav>
 
         {/* Header */}
         <header className="mb-8">
           <div className="flex items-center gap-3 flex-wrap">
             <div className="heading-chip bg-neon-green" />
-            <h1 className="font-display font-bold text-3xl md:text-4xl lg:text-5xl leading-[0.98] uppercase tracking-tight">
+            <h1 className="font-display font-extrabold text-3xl md:text-4xl lg:text-5xl leading-[1.06] tracking-tight text-ink">
               Kalshi Smart Money Signals
             </h1>
           </div>
           <div className="flex items-center gap-3 mt-4 flex-wrap">
             <ScannerLiveStatus updatedAt={renderedAt} />
-            <span className="text-xs text-ink-faint font-semibold">Live order book data from Kalshi&apos;s public API</span>
+            <span className="text-xs text-black/80 font-semibold">Live order book data from Kalshi&apos;s public API</span>
           </div>
           <p className="text-[16.5px] text-ink-secondary mt-4 leading-relaxed max-w-3xl">
             Where serious capital is resting on Kalshi right now — the markets with{' '}

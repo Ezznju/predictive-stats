@@ -251,12 +251,12 @@ export default function LPScannerPage() {
         <div className="absolute bottom-2 right-10 w-14 h-14 rounded-full bg-neon-lime border-2 border-black opacity-60 hidden md:block" />
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
-          <nav className="flex items-center gap-2 text-xs text-ink-muted mb-4">
-            <Link href="/" className="hover:text-ink transition-colors">Home</Link>
-            <ChevronRight className="w-3 h-3" />
-            <Link href="/tools" className="hover:text-ink transition-colors">Tools</Link>
-            <ChevronRight className="w-3 h-3" />
-            <span className="text-ink-secondary">LP Scanner</span>
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-black/80 mb-4">
+            <Link href="/" className="hover:text-black hover:underline transition-colors">Home</Link>
+            <ChevronRight className="w-3 h-3" aria-hidden="true" />
+            <Link href="/tools" className="hover:text-black hover:underline transition-colors">Tools</Link>
+            <ChevronRight className="w-3 h-3" aria-hidden="true" />
+            <span className="text-black font-bold">LP Scanner</span>
           </nav>
 
           <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -299,7 +299,7 @@ export default function LPScannerPage() {
           ].map((c) => (
             <div key={c.title} className="bg-white rounded-2xl border-2 border-black shadow-pop p-5 transition-all duration-200 hover:-translate-y-1">
               <div className="w-11 h-11 rounded-xl border-2 border-black flex items-center justify-center mb-3" style={{ background: c.color }}>
-                <c.icon className="w-5 h-5" style={{ color: c.color === YELLOW ? '#000' : '#fff' }} />
+                <c.icon className="w-5 h-5" style={{ color: c.color === BRAND ? '#fff' : '#0b1120' }} />
               </div>
               <h3 className="font-display font-bold text-base text-ink mb-1">{c.title}</h3>
               <p className="text-sm text-ink-secondary leading-relaxed">{c.body}</p>
@@ -332,7 +332,7 @@ export default function LPScannerPage() {
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-muted" />
             <input
-              className="w-full pl-9 pr-3 py-2 border-2 border-black rounded-lg text-sm font-display bg-white shadow-pop-sm focus:outline-none focus:ring-2 focus:ring-brand-magenta/30"
+              className="w-full pl-9 pr-3 py-2 border-2 border-black rounded-lg text-sm font-display bg-white shadow-pop-sm focus:outline-none focus:ring-2 focus:ring-neon-magenta/40"
               placeholder="Search markets…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -353,7 +353,7 @@ export default function LPScannerPage() {
             <Filter className="w-4 h-4" />
             Sort
           </button>
-          <span className="text-xs text-ink-faint">{filtered.length} markets</span>
+          <span className="text-xs font-mono font-bold text-black/80">{filtered.length} markets</span>
           <ScannerLiveStatus updatedAt={updatedAt} />
         </div>
 

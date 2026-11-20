@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Menu, X, Search, ChevronRight } from 'lucide-react';
 import { Category } from '@/types';
 import { InstantSearch } from '@/components/InstantSearch';
+import { getContrastInk } from '@/lib/seo-utils';
 
 interface NavbarProps {
   siteName: string;
@@ -23,6 +25,7 @@ const PRIMARY = [
 ];
 
 export function Navbar({ siteName, categories }: NavbarProps) {
+  const pathname = usePathname();
   // Two-state drawer: mounted (in DOM) + shown (animates in). Lets the panel
   // slide out fully before unmounting instead of vanishing mid-animation.
   const [mounted, setMounted] = useState(false);
@@ -62,20 +65,38 @@ export function Navbar({ siteName, categories }: NavbarProps) {
               alt=""
               className="w-9 h-9 rounded-xl shadow-pop-sm group-hover:-translate-y-0.5 transition-transform"
             />
-            <span className="font-display font-bold text-xl text-black group-hover:text-brand-orange transition-colors">
+            <span className="font-display font-bold text-xl text-black group-hover:underline decoration-2 underline-offset-4 transition-all">
               {siteName}
             </span>
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-6">
-            {PRIMARY.map((l) => (
-              <Link key={l.href} href={l.href} className="text-sm text-black/70 hover:text-black transition-colors font-medium">
-                {l.label}
-              </Link>
-            ))}
-            <button onClick={openSearch} aria-label="Search (press /)" className="text-black/70 hover:text-black transition-colors">
-              <Search className="w-4 h-4" />
+          <nav aria-label="Primary" className="hidden md:flex items-center gap-5">
+            {PRIMARY.map((l) => {
+              const active = pathname === l.href || (l.href !== '/' && pathname.startsWith(`${l.href}/`));
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  aria-current={active ? 'page' : undefined}
+                  className={`text-sm transition-all font-semibold px-2.5 py-1 rounded-lg ${
+                    active
+                      ? 'bg-black text-brand-yellow'
+                      : 'text-black/85 hover:text-black hover:bg-black/10'
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+            <button
+              onClick={openSearch}
+              aria-label="Search articles (press /)"
+              className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/90 border-2 border-black shadow-pop-sm text-black hover:bg-brand-yellow transition-colors text-xs font-semibold"
+            >
+              <Search className="w-3.5 h-3.5" aria-hidden="true" />
+              <span className="hidden lg:inline">Search</span>
+              <kbd className="font-mono text-[10px] font-bold px-1 py-0.5 rounded bg-black/10 text-black/80">/</kbd>
             </button>
           </nav>
 
@@ -181,7 +202,7 @@ export function Navbar({ siteName, categories }: NavbarProps) {
                         href={`/category/${cat.slug}`}
                         onClick={closeDrawer}
                         className="px-3 py-1.5 text-xs font-bold rounded-full border-2 border-black transition-transform hover:-translate-y-0.5"
-                        style={{ backgroundColor: cat.color, color: '#fff' }}
+                        style={{ backgroundColor: cat.color, color: getContrastInk(cat.color) }}
                       >
                         {cat.name}
                       </Link>

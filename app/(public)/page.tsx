@@ -15,9 +15,10 @@ import {
 import { buildHomepageContent } from '@/lib/homepage-content';
 import { DecisionLabStrip } from '@/components/golden/DecisionLabStrip';
 import { MascotBand } from '@/components/MascotBand';
+import { SITE_URL, stripHtml } from '@/lib/seo-utils';
 
 export const revalidate = 300;
-export const metadata = { alternates: { canonical: 'https://predictionsmarketfans.com/' } };
+export const metadata = { alternates: { canonical: SITE_URL } };
 
 export default async function Home() {
   let featured: Awaited<ReturnType<typeof getFeaturedArticles>> = [];
@@ -63,39 +64,58 @@ export default async function Home() {
         <section className="border-b border-surface-border relative overflow-hidden">
           <MascotBand />
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 relative z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 relative z-10">
+            {/* Editorial masthead H1 (stable site-level heading for SEO & clarity) */}
+            <div className="flex flex-wrap items-baseline justify-between gap-2 pb-5 mb-6 border-b-2 border-black">
+              <h1 className="font-display font-extrabold text-xl sm:text-2xl text-black tracking-tight">
+                {settings.siteTagline || 'Sharp analysis for prediction markets'}
+              </h1>
+              <p className="text-xs sm:text-sm font-semibold text-black/80">
+                Polymarket &amp; Kalshi research, live scanners &amp; data
+              </p>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
               {/* LEFT — 2 featured stories (hidden on mobile, shown on desktop) */}
-              <div className="hidden lg:flex lg:col-span-3 flex-col gap-5">
-                <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-1">
-                  <Zap className="w-3.5 h-3.5 text-black" />
-                  <span className="text-xs font-bold tracking-widest uppercase text-black">Today&apos;s Picks</span>
+              <div className="hidden lg:flex lg:col-span-3 flex-col bg-white border-2 border-black rounded-2xl shadow-pop p-4 gap-4">
+                <div className="flex items-center gap-2 border-b-2 border-black pb-2">
+                  <Zap className="w-3.5 h-3.5 text-black" aria-hidden="true" />
+                  <h2 className="text-xs font-bold tracking-widest uppercase text-black">Today&apos;s Picks</h2>
                 </div>
-                {subFeatured.map((article) => (
-                  <Link key={article.id} href={`/${article.categorySlug}/${article.slug}`}
-                    className="group block flex-1">
-                    <div className="relative aspect-[16/10] rounded-xl overflow-hidden border-2 border-black shadow-[3px_3px_0_#000] mb-2">
-                      {article.featuredImage && (
-                        <Image src={article.featuredImage} alt={article.title} fill
-                          className="object-cover transition-transform duration-500 group-hover:scale-105"
-                          sizes="250px" />
+                {subFeatured.map((article) => {
+                  const cleanTitle = stripHtml(article.title);
+                  const cat = categoryMap.get(article.categorySlug);
+                  return (
+                    <Link
+                      key={article.id}
+                      href={`/${article.categorySlug}/${article.slug}`}
+                      className="group block flex-1 pb-3 border-b border-black/10 last:border-b-0 last:pb-0"
+                    >
+                      <div className="relative aspect-[16/10] rounded-xl overflow-hidden border-2 border-black shadow-pop-sm mb-2.5">
+                        {article.featuredImage && (
+                          <Image
+                            src={article.featuredImage}
+                            alt={cleanTitle}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            sizes="260px"
+                          />
+                        )}
+                      </div>
+                      {cat && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted block mb-1">
+                          {cat.name}
+                        </span>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                    </div>
-                    {(() => {
-                      const cat = categoryMap.get(article.categorySlug);
-                      return cat ? (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-black block mb-1">{cat.name}</span>
-                      ) : null;
-                    })()}
-                    <h3 className="font-display font-bold text-sm text-black leading-snug group-hover:text-brand-orange transition-colors line-clamp-3">
-                      {article.title}
-                    </h3>
-                    <span className="text-[11px] text-black/50 mt-1 block">
-                      {authorMap.get(article.authorId)?.name} · {article.readTime} min
-                    </span>
-                  </Link>
-                ))}
+                      <h3 className="font-display font-bold text-[15px] text-black leading-snug group-hover:text-brand-orange transition-colors line-clamp-3">
+                        {cleanTitle}
+                      </h3>
+                      <span className="text-[12px] font-medium text-ink-muted mt-1.5 block">
+                        {authorMap.get(article.authorId)?.name} · {article.readTime} min
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
 
               {/* CENTER — main featured story */}
@@ -105,24 +125,39 @@ export default async function Home() {
                   category={categoryMap.get(heroArticle.categorySlug)} />
               </div>
 
-              {/* RIGHT — trending stories (2 on mobile, 5 on desktop) */}
-              <div className="lg:col-span-3 flex flex-col">
-                <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-4">
-                  <TrendingUp className="w-3.5 h-3.5 text-black" />
-                  <span className="text-xs font-bold tracking-widest uppercase text-black">Trending Stories</span>
+              {/* RIGHT — trending stories (3 on mobile, 5 on desktop) */}
+              <div className="lg:col-span-3 flex flex-col bg-[#FFF7E6] border-2 border-black rounded-2xl shadow-pop p-4">
+                <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-3">
+                  <TrendingUp className="w-3.5 h-3.5 text-black" aria-hidden="true" />
+                  <h2 className="text-xs font-bold tracking-widest uppercase text-black">Trending Stories</h2>
                 </div>
-                <div className="flex-1 flex flex-col justify-between space-y-0">
+                <div className="flex-1 flex flex-col justify-between divide-y divide-black/10">
                   {trending.slice(0, 5).map((article, i) => {
                     const cat = categoryMap.get(article.categorySlug);
+                    const cleanTitle = stripHtml(article.title);
                     return (
-                      <Link key={article.id} href={`/${article.categorySlug}/${article.slug}`}
-                        className={`group block py-3 border-b border-black/10 last:border-b-0 flex-1 ${i >= 3 ? 'hidden lg:block' : ''}`}>
-                        <h4 className="font-display font-bold text-[20px] text-black leading-snug group-hover:text-brand-orange transition-colors line-clamp-3">
-                          {article.title}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          {cat && <span className="text-[10px] font-bold uppercase tracking-wider text-black/50">{cat.name}</span>}
-                          <span className="text-[14px] font-medium text-black/40">by {authorMap.get(article.authorId)?.name}</span>
+                      <Link
+                        key={article.id}
+                        href={`/${article.categorySlug}/${article.slug}`}
+                        className={`group flex items-start gap-3 py-3 first:pt-1 last:pb-0 ${i >= 3 ? 'hidden lg:flex' : ''}`}
+                      >
+                        <span className="font-mono font-bold text-xs px-1.5 py-0.5 rounded bg-brand-yellow border border-black text-black shrink-0 mt-0.5">
+                          {String(i + 1).padStart(2, '0')}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-display font-bold text-[15px] text-black leading-snug group-hover:text-brand-orange transition-colors line-clamp-2">
+                            {cleanTitle}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                            {cat && (
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
+                                {cat.name}
+                              </span>
+                            )}
+                            <span className="text-[12px] font-medium text-ink-muted">
+                              by {authorMap.get(article.authorId)?.name}
+                            </span>
+                          </div>
                         </div>
                       </Link>
                     );
@@ -271,10 +306,18 @@ function WritersRail({ authors }: { authors: Awaited<ReturnType<typeof getAuthor
             className="flex items-center gap-3 p-3 bg-white rounded-xl card-pop card-pop-hover group">
             <div className="w-12 h-12 rounded-full overflow-hidden bg-surface-overlay flex-shrink-0 border-2 border-black">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
+              <img
+                src={author.avatar}
+                alt={author.name}
+                width={48}
+                height={48}
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
-              <h4 className="font-display font-semibold text-sm text-black group-hover:text-ink-secondary transition-colors">{author.name}</h4>
+              <h3 className="font-display font-semibold text-sm text-black group-hover:text-brand-orange transition-colors">{author.name}</h3>
               <p className="text-xs text-ink-muted">{author.title}</p>
             </div>
           </Link>

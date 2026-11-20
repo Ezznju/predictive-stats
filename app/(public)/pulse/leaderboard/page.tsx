@@ -34,8 +34,16 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: { canonical: 'https://predictionsmarketfans.com/pulse/leaderboard' },
     openGraph: {
       type: 'website',
+      url: 'https://predictionsmarketfans.com/pulse/leaderboard',
       title: 'Whale Skill Leaderboard — Polymarket Whale Tracker',
       description: 'Top wallets ranked by skill score on Polymarket.',
+      images: [{ url: '/pulse/og', width: 1200, height: 630, type: 'image/png' }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Whale Skill Leaderboard — Polymarket Whale Tracker',
+      description: 'Top wallets ranked by skill score on Polymarket.',
+      images: ['/pulse/og'],
     },
   };
 }
@@ -69,7 +77,7 @@ export default async function LeaderboardPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(jsonLd)}} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd)}} />
 
-      <main className="min-h-screen bg-surface">
+      <div className="min-h-screen bg-surface">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
           <PulseHeader
             title="Skill Leaderboard"
@@ -172,7 +180,7 @@ export default async function LeaderboardPage() {
             )}
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }

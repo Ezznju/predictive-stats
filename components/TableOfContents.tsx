@@ -14,7 +14,7 @@ const DOT_COLORS = ['#FF00B8', '#29C5F6', '#FFE642', '#2BD96E', '#9D5CFF', '#FF6
 export function TableOfContents() {
   const [items, setItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState('');
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [pastEnd, setPastEnd] = useState(false);
   const [beforeStart, setBeforeStart] = useState(true);
 
@@ -96,10 +96,11 @@ export function TableOfContents() {
 
   return (
     <>
-      {/* Floating sidebar TOC — desktop only */}
+      {/* Floating sidebar TOC — desktop only (aligned with 1300px CSS media query) */}
       <nav
+        aria-label="Table of contents"
         aria-hidden={!sidebarVisible}
-        className={`article-layout-toc hidden xl:block transition-all duration-300 ${
+        className={`article-layout-toc hidden min-[1300px]:block transition-all duration-300 ${
           sidebarVisible
             ? 'opacity-100 translate-x-0'
             : 'opacity-0 -translate-x-3 pointer-events-none invisible'
@@ -133,18 +134,25 @@ export function TableOfContents() {
         </div>
       </nav>
 
-      {/* Inline TOC — mobile/tablet */}
-      <div className="xl:hidden my-8 p-5 rounded-2xl bg-[#C6F23A] border-2 border-black shadow-[4px_4px_0_#000]">
+      {/* Inline TOC — mobile/tablet (collapsed by default so paragraph 1 starts sooner) */}
+      <nav
+        aria-label="Table of contents"
+        className="min-[1300px]:hidden my-6 p-4 sm:p-5 rounded-2xl bg-[#FFF7E6] border-2 border-black shadow-[4px_4px_0_#000] max-w-[66ch] mx-auto"
+      >
         <button
           onClick={() => setOpen(!open)}
+          aria-expanded={open}
           className="flex items-center gap-3 w-full text-left"
         >
-          <span className="inline-block w-4 h-7 bg-[#FF00B8] border-2 border-black shadow-[2px_2px_0_#000] rounded-md shrink-0" />
-          <span className="font-display font-bold text-lg text-black">
+          <span className="inline-block w-3.5 h-6 bg-[#FFE642] border-2 border-black shadow-[2px_2px_0_#000] rounded-md shrink-0" />
+          <span className="font-display font-bold text-base sm:text-lg text-black">
             Table of Contents
           </span>
-          <span className="ml-auto text-xs font-bold text-black/60">
-            {open ? '▲' : '▼'}
+          <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/5 border border-black/15 text-ink-muted">
+            {items.length} sections
+          </span>
+          <span className="ml-auto text-xs font-bold text-black/70">
+            {open ? '▲ Hide' : '▼ Show'}
           </span>
         </button>
         {open && (
@@ -177,7 +185,7 @@ export function TableOfContents() {
             ))}
           </ol>
         )}
-      </div>
+      </nav>
     </>
   );
 }

@@ -30,6 +30,7 @@ import {
 import { autoLink } from '@/lib/auto-linker';
 import { embedTools } from '@/lib/tool-embed';
 import { cachedByKey, slimArticles } from '@/lib/isolate-cache';
+import { SITE_URL, countWords, getContrastInk, stripHtml } from '@/lib/seo-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,28 +81,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!data) return { title: 'Article Not Found' };
   const { article, author } = data;
   const categorySlug = params.category;
+  const cleanTitle = stripHtml(article.seoTitle || article.title);
+  const cleanDesc = stripHtml(article.metaDescription || article.excerpt);
 
-  const siteUrl = 'https://predictionsmarketfans.com';
   return {
-    title: article.seoTitle || article.title,
-    description: article.metaDescription || article.excerpt,
-    alternates: { canonical: `${siteUrl}/${categorySlug}/${article.slug}` },
+    title: cleanTitle,
+    description: cleanDesc,
+    alternates: { canonical: `${SITE_URL}/${categorySlug}/${article.slug}` },
     authors: author ? [{ name: author.name }] : undefined,
     openGraph: {
       type: 'article',
-      title: article.seoTitle || article.title,
-      description: article.metaDescription || article.excerpt,
+      url: `${SITE_URL}/${categorySlug}/${article.slug}`,
+      title: cleanTitle,
+      description: cleanDesc,
       publishedTime: article.publishDate,
-      modifiedTime: article.updatedDate,
+      modifiedTime: article.updatedDate || article.publishDate,
       authors: author ? [author.name] : undefined,
       tags: article.tags,
-      images: [{ url: `${siteUrl}/${categorySlug}/${article.slug}/og?v=2`, width: 1200, height: 630, type: 'image/png' }],
+      images: [{ url: `${SITE_URL}/${categorySlug}/${article.slug}/og?v=2`, width: 1200, height: 630, type: 'image/png', alt: cleanTitle }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: article.seoTitle || article.title,
-      description: article.metaDescription || article.excerpt,
-      images: [{ url: `${siteUrl}/${categorySlug}/${article.slug}/og?v=2`, width: 1200, height: 630, type: 'image/png' }],
+      title: cleanTitle,
+      description: cleanDesc,
+      images: [{ url: `${SITE_URL}/${categorySlug}/${article.slug}/og?v=2`, width: 1200, height: 630, type: 'image/png', alt: cleanTitle }],
     },
   };
 }
@@ -243,40 +246,52 @@ export default async function CategoryArticlePage({ params }: Props) {
   const categoryMap = new Map(allCategories.map(c => [c.slug, c]));
 
   const categorySlug = params.category;
-  const articleUrl = `${settings.siteUrl || 'https://predictionsmarketfans.com'}/${categorySlug}/${article.slug}`;
+  const siteUrl = (settings.siteUrl || SITE_URL).replace(/\/+$/, '');
+  const articleUrl = `${siteUrl}/${categorySlug}/${article.slug}`;
+  const cleanTitle = stripHtml(article.title);
+  const cleanExcerpt = stripHtml(article.excerpt);
+  const ogImageUrl = `${siteUrl}/${categorySlug}/${article.slug}/og?v=2`;
+  const schemaImages = article.featuredImage ? [article.featuredImage, ogImageUrl] : [ogImageUrl];
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: article.title,
-    description: article.excerpt,
-    image: article.featuredImage,
+    headline: cleanTitle,
+    description: cleanExcerpt,
+    image: schemaImages,
     datePublished: article.publishDate,
     dateModified: article.updatedDate || article.publishDate,
+    inLanguage: 'en-US',
     author: author
-      ? { '@type': 'Person', name: author.name, url: `${settings.siteUrl || 'https://predictionsmarketfans.com'}/author/${author.slug}` }
+      ? { '@type': 'Person', name: author.name, url: `${siteUrl}/author/${author.slug}` }
       : undefined,
     publisher: {
       '@type': 'Organization',
-      name: settings.siteName,
-      url: settings.siteUrl,
+      '@id': `${siteUrl}/#organization`,
+      name: settings.siteName || 'Predictions Market Fans',
+      url: siteUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${siteUrl}/apple-touch-icon.png`,
+        width: 180,
+        height: 180,
+      },
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': articleUrl },
-    wordCount: article.content.split(/\s+/).length,
+    wordCount: countWords(article.content),
     articleSection: category?.name,
     keywords: article.tags.join(', '),
   };
 
-  const siteUrl = settings.siteUrl || 'https://predictionsmarketfans.com';
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
       ...(category
-        ? [{ '@type': 'ListItem', position: 2, name: category.name, item: `${siteUrl}/${categorySlug}` }]
+        ? [{ '@type': 'ListItem', position: 2, name: category.name, item: `${siteUrl}/category/${categorySlug}` }]
         : []),
-      { '@type': 'ListItem', position: category ? 3 : 2, name: article.title, item: articleUrl },
+      { '@type': 'ListItem', position: category ? 3 : 2, name: cleanTitle, item: articleUrl },
     ],
   };
 
@@ -310,63 +325,84 @@ export default async function CategoryArticlePage({ params }: Props) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(faqJsonLd)}} />
       )}
       <ReadingProgressBar />
-      <ReadingMiniBar title={article.title.replace(/<[^>]*>/g, '')} />
+      <ReadingMiniBar title={cleanTitle} />
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-xs text-ink-muted mb-6">
-          <Link href="/" className="hover:text-ink transition-colors">Home</Link>
-          <ChevronRight className="w-3 h-3" />
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-black/80 mb-6">
+          <Link href="/" className="hover:text-black hover:underline transition-colors">Home</Link>
+          <ChevronRight className="w-3 h-3" aria-hidden="true" />
           {category ? (
             <>
-              <Link href={`/category/${category.slug}`} className="hover:text-ink transition-colors">{category.name}</Link>
-              <ChevronRight className="w-3 h-3" />
+              <Link href={`/category/${category.slug}`} className="hover:text-black hover:underline transition-colors">{category.name}</Link>
+              <ChevronRight className="w-3 h-3" aria-hidden="true" />
             </>
           ) : (
             <>
-              <Link href="/articles" className="hover:text-ink transition-colors">Articles</Link>
-              <ChevronRight className="w-3 h-3" />
+              <Link href="/articles" className="hover:text-black hover:underline transition-colors">Articles</Link>
+              <ChevronRight className="w-3 h-3" aria-hidden="true" />
             </>
           )}
+          <span className="text-black truncate max-w-[260px] sm:max-w-md">{cleanTitle}</span>
         </nav>
 
         {/* ── Reading sheet: white paper surface for the article itself.
-             Long body text no longer sits on raw orange; the page keeps the
-             brand frame while content gets a calm sheet. ── */}
-        <div className="bg-white border-2 border-black rounded-2xl shadow-pop-lg p-5 sm:p-8 lg:p-10">
+             Long body text sits on a calm sheet with optimal 66ch measure. ── */}
+        <div className="bg-white border-2 border-black rounded-2xl shadow-pop-lg p-5 sm:p-8 lg:p-12">
 
         {/* Header */}
-        <header className="mb-8">
+        <header className="mb-8 max-w-[66ch] mx-auto">
           {category && (
-            <span
-              className="category-badge mb-4 inline-block"
-              style={{ backgroundColor: category.color, color: '#fff' }}
+            <Link
+              href={`/category/${category.slug}`}
+              className="category-badge border-2 border-black shadow-pop-sm mb-4 inline-block hover:-translate-y-0.5 transition-transform"
+              style={{ backgroundColor: category.color, color: getContrastInk(category.color) }}
             >
               {category.name}
-            </span>
+            </Link>
           )}
           <h1
-            className="article-title font-display font-bold text-3xl md:text-4xl lg:text-5xl leading-[0.95] uppercase tracking-tight"
+            className="article-title font-display font-extrabold"
             dangerouslySetInnerHTML={{ __html: article.title }}
           />
-          <p className="text-[16px] text-ink-secondary mt-4 leading-relaxed">{article.excerpt}</p>
+          <p className="text-lg sm:text-xl text-ink-secondary mt-4 leading-relaxed">{article.excerpt}</p>
 
           {/* Meta */}
           <div className="flex flex-wrap items-center gap-4 mt-6 pb-6 border-b border-black/10">
             {author && (
               <Link href={`/author/${author.slug}`} className="flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-full overflow-hidden">
-                  <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-black shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={author.avatar}
+                    alt={author.name}
+                    width={40}
+                    height={40}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
-                  <span className="text-[14px] font-medium text-ink group-hover:text-black transition-colors">{author.name}</span>
+                  <span className="text-[14px] font-semibold text-ink group-hover:text-brand-orange transition-colors">{author.name}</span>
                   <span className="text-[12px] text-ink-muted block">{author.title}</span>
                 </div>
               </Link>
             )}
-            <div className="flex items-center gap-4 text-[14px] font-medium text-ink-muted ml-auto">
-              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(article.publishDate)}</span>
-              <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{article.readTime} min read</span>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13.5px] font-medium text-ink-muted ml-auto">
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
+                {formatDate(article.publishDate)}
+              </span>
+              {article.updatedDate && article.updatedDate !== article.publishDate && (
+                <span className="text-xs font-semibold text-ink-secondary bg-brand-yellow/40 border border-black/20 rounded-full px-2 py-0.5">
+                  Updated {formatDate(article.updatedDate)}
+                </span>
+              )}
+              <span className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" aria-hidden="true" />
+                {article.readTime} min read
+              </span>
             </div>
           </div>
         </header>
@@ -376,7 +412,7 @@ export default async function CategoryArticlePage({ params }: Props) {
           <div className="relative aspect-[16/9] rounded-2xl overflow-hidden mb-10 border-2 border-black shadow-pop">
             <Image
               src={article.featuredImage}
-              alt={article.title}
+              alt={cleanTitle}
               fill
               className="object-cover"
               sizes="(max-width: 896px) 100vw, 896px"
@@ -390,8 +426,8 @@ export default async function CategoryArticlePage({ params }: Props) {
 
         {/* Pull Quote */}
         {article.pullQuote && (
-          <blockquote className="my-10 pl-6 border-l-[10px] border-black">
-            <p className="font-display font-bold text-[clamp(20px,3vw,30px)] leading-[1.3] uppercase text-ink m-0">
+          <blockquote className="my-10 max-w-[66ch] mx-auto pl-6 border-l-[6px] border-black">
+            <p className="font-display font-bold text-[clamp(19px,2.4vw,25px)] leading-[1.4] text-ink m-0">
               {article.pullQuote}
             </p>
           </blockquote>
@@ -399,12 +435,10 @@ export default async function CategoryArticlePage({ params }: Props) {
 
         {/* Article Body */}
         <div
-          className="prose prose-lg max-w-none
+          className="prose prose-lg article-prose max-w-none
             prose-headings:font-display
-            prose-h2:text-2xl prose-h2:font-bold prose-h2:text-ink prose-h2:mt-10 prose-h2:mb-4
-            prose-h3:text-xl prose-h3:font-semibold prose-h3:text-ink prose-h3:mt-8 prose-h3:mb-3
-            prose-p:text-ink-secondary prose-p:leading-relaxed
-            prose-a:text-black prose-a:no-underline hover:prose-a:underline
+            prose-h3:text-xl prose-h3:font-bold prose-h3:text-ink prose-h3:mt-8 prose-h3:mb-3
+            prose-p:text-ink-secondary
             prose-strong:text-ink
             prose-blockquote:border-l-black prose-blockquote:text-ink-secondary
             prose-code:text-black prose-code:bg-black/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
@@ -416,13 +450,13 @@ export default async function CategoryArticlePage({ params }: Props) {
         <HeadingAnchors />
 
         {/* Tags */}
-        <div className="mt-10 pt-6 border-t border-black/10">
+        <div className="mt-10 pt-6 border-t border-black/10 max-w-[66ch] mx-auto">
           <div className="flex flex-wrap gap-2">
             {article.tags.map((tag) => (
               <Link
                 key={tag}
                 href={`/tag/${encodeURIComponent(tag.toLowerCase())}`}
-                className="px-3 py-1 text-xs bg-black/5 text-ink-secondary rounded-full border border-black/10 hover:bg-black hover:text-white hover:border-black transition-colors"
+                className="px-3 py-1 text-xs font-semibold bg-black/5 text-ink-secondary rounded-full border border-black/15 hover:bg-black hover:text-white hover:border-black transition-colors"
               >
                 #{tag}
               </Link>
@@ -431,10 +465,14 @@ export default async function CategoryArticlePage({ params }: Props) {
         </div>
 
         {/* Share */}
-        <ShareButtons url={articleUrl} title={article.title} />
+        <div className="max-w-[66ch] mx-auto">
+          <ShareButtons url={articleUrl} title={cleanTitle} />
+        </div>
 
         {/* Reactions — one tap, no signup */}
-        <ReactionsBar slug={article.slug} />
+        <div className="max-w-[66ch] mx-auto">
+          <ReactionsBar slug={article.slug} />
+        </div>
 
         {/* Hydrate live Polymarket odds embeds */}
         <PolymarketEmbeds />
@@ -450,14 +488,23 @@ export default async function CategoryArticlePage({ params }: Props) {
 
         {/* Author Bio */}
         {author && (
-          <div className="mt-8 p-6 bg-white rounded-2xl border border-white/20 shadow-sm">
+          <div className="mt-8 p-6 bg-white rounded-2xl border-2 border-black shadow-pop">
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
-                <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
+              <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-black">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={author.avatar}
+                  alt={author.name}
+                  width={64}
+                  height={64}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div>
-                <Link href={`/author/${author.slug}`} className="font-display font-bold text-ink hover:text-black transition-colors">{author.name}</Link>
-                <p className="text-xs text-black mt-0.5">{author.title}</p>
+                <Link href={`/author/${author.slug}`} className="font-display font-bold text-ink hover:text-brand-orange transition-colors">{author.name}</Link>
+                <p className="text-xs font-semibold text-ink-muted mt-0.5">{author.title}</p>
                 <div
                   className="text-sm text-ink-secondary mt-2 leading-relaxed [&_a]:text-ink [&_a]:underline [&_a]:font-semibold [&_a:hover]:text-black"
                   dangerouslySetInnerHTML={{ __html: author.bio }}
@@ -477,9 +524,9 @@ export default async function CategoryArticlePage({ params }: Props) {
         </div>
 
         {/* Disclaimer */}
-        <div className="mt-8 p-4 bg-white/15 rounded-xl border border-white/20">
-          <p className="text-xs text-ink-muted leading-relaxed">
-            <strong className="text-ink-secondary">Disclaimer:</strong> This content is for informational and educational purposes only. It does not constitute financial advice, investment recommendations, or trading guidance. Prediction market participation involves risk of loss. Always conduct your own research before making any financial decisions.
+        <div className="mt-8 p-4 sm:p-5 bg-[#FFF7E6] rounded-2xl border-2 border-black shadow-pop-sm">
+          <p className="text-xs text-ink-secondary leading-relaxed">
+            <strong className="text-ink">Disclaimer:</strong> This content is for informational and educational purposes only. It does not constitute financial advice, investment recommendations, or trading guidance. Prediction market participation involves risk of loss. Always conduct your own research before making any financial decisions.
           </p>
         </div>
 

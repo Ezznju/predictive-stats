@@ -47,48 +47,51 @@ export default function ContactPage() {
       <p className="text-ink-secondary mb-8">Have a tip, correction, or pitch? We read everything.</p>
 
       {submitted ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-white/20 shadow-sm">
-          <Check className="w-12 h-12 text-brand-green mx-auto mb-4" />
+        <div className="text-center py-16 bg-white rounded-2xl border-2 border-black shadow-pop">
+          <Check className="w-12 h-12 text-brand-green mx-auto mb-4" aria-hidden="true" />
           <h2 className="font-display font-bold text-2xl text-ink">Message sent!</h2>
           <p className="text-ink-secondary mt-2">We&apos;ll get back to you soon.</p>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-2xl border-2 border-black shadow-pop-lg p-6 sm:p-8">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+            <div className="bg-red-50 border-2 border-red-600 text-red-800 px-4 py-3 rounded-xl text-sm font-medium">
               {error}
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-ink mb-2">Name</label>
+              <label htmlFor="contact-name" className="block text-sm font-bold text-ink mb-2">Name</label>
               <input
+                id="contact-name"
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full bg-white border border-white/20 rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:border-black focus:ring-1 focus:ring-black/15 transition-colors"
+                className="w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-brand-yellow transition-colors"
                 placeholder="Your name"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-ink mb-2">Email</label>
+              <label htmlFor="contact-email" className="block text-sm font-bold text-ink mb-2">Email</label>
               <input
+                id="contact-email"
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white border border-white/20 rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:border-black focus:ring-1 focus:ring-black/15 transition-colors"
+                className="w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-brand-yellow transition-colors"
                 placeholder="your@email.com"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink mb-2">Subject</label>
+            <label htmlFor="contact-subject" className="block text-sm font-bold text-ink mb-2">Subject</label>
             <select
+              id="contact-subject"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full bg-white border border-white/20 rounded-xl px-4 py-3 text-ink focus:outline-none focus:border-black focus:ring-1 focus:ring-black/15 transition-colors"
+              className="w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-ink focus:outline-none focus:ring-2 focus:ring-brand-yellow transition-colors"
             >
               <option value="general">General Inquiry</option>
               <option value="pitch">Article Pitch</option>
@@ -98,13 +101,14 @@ export default function ContactPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink mb-2">Message</label>
+            <label htmlFor="contact-message" className="block text-sm font-bold text-ink mb-2">Message</label>
             <textarea
+              id="contact-message"
               required
               rows={6}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="w-full bg-white border border-white/20 rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:border-black focus:ring-1 focus:ring-black/15 transition-colors resize-none"
+              className="w-full bg-white border-2 border-black rounded-xl px-4 py-3 text-ink placeholder:text-ink-faint focus:outline-none focus:ring-2 focus:ring-brand-yellow transition-colors resize-none"
               placeholder="Your message..."
             />
           </div>
@@ -121,7 +125,7 @@ export default function ContactPage() {
           <button
             type="submit"
             disabled={sending}
-            className="bg-black hover:bg-black/90 disabled:bg-black/50 text-white px-6 py-3 rounded-xl font-display font-semibold transition-colors flex items-center gap-2 shadow-sm"
+            className="bg-black hover:bg-black/90 disabled:bg-black/50 text-white px-6 py-3 rounded-xl font-display font-bold btn-pop flex items-center gap-2"
           >
             {sending ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Sending...</>
@@ -132,29 +136,29 @@ export default function ContactPage() {
         </form>
       )}
 
-      <div className="mt-12 p-6 bg-white rounded-2xl border border-white/20 shadow-sm">
+      <div className="mt-10 p-6 bg-white rounded-2xl border-2 border-black shadow-pop">
         <div className="flex items-center gap-2 mb-3">
-          <Mail className="w-4 h-4 text-black" />
-          <span className="font-display font-semibold text-ink">Direct Email</span>
+          <Mail className="w-4 h-4 text-black" aria-hidden="true" />
+          <span className="font-display font-bold text-ink">Direct Email</span>
         </div>
         <p className="text-ink-secondary text-sm">For press inquiries, pitch submissions, and partnership proposals:</p>
-        <a href="mailto:ezzekielnjuguna.en@gmail.com" className="text-black hover:text-black/80 text-sm mt-1 inline-block">ezzekielnjuguna.en@gmail.com</a>
+        <a href="mailto:ezzekielnjuguna.en@gmail.com" className="text-black font-semibold underline decoration-brand-orange decoration-2 underline-offset-4 hover:text-brand-orange text-sm mt-1.5 inline-block">ezzekielnjuguna.en@gmail.com</a>
       </div>
 
       {/* While you're here */}
       <div className="mt-12">
         <h2 className="font-display font-bold text-xl text-ink mb-4">While you&apos;re here</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Link href="/articles" className="p-4 bg-white rounded-xl border border-white/20 shadow-sm hover:border-black/20 hover:shadow-md transition-all group">
-            <h3 className="font-display font-semibold text-sm text-ink group-hover:text-black transition-colors flex items-center gap-2">Latest Analysis <ArrowRight className="w-3 h-3" /></h3>
+          <Link href="/articles" className="p-4 bg-white rounded-xl border-2 border-black shadow-pop-sm hover:-translate-y-0.5 hover:shadow-pop transition-all group">
+            <h3 className="font-display font-bold text-sm text-ink group-hover:text-brand-orange transition-colors flex items-center gap-2">Latest Analysis <ArrowRight className="w-3 h-3" /></h3>
             <p className="text-xs text-ink-secondary mt-1">Data-driven articles on prediction markets.</p>
           </Link>
-          <Link href="/tools" className="p-4 bg-white rounded-xl border border-white/20 shadow-sm hover:border-black/20 hover:shadow-md transition-all group">
-            <h3 className="font-display font-semibold text-sm text-ink group-hover:text-black transition-colors flex items-center gap-2">Free Tools <ArrowRight className="w-3 h-3" /></h3>
+          <Link href="/tools" className="p-4 bg-white rounded-xl border-2 border-black shadow-pop-sm hover:-translate-y-0.5 hover:shadow-pop transition-all group">
+            <h3 className="font-display font-bold text-sm text-ink group-hover:text-brand-orange transition-colors flex items-center gap-2">Free Tools <ArrowRight className="w-3 h-3" /></h3>
             <p className="text-xs text-ink-secondary mt-1">LP scanner and arbitrage finder.</p>
           </Link>
-          <Link href="/platforms" className="p-4 bg-white rounded-xl border border-white/20 shadow-sm hover:border-black/20 hover:shadow-md transition-all group">
-            <h3 className="font-display font-semibold text-sm text-ink group-hover:text-black transition-colors flex items-center gap-2">Platform Reviews <ArrowRight className="w-3 h-3" /></h3>
+          <Link href="/platforms" className="p-4 bg-white rounded-xl border-2 border-black shadow-pop-sm hover:-translate-y-0.5 hover:shadow-pop transition-all group">
+            <h3 className="font-display font-bold text-sm text-ink group-hover:text-brand-orange transition-colors flex items-center gap-2">Platform Reviews <ArrowRight className="w-3 h-3" /></h3>
             <p className="text-xs text-ink-secondary mt-1">Compare Polymarket, Kalshi &amp; more.</p>
           </Link>
         </div>
