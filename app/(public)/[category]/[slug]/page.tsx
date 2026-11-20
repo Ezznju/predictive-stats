@@ -2,7 +2,7 @@ import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { Clock, Calendar, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react';
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
@@ -79,31 +79,31 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await getCachedArticlePage(params.slug);
   if (!data) return { title: 'Article Not Found' };
   const { article, author } = data;
-  const categorySlug = params.category;
+  const canonicalCategory = article.categorySlug || params.category;
   const cleanTitle = stripHtml(article.seoTitle || article.title);
   const cleanDesc = stripHtml(article.metaDescription || article.excerpt);
 
   return {
     title: cleanTitle,
     description: cleanDesc,
-    alternates: { canonical: `${SITE_URL}/${categorySlug}/${article.slug}` },
+    alternates: { canonical: `${SITE_URL}/${canonicalCategory}/${article.slug}` },
     authors: author ? [{ name: author.name }] : undefined,
     openGraph: {
       type: 'article',
-      url: `${SITE_URL}/${categorySlug}/${article.slug}`,
+      url: `${SITE_URL}/${canonicalCategory}/${article.slug}`,
       title: cleanTitle,
       description: cleanDesc,
       publishedTime: article.publishDate,
       modifiedTime: article.updatedDate || article.publishDate,
       authors: author ? [author.name] : undefined,
       tags: article.tags,
-      images: [{ url: `${SITE_URL}/${categorySlug}/${article.slug}/og?v=2`, width: 1200, height: 630, type: 'image/png', alt: cleanTitle }],
+      images: [{ url: `${SITE_URL}/${canonicalCategory}/${article.slug}/og?v=2`, width: 1200, height: 630, type: 'image/png', alt: cleanTitle }],
     },
     twitter: {
       card: 'summary_large_image',
       title: cleanTitle,
       description: cleanDesc,
-      images: [{ url: `${SITE_URL}/${categorySlug}/${article.slug}/og?v=2`, width: 1200, height: 630, type: 'image/png', alt: cleanTitle }],
+      images: [{ url: `${SITE_URL}/${canonicalCategory}/${article.slug}/og?v=2`, width: 1200, height: 630, type: 'image/png', alt: cleanTitle }],
     },
   };
 }
@@ -241,10 +241,15 @@ export default async function CategoryArticlePage({ params }: Props) {
 
   const { article, author, category, related, settings, allAuthors, allCategories, prevArticle, nextArticle } = data;
 
+  // Prevent wrong-category duplicate URLs: permanently redirect to canonical category
+  if (article.categorySlug && params.category !== article.categorySlug) {
+    permanentRedirect(`/${article.categorySlug}/${article.slug}`);
+  }
+
   const authorMap = new Map(allAuthors.map(a => [a.id, a]));
   const categoryMap = new Map(allCategories.map(c => [c.slug, c]));
 
-  const categorySlug = params.category;
+  const categorySlug = article.categorySlug || params.category;
   const siteUrl = (settings.siteUrl || SITE_URL).replace(/\/+$/, '');
   const articleUrl = `${siteUrl}/${categorySlug}/${article.slug}`;
   const cleanTitle = stripHtml(article.title);
@@ -280,6 +285,10 @@ export default async function CategoryArticlePage({ params }: Props) {
     wordCount: countWords(article.content),
     articleSection: category?.name,
     keywords: article.tags.join(', '),
+    speakable: {
+      '@type': 'SpeakableSpecification',
+      cssSelector: ['.article-title', '.article-deck'],
+    },
   };
 
   const breadcrumbJsonLd = {
@@ -378,11 +387,11 @@ export default async function CategoryArticlePage({ params }: Props) {
                   <span aria-hidden="true">·</span>
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" aria-hidden="true" />
-                    {formatDate(article.publishDate)}
+                    <time dateTime={article.publishDate}>{formatDate(article.publishDate)}</time>
                   </span>
                   {article.updatedDate && article.updatedDate !== article.publishDate && (
                     <span className="text-[10px] font-bold text-ink bg-brand-yellow/60 border border-black/30 rounded px-1.5 py-0.5">
-                      Updated {formatDate(article.updatedDate)}
+                      Updated <time dateTime={article.updatedDate}>{formatDate(article.updatedDate)}</time>
                     </span>
                   )}
                 </div>
@@ -392,7 +401,7 @@ export default async function CategoryArticlePage({ params }: Props) {
                 className="article-title font-display font-extrabold"
                 dangerouslySetInnerHTML={{ __html: article.title }}
               />
-              <p className="text-lg sm:text-xl text-ink-secondary mt-4 leading-relaxed">{article.excerpt}</p>
+              <p className="article-deck text-lg sm:text-xl text-ink-secondary mt-4 leading-relaxed">{article.excerpt}</p>
 
               {/* Author Byline */}
               {author && (

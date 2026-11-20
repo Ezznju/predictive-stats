@@ -4,6 +4,7 @@
  * black borders, offset shadows, bright accent dots, Space Grotesk type.
  */
 import { OG_FONTS_B64 } from './og-fonts-data';
+import { getContrastInk, stripHtml } from './seo-utils';
 
 export const ogSize = { width: 1200, height: 630 };
 
@@ -46,8 +47,9 @@ interface OgCardProps {
 }
 
 export function OgCard({ title, badge, badgeColor = '#FF00B8', metaLeft, metaRight }: OgCardProps) {
-  const safeTitle = truncate(title, 110);
+  const safeTitle = truncate(stripHtml(title), 110);
   const titleSize = safeTitle.length > 80 ? 52 : safeTitle.length > 50 ? 60 : 70;
+  const badgeInk = getContrastInk(badgeColor);
 
   return (
     <div
@@ -81,7 +83,7 @@ export function OgCard({ title, badge, badgeColor = '#FF00B8', metaLeft, metaRig
               style={{
                 display: 'flex',
                 backgroundColor: badgeColor,
-                color: '#FFFFFF',
+                color: badgeInk,
                 border: '3px solid #000000',
                 borderRadius: 999,
                 padding: '10px 26px',

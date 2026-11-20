@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { getArticleBySlug, getCategoryBySlug, formatDate } from '@/lib/db';
 import { ogSize, loadOgFonts, OgCard } from '@/lib/og-template';
+import { stripHtml } from '@/lib/seo-utils';
 
 // Edge runtime: lambdas boot ~10x faster than Node here, keeping cold renders
 // inside the ~3s budget social crawlers give OG images before they give up.
@@ -30,7 +31,7 @@ async function getOgArticle(slug: string): Promise<OgArticleData | null> {
   }
   const category = await getCategoryBySlug(article.categorySlug);
   const data: OgArticleData = {
-    title: article.title,
+    title: stripHtml(article.title),
     badge: category?.name,
     badgeColor: category?.color,
     publishDate: article.publishDate,

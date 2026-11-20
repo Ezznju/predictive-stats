@@ -76,7 +76,22 @@ const LINK_RULES: LinkRule[] = [
     href: '/tools/arbitrage-scanner',
     title: 'Find arbitrage opportunities',
   },
+  {
+    terms: ['whale skill leaderboard', 'skill leaderboard', 'top Polymarket wallets'],
+    href: '/pulse/leaderboard',
+    title: 'Polymarket Whale Skill Leaderboard',
+  },
+  {
+    terms: ['Polymarket whale tracker', 'whale tracker', 'whale trades', 'Polymarket smart money'],
+    href: '/pulse',
+    title: 'Live Polymarket Whale Tracker',
+  },
   // Single-word platform review links LAST
+  {
+    terms: ['Pronostyx'],
+    href: '/platforms/pronostyx',
+    title: 'Pronostyx review',
+  },
   {
     terms: ['Polymarket'],
     href: '/platforms/polymarket',
@@ -86,6 +101,11 @@ const LINK_RULES: LinkRule[] = [
     terms: ['Kalshi'],
     href: '/platforms/kalshi',
     title: 'Kalshi review',
+  },
+  {
+    terms: ['Manifold Markets', 'Manifold'],
+    href: '/platforms/manifold',
+    title: 'Manifold Markets review',
   },
   {
     terms: ['Metaculus'],

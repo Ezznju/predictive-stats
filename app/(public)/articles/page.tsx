@@ -16,27 +16,40 @@ export const dynamic = 'force-dynamic';
 
 const PAGE_SIZE = 18;
 
-export const metadata: Metadata = {
-  title: 'All Articles — Prediction Market Analysis & Guides',
-  description:
-    'All articles on prediction markets, Polymarket, Kalshi, forecasting, data analysis, and probabilistic thinking.',
-  alternates: { canonical: `${SITE_URL}/articles` },
-  openGraph: {
-    type: 'website',
-    url: `${SITE_URL}/articles`,
-    title: 'All Articles — Prediction Market Analysis & Guides',
-    description:
-      'All articles on prediction markets, Polymarket, Kalshi, forecasting, data analysis, and probabilistic thinking.',
-    images: [DEFAULT_OG_IMAGE],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'All Articles — Prediction Market Analysis & Guides',
-    description:
-      'All articles on prediction markets, Polymarket, Kalshi, forecasting, data analysis, and probabilistic thinking.',
-    images: ['/twitter-image'],
-  },
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams?: { page?: string };
+}): Promise<Metadata> {
+  const raw = Number(searchParams?.page ?? '1');
+  const page = Number.isFinite(raw) && raw > 1 ? Math.floor(raw) : 1;
+  const canonical = page > 1 ? `${SITE_URL}/articles?page=${page}` : `${SITE_URL}/articles`;
+  const title =
+    page > 1
+      ? `All Articles — Page ${page} | Prediction Market Analysis & Guides`
+      : 'All Articles — Prediction Market Analysis & Guides';
+  const description =
+    'All articles on prediction markets, Polymarket, Kalshi, forecasting, data analysis, and probabilistic thinking.';
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: 'website',
+      url: canonical,
+      title,
+      description,
+      images: [DEFAULT_OG_IMAGE],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['/twitter-image'],
+    },
+  };
+}
 
 const getCachedArticlesPage = cachedByKey(
   'articles-page',

@@ -76,6 +76,11 @@ export const metadata: Metadata = {
   other: {
     'google-adsense-account': 'ca-pub-4137106305154354',
   },
+  alternates: {
+    types: {
+      'application/rss+xml': `${SITE_URL}/rss.xml`,
+    },
+  },
   verification: process.env.GOOGLE_SITE_VERIFICATION
     ? { google: process.env.GOOGLE_SITE_VERIFICATION }
     : undefined,
