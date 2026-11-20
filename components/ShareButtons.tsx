@@ -20,8 +20,8 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-3 mt-6 pb-2">
-      <span className="text-sm text-ink-muted font-medium">Share:</span>
+    <div className="flex flex-wrap items-center gap-2.5">
+      <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-ink-muted mr-1">Share</span>
       <a
         href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(cleanTitle)}`}
         target="_blank"

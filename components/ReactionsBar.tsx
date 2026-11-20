@@ -59,8 +59,8 @@ export function ReactionsBar({ slug }: { slug: string }) {
   };
 
   return (
-    <div className="mt-8 pt-6 border-t border-black/10">
-      <p className="text-[11px] font-bold uppercase tracking-widest text-ink-faint mb-3">
+    <div>
+      <p className="text-[11px] font-mono font-bold uppercase tracking-widest text-ink-muted mb-2.5">
         Rate this piece — one tap, no signup
       </p>
       <div className="flex flex-wrap gap-2">

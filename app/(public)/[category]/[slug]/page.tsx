@@ -325,286 +325,317 @@ export default async function CategoryArticlePage({ params }: Props) {
       )}
       <ReadingProgressBar />
 
-      <article className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-        {/* Breadcrumbs */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-black/80 mb-6">
-          <Link href="/" className="hover:text-black hover:underline transition-colors">Home</Link>
-          <ChevronRight className="w-3 h-3" aria-hidden="true" />
-          {category ? (
-            <>
-              <Link href={`/category/${category.slug}`} className="hover:text-black hover:underline transition-colors">{category.name}</Link>
+      <div className="max-w-[1160px] mx-auto px-4 sm:px-6 py-8">
+        <div className="xl:grid xl:grid-cols-[240px_minmax(0,1fr)] xl:gap-8 xl:items-start">
+          {/* Desktop sticky TOC rail (true grid column — never clips or overlaps) */}
+          <aside className="hidden xl:block pt-10 no-print">
+            <TableOfContents variant="sidebar" readTime={article.readTime} />
+          </aside>
+
+          {/* Main article column */}
+          <article className="min-w-0 max-w-4xl mx-auto w-full">
+            {/* Breadcrumbs */}
+            <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-black/80 mb-5 no-print">
+              <Link href="/" className="hover:text-black hover:underline transition-colors">Home</Link>
               <ChevronRight className="w-3 h-3" aria-hidden="true" />
-            </>
-          ) : (
-            <>
-              <Link href="/articles" className="hover:text-black hover:underline transition-colors">Articles</Link>
-              <ChevronRight className="w-3 h-3" aria-hidden="true" />
-            </>
-          )}
-          <span className="text-black truncate max-w-[260px] sm:max-w-md">{cleanTitle}</span>
-        </nav>
+              {category ? (
+                <>
+                  <Link href={`/category/${category.slug}`} className="hover:text-black hover:underline transition-colors">{category.name}</Link>
+                  <ChevronRight className="w-3 h-3" aria-hidden="true" />
+                </>
+              ) : (
+                <>
+                  <Link href="/articles" className="hover:text-black hover:underline transition-colors">Articles</Link>
+                  <ChevronRight className="w-3 h-3" aria-hidden="true" />
+                </>
+              )}
+              <span className="text-black truncate max-w-[260px] sm:max-w-md">{cleanTitle}</span>
+            </nav>
 
-        {/* ── Reading sheet: white paper surface for the article itself.
-             Long body text sits on a calm sheet with optimal 66ch measure. ── */}
-        <div className="bg-white border-2 border-black rounded-2xl shadow-pop-lg p-5 sm:p-8 lg:p-12">
+            {/* ── Warm editorial reading sheet (#FFFDF9 ivory paper, 66ch text measure) ── */}
+            <div className="reading-sheet bg-[#FFFDF9] border-2 border-black rounded-2xl shadow-pop-lg p-5 sm:p-8 lg:p-12">
 
-        {/* Header */}
-        <header className="mb-8 max-w-[66ch] mx-auto">
-          {category && (
-            <Link
-              href={`/category/${category.slug}`}
-              className="category-badge border-2 border-black shadow-pop-sm mb-4 inline-block hover:-translate-y-0.5 transition-transform"
-              style={{ backgroundColor: category.color, color: getContrastInk(category.color) }}
-            >
-              {category.name}
-            </Link>
-          )}
-          <h1
-            className="article-title font-display font-extrabold"
-            dangerouslySetInnerHTML={{ __html: article.title }}
-          />
-          <p className="text-lg sm:text-xl text-ink-secondary mt-4 leading-relaxed">{article.excerpt}</p>
+            {/* Magazine Header */}
+            <header className="mb-8 max-w-[66ch] mx-auto">
+              {/* Editorial kicker bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-black/10">
+                <div>
+                  {category && (
+                    <Link
+                      href={`/category/${category.slug}`}
+                      className="category-badge border-2 border-black shadow-pop-sm inline-block hover:-translate-y-0.5 transition-transform"
+                      style={{ backgroundColor: category.color, color: getContrastInk(category.color) }}
+                    >
+                      {category.name}
+                    </Link>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" aria-hidden="true" />
+                    {article.readTime} min read
+                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3 h-3" aria-hidden="true" />
+                    {formatDate(article.publishDate)}
+                  </span>
+                  {article.updatedDate && article.updatedDate !== article.publishDate && (
+                    <span className="text-[10px] font-bold text-ink bg-brand-yellow/60 border border-black/30 rounded px-1.5 py-0.5">
+                      Updated {formatDate(article.updatedDate)}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-          {/* Meta */}
-          <div className="flex flex-wrap items-center gap-4 mt-6 pb-6 border-b border-black/10">
-            {author && (
-              <Link href={`/author/${author.slug}`} className="flex items-center gap-3 group">
-                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-black shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={author.avatar}
-                    alt={author.name}
-                    width={40}
-                    height={40}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover"
+              <h1
+                className="article-title font-display font-extrabold"
+                dangerouslySetInnerHTML={{ __html: article.title }}
+              />
+              <p className="text-lg sm:text-xl text-ink-secondary mt-4 leading-relaxed">{article.excerpt}</p>
+
+              {/* Author Byline */}
+              {author && (
+                <div className="flex items-center justify-between gap-4 mt-6 pt-5 border-t border-black/10">
+                  <Link href={`/author/${author.slug}`} className="flex items-center gap-3 group">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-black shrink-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={author.avatar}
+                        alt={author.name}
+                        width={40}
+                        height={40}
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <span className="text-[14px] font-bold text-ink group-hover:text-brand-orange transition-colors">
+                        {author.name}
+                      </span>
+                      <span className="text-[12px] text-ink-muted block">{author.title}</span>
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </header>
+
+            {/* Featured Image */}
+            {article.featuredImage && (
+              <figure className="mb-10 max-w-[780px] mx-auto">
+                <div className="relative aspect-[16/9] rounded-2xl overflow-hidden border-2 border-black shadow-pop">
+                  <Image
+                    src={article.featuredImage}
+                    alt={cleanTitle}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 896px) 100vw, 780px"
+                    priority
                   />
                 </div>
-                <div>
-                  <span className="text-[14px] font-semibold text-ink group-hover:text-brand-orange transition-colors">{author.name}</span>
-                  <span className="text-[12px] text-ink-muted block">{author.title}</span>
-                </div>
-              </Link>
+              </figure>
             )}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13.5px] font-medium text-ink-muted ml-auto">
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5" aria-hidden="true" />
-                {formatDate(article.publishDate)}
-              </span>
-              {article.updatedDate && article.updatedDate !== article.publishDate && (
-                <span className="text-xs font-semibold text-ink-secondary bg-brand-yellow/40 border border-black/20 rounded-full px-2 py-0.5">
-                  Updated {formatDate(article.updatedDate)}
-                </span>
-              )}
-              <span className="flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" aria-hidden="true" />
-                {article.readTime} min read
-              </span>
-            </div>
-          </div>
-        </header>
 
-        {/* Featured Image */}
-        {article.featuredImage && (
-          <div className="relative aspect-[16/9] rounded-2xl overflow-hidden mb-10 border-2 border-black shadow-pop">
-            <Image
-              src={article.featuredImage}
-              alt={cleanTitle}
-              fill
-              className="object-cover"
-              sizes="(max-width: 896px) 100vw, 896px"
-              priority
+            {/* Inline Table of Contents (mobile/tablet only) */}
+            <TableOfContents variant="inline" readTime={article.readTime} />
+
+            {/* Pull Quote */}
+            {article.pullQuote && (
+              <blockquote className="my-10 max-w-[66ch] mx-auto pl-6 border-l-[6px] border-black">
+                <p className="font-display font-bold text-[clamp(19px,2.4vw,25px)] leading-[1.4] text-ink m-0">
+                  {article.pullQuote}
+                </p>
+              </blockquote>
+            )}
+
+            {/* Article Body */}
+            <div
+              className="prose prose-lg article-prose max-w-none
+                prose-headings:font-display
+                prose-h3:text-xl prose-h3:font-bold prose-h3:text-ink prose-h3:mt-8 prose-h3:mb-3
+                prose-p:text-ink-secondary
+                prose-strong:text-ink
+                prose-blockquote:border-l-black prose-blockquote:text-ink-secondary
+                prose-code:text-black prose-code:bg-black/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
+                prose-li:text-ink-secondary"
+              dangerouslySetInnerHTML={{ __html: finalBody }}
             />
-          </div>
-        )}
 
-        {/* Table of Contents */}
-        <TableOfContents />
+            {/* Deep-link anchors on section headings */}
+            <HeadingAnchors />
 
-        {/* Pull Quote */}
-        {article.pullQuote && (
-          <blockquote className="my-10 max-w-[66ch] mx-auto pl-6 border-l-[6px] border-black">
-            <p className="font-display font-bold text-[clamp(19px,2.4vw,25px)] leading-[1.4] text-ink m-0">
-              {article.pullQuote}
-            </p>
-          </blockquote>
-        )}
+            {/* Unified Engagement Footer (Tags + Reactions + Share) */}
+            <footer className="mt-12 pt-6 border-t border-black/10 max-w-[66ch] mx-auto space-y-6 no-print">
+              {article.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {article.tags.map((tag) => (
+                    <Link
+                      key={tag}
+                      href={`/tag/${encodeURIComponent(tag.toLowerCase())}`}
+                      className="px-3 py-1 text-xs font-semibold bg-black/5 text-ink-secondary rounded-full border border-black/15 hover:bg-black hover:text-white hover:border-black transition-colors"
+                    >
+                      #{tag}
+                    </Link>
+                  ))}
+                </div>
+              )}
 
-        {/* Article Body */}
-        <div
-          className="prose prose-lg article-prose max-w-none
-            prose-headings:font-display
-            prose-h3:text-xl prose-h3:font-bold prose-h3:text-ink prose-h3:mt-8 prose-h3:mb-3
-            prose-p:text-ink-secondary
-            prose-strong:text-ink
-            prose-blockquote:border-l-black prose-blockquote:text-ink-secondary
-            prose-code:text-black prose-code:bg-black/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-            prose-li:text-ink-secondary"
-          dangerouslySetInnerHTML={{ __html: finalBody }}
-        />
-
-        {/* Deep-link anchors on section headings */}
-        <HeadingAnchors />
-
-        {/* Tags */}
-        <div className="mt-10 pt-6 border-t border-black/10 max-w-[66ch] mx-auto">
-          <div className="flex flex-wrap gap-2">
-            {article.tags.map((tag) => (
-              <Link
-                key={tag}
-                href={`/tag/${encodeURIComponent(tag.toLowerCase())}`}
-                className="px-3 py-1 text-xs font-semibold bg-black/5 text-ink-secondary rounded-full border border-black/15 hover:bg-black hover:text-white hover:border-black transition-colors"
-              >
-                #{tag}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Share */}
-        <div className="max-w-[66ch] mx-auto">
-          <ShareButtons url={articleUrl} title={cleanTitle} />
-        </div>
-
-        {/* Reactions — one tap, no signup */}
-        <div className="max-w-[66ch] mx-auto">
-          <ReactionsBar slug={article.slug} />
-        </div>
-
-        {/* Hydrate live Polymarket odds embeds */}
-        <PolymarketEmbeds />
-
-        {/* Hydrate embedded tweets */}
-        <TwitterEmbeds />
-
-        {/* Fullscreen lightbox for prose images */}
-        <ImageLightbox />
-
-        </div>
-        {/* ── end reading sheet ── */}
-
-        {/* Author Bio */}
-        {author && (
-          <div className="mt-8 p-6 bg-white rounded-2xl border-2 border-black shadow-pop">
-            <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-black">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={author.avatar}
-                  alt={author.name}
-                  width={64}
-                  height={64}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover"
-                />
+              <div className="bg-[#FFF7E6] border-2 border-black/15 rounded-2xl p-4 sm:p-5 space-y-5">
+                <ReactionsBar slug={article.slug} />
+                <div className="pt-4 border-t border-black/10">
+                  <ShareButtons url={articleUrl} title={cleanTitle} />
+                </div>
               </div>
-              <div>
-                <Link href={`/author/${author.slug}`} className="font-display font-bold text-ink hover:text-brand-orange transition-colors">{author.name}</Link>
-                <p className="text-xs font-semibold text-ink-muted mt-0.5">{author.title}</p>
-                <div
-                  className="text-sm text-ink-secondary mt-2 leading-relaxed [&_a]:text-ink [&_a]:underline [&_a]:font-semibold [&_a:hover]:text-black"
-                  dangerouslySetInnerHTML={{ __html: author.bio }}
-                />
-              </div>
+            </footer>
+
+            {/* Hydrate live Polymarket odds embeds */}
+            <PolymarketEmbeds />
+
+            {/* Hydrate embedded tweets */}
+            <TwitterEmbeds />
+
+            {/* Fullscreen lightbox for prose images */}
+            <ImageLightbox />
+
             </div>
-          </div>
-        )}
+            {/* ── end reading sheet ── */}
 
-        {/* Inline Newsletter */}
-        <div className="mt-10">
-          <NewsletterBlock
-            variant="inline"
-            heading={settings.newsletterHeading}
-            body={settings.newsletterBody}
-          />
-        </div>
+            {/* Quiet Editorial Colophon Disclaimer */}
+            <p className="mt-4 px-2 text-[11.5px] text-black/80 font-medium leading-relaxed text-center sm:text-left">
+              <strong>Editorial note:</strong> Informational and educational commentary only — not financial or trading advice. Prediction markets involve risk of loss.
+            </p>
 
-        {/* Disclaimer */}
-        <div className="mt-8 p-4 sm:p-5 bg-[#FFF7E6] rounded-2xl border-2 border-black shadow-pop-sm">
-          <p className="text-xs text-ink-secondary leading-relaxed">
-            <strong className="text-ink">Disclaimer:</strong> This content is for informational and educational purposes only. It does not constitute financial advice, investment recommendations, or trading guidance. Prediction market participation involves risk of loss. Always conduct your own research before making any financial decisions.
-          </p>
-        </div>
+            {/* Author Bio */}
+            {author && (
+              <div className="mt-8 p-6 bg-[#FFFDF9] rounded-2xl border-2 border-black shadow-pop no-print">
+                <div className="flex flex-col sm:flex-row items-start gap-4">
+                  <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 border-2 border-black">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={author.avatar}
+                      alt={author.name}
+                      width={64}
+                      height={64}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <div>
+                        <Link href={`/author/${author.slug}`} className="font-display font-bold text-lg text-ink hover:text-brand-orange transition-colors">
+                          {author.name}
+                        </Link>
+                        <p className="text-xs font-semibold text-ink-muted">{author.title}</p>
+                      </div>
+                      <Link
+                        href={`/author/${author.slug}`}
+                        className="text-xs font-mono font-bold uppercase tracking-wider text-black bg-brand-yellow border-2 border-black rounded-lg px-2.5 py-1 shadow-pop-sm hover:-translate-y-0.5 transition-transform"
+                      >
+                        More by {author.name.split(' ')[0]} →
+                      </Link>
+                    </div>
+                    <div
+                      className="text-sm text-ink-secondary mt-2.5 leading-relaxed [&_a]:text-ink [&_a]:underline [&_a]:font-semibold [&_a:hover]:text-black"
+                      dangerouslySetInnerHTML={{ __html: author.bio }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
-        {/* CTA Cards */}
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5">
-          <Link
-            href="/tools/lp-scanner"
-            className="group relative block border-2 border-black bg-[#C6F23A] p-6 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_#000] transition-all"
-          >
-            <span className="inline-block font-mono font-bold text-[10px] tracking-[0.12em] uppercase bg-white border-2 border-black px-2 py-0.5 mb-3">
-              See the numbers
-            </span>
-            <h3 className="font-display font-bold text-2xl uppercase text-black mb-2">LP Scanner</h3>
-            <p className="text-sm text-black/70 leading-relaxed">Rank every live Polymarket reward pool by competition, minimum capital, and yield per $1,000.</p>
-            <span className="absolute top-5 right-5 w-8 h-8 bg-black text-[#C6F23A] rounded-full flex items-center justify-center font-mono font-bold text-sm group-hover:translate-x-1 group-hover:-rotate-8 transition-transform">
-              →
-            </span>
-          </Link>
-          <Link
-            href="/tools/arbitrage-scanner"
-            className="group relative block border-2 border-black bg-[#29C5F6] p-6 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_#000] transition-all"
-          >
-            <span className="inline-block font-mono font-bold text-[10px] tracking-[0.12em] uppercase bg-white border-2 border-black px-2 py-0.5 mb-3">
-              Find the spread
-            </span>
-            <h3 className="font-display font-bold text-2xl uppercase text-black mb-2">Arbitrage Scanner</h3>
-            <p className="text-sm text-black/70 leading-relaxed">Compare odds across Polymarket, Kalshi, and Metaculus to find mispriced markets in real time.</p>
-            <span className="absolute top-5 right-5 w-8 h-8 bg-black text-[#29C5F6] rounded-full flex items-center justify-center font-mono font-bold text-sm group-hover:translate-x-1 group-hover:-rotate-8 transition-transform">
-              →
-            </span>
-          </Link>
-        </div>
+            {/* Inline Newsletter */}
+            <div className="mt-8 no-print">
+              <NewsletterBlock
+                variant="inline"
+                heading={settings.newsletterHeading}
+                body={settings.newsletterBody}
+              />
+            </div>
 
-        {/* Prev / Next */}
-        {(prevArticle || nextArticle) && (
-          <nav aria-label="Article pagination" className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {prevArticle ? (
+            {/* CTA Cards */}
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-5 no-print">
               <Link
-                href={`/${prevArticle.categorySlug}/${prevArticle.slug}`}
-                className="group border-2 border-black bg-white p-5 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] hover:bg-[#D9F24B] transition-all"
+                href="/tools/lp-scanner"
+                className="group relative block border-2 border-black bg-[#C6F23A] rounded-2xl p-6 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_#000] transition-all"
               >
-                <span className="flex items-center gap-1.5 font-mono font-bold text-[10px] tracking-[0.12em] uppercase text-black/50">
-                  <ArrowLeft className="w-3.5 h-3.5" /> Previous
+                <span className="inline-block font-mono font-bold text-[10px] tracking-[0.12em] uppercase bg-white border-2 border-black px-2 py-0.5 mb-3">
+                  See the numbers
                 </span>
-                <span className="block font-display font-bold text-sm mt-2 leading-snug text-black group-hover:text-black">
-                  {prevArticle.title.replace(/<[^>]*>/g, '')}
-                </span>
-                <span className="block text-xs text-ink-muted mt-1.5">
-                  {categoryMap.get(prevArticle.categorySlug)?.name} · {prevArticle.readTime} min
+                <h3 className="font-display font-bold text-2xl text-black mb-2">LP Scanner</h3>
+                <p className="text-sm text-black/80 leading-relaxed">Rank every live Polymarket reward pool by competition, minimum capital, and yield per $1,000.</p>
+                <span className="absolute top-5 right-5 w-8 h-8 bg-black text-[#C6F23A] rounded-full flex items-center justify-center font-mono font-bold text-sm group-hover:translate-x-1 transition-transform">
+                  →
                 </span>
               </Link>
-            ) : <div className="hidden sm:block" />}
-            {nextArticle ? (
               <Link
-                href={`/${nextArticle.categorySlug}/${nextArticle.slug}`}
-                className="group border-2 border-black bg-white p-5 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] hover:bg-[#D9F24B] transition-all sm:text-right"
+                href="/tools/arbitrage-scanner"
+                className="group relative block border-2 border-black bg-[#29C5F6] rounded-2xl p-6 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_#000] transition-all"
               >
-                <span className="flex items-center gap-1.5 font-mono font-bold text-[10px] tracking-[0.12em] uppercase text-black/50 sm:justify-end">
-                  Next <ArrowRight className="w-3.5 h-3.5" />
+                <span className="inline-block font-mono font-bold text-[10px] tracking-[0.12em] uppercase bg-white border-2 border-black px-2 py-0.5 mb-3">
+                  Find the spread
                 </span>
-                <span className="block font-display font-bold text-sm mt-2 leading-snug text-black group-hover:text-black">
-                  {nextArticle.title.replace(/<[^>]*>/g, '')}
-                </span>
-                <span className="block text-xs text-ink-muted mt-1.5">
-                  {categoryMap.get(nextArticle.categorySlug)?.name} · {nextArticle.readTime} min
+                <h3 className="font-display font-bold text-2xl text-black mb-2">Arbitrage Scanner</h3>
+                <p className="text-sm text-black/80 leading-relaxed">Compare odds across Polymarket, Kalshi, and Metaculus to find mispriced markets in real time.</p>
+                <span className="absolute top-5 right-5 w-8 h-8 bg-black text-[#29C5F6] rounded-full flex items-center justify-center font-mono font-bold text-sm group-hover:translate-x-1 transition-transform">
+                  →
                 </span>
               </Link>
-            ) : <div className="hidden sm:block" />}
-          </nav>
-        )}
+            </div>
 
-        {/* Comments */}
-        <GiscusComments slug={article.slug} />
-      </article>
+            {/* Prev / Next */}
+            {(prevArticle || nextArticle) && (
+              <nav aria-label="Article pagination" className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 no-print">
+                {prevArticle ? (
+                  <Link
+                    href={`/${prevArticle.categorySlug}/${prevArticle.slug}`}
+                    className="group border-2 border-black rounded-2xl bg-[#FFFDF9] p-5 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] hover:bg-[#D9F24B] transition-all"
+                  >
+                    <span className="flex items-center gap-1.5 font-mono font-bold text-[10px] tracking-[0.12em] uppercase text-black/60">
+                      <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" /> Previous
+                    </span>
+                    <span className="block font-display font-bold text-sm mt-2 leading-snug text-black">
+                      {stripHtml(prevArticle.title)}
+                    </span>
+                    <span className="block text-xs text-ink-muted mt-1.5">
+                      {categoryMap.get(prevArticle.categorySlug)?.name} · {prevArticle.readTime} min
+                    </span>
+                  </Link>
+                ) : <div className="hidden sm:block" />}
+                {nextArticle ? (
+                  <Link
+                    href={`/${nextArticle.categorySlug}/${nextArticle.slug}`}
+                    className="group border-2 border-black rounded-2xl bg-[#FFFDF9] p-5 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] hover:bg-[#D9F24B] transition-all sm:text-right"
+                  >
+                    <span className="flex items-center gap-1.5 font-mono font-bold text-[10px] tracking-[0.12em] uppercase text-black/60 sm:justify-end">
+                      Next <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                    </span>
+                    <span className="block font-display font-bold text-sm mt-2 leading-snug text-black">
+                      {stripHtml(nextArticle.title)}
+                    </span>
+                    <span className="block text-xs text-ink-muted mt-1.5">
+                      {categoryMap.get(nextArticle.categorySlug)?.name} · {nextArticle.readTime} min
+                    </span>
+                  </Link>
+                ) : <div className="hidden sm:block" />}
+              </nav>
+            )}
+
+            {/* Comments */}
+            <div className="no-print">
+              <GiscusComments slug={article.slug} />
+            </div>
+          </article>
+        </div>
+      </div>
 
       {/* Read Next */}
       {related.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 border-t border-white/20">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 border-t-2 border-black/15 no-print">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-1 h-6 bg-brand-green rounded-full" />
+            <div className="heading-chip bg-neon-green" />
             <h2 className="font-display font-bold text-2xl text-ink">Read Next</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

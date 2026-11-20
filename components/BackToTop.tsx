@@ -34,7 +34,7 @@ export function BackToTop() {
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       aria-label="Back to top"
       aria-hidden={!show}
-      className={`fixed bottom-5 right-5 z-40 p-3 bg-black text-brand-yellow border-2 border-black shadow-pop rounded-xl hover:-translate-y-0.5 hover:shadow-pop-lg transition-all duration-200 ${
+      className={`fixed bottom-5 right-5 z-40 p-3 bg-black text-brand-yellow border-2 border-black shadow-pop rounded-xl hover:-translate-y-0.5 hover:shadow-pop-lg transition-all duration-200 print:hidden ${
         show ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3 pointer-events-none'
       }`}
     >

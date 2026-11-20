@@ -24,6 +24,8 @@ export function ImageLightbox() {
     imgs.forEach((img) => {
       if (img.closest('a')) return; // don't hijack linked images
       img.style.cursor = 'zoom-in';
+      img.classList.add('prose-zoomable');
+      if (!img.title) img.title = 'Click to expand';
       const open = () => {
         setSrc(img.currentSrc || img.src);
         setAlt(img.alt || '');
@@ -37,7 +39,10 @@ export function ImageLightbox() {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSrc(null); };
     window.addEventListener('keydown', onKey);
     return () => {
-      handlers.forEach(([img, open]) => img.removeEventListener('click', open));
+      handlers.forEach(([img, open]) => {
+        img.removeEventListener('click', open);
+        img.classList.remove('prose-zoomable');
+      });
       window.removeEventListener('keydown', onKey);
     };
   }, []);

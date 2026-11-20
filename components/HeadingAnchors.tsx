@@ -3,10 +3,9 @@
 import { useEffect } from 'react';
 
 /**
- * Injects a "#" copy-link button into every h2/h3 inside the article prose.
- * Reuses IDs the TableOfContents already assigned (h2s), slugifies the rest
- * (h3s). Click copies a deep link and syncs the hash without jumping.
- * Renders nothing itself.
+ * Injects a hover-only "#" copy-link button into every h2/h3 inside the
+ * article prose. Stays completely hidden at rest so headings remain razor-clean,
+ * and shows a crisp "Copied ✓" pill on click.
  */
 export function HeadingAnchors() {
   useEffect(() => {
@@ -37,15 +36,20 @@ export function HeadingAnchors() {
       btn.type = 'button';
       btn.className = 'heading-anchor';
       btn.setAttribute('aria-label', 'Copy link to this section');
+      btn.setAttribute('title', 'Copy link to section');
       btn.textContent = '#';
       let t: ReturnType<typeof setTimeout> | undefined;
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         const url = `${window.location.origin}${window.location.pathname}#${h.id}`;
         navigator.clipboard?.writeText(url).catch(() => {});
-        btn.textContent = '✓';
+        btn.textContent = 'Copied ✓';
+        btn.classList.add('is-copied');
         if (t) clearTimeout(t);
-        t = setTimeout(() => { btn.textContent = '#'; }, 1400);
+        t = setTimeout(() => {
+          btn.textContent = '#';
+          btn.classList.remove('is-copied');
+        }, 1600);
         window.history.replaceState(null, '', `#${h.id}`);
       });
       h.appendChild(btn);

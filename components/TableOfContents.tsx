@@ -5,18 +5,23 @@ import { useEffect, useState } from 'react';
 interface TocItem {
   id: string;
   text: string;
-  level: number;
   num: number;
 }
 
-const DOT_COLORS = ['#FF00B8', '#29C5F6', '#FFE642', '#2BD96E', '#9D5CFF', '#FF6B00'];
+interface TableOfContentsProps {
+  /** 'sidebar' renders the sticky desktop rail; 'inline' renders the collapsible mobile/tablet card */
+  variant?: 'sidebar' | 'inline';
+  /** Total estimated reading time in minutes (for live remaining time inside the sidebar TOC) */
+  readTime?: number;
+}
 
-export function TableOfContents() {
+const DOT_COLORS = ['#FF00B8', '#29C5F6', '#FFE642', '#2BD96E', '#FF7900'];
+
+export function TableOfContents({ variant = 'inline', readTime }: TableOfContentsProps) {
   const [items, setItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState('');
   const [open, setOpen] = useState(false);
-  const [pastEnd, setPastEnd] = useState(false);
-  const [beforeStart, setBeforeStart] = useState(true);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     const prose = document.querySelector('.prose');
@@ -28,10 +33,12 @@ export function TableOfContents() {
     headings.forEach((h, i) => {
       const id = h.id || `heading-${i}`;
       if (!h.id) h.id = id;
+      // Exclude injected "#" anchor button text if already present
+      const clone = h.cloneNode(true) as HTMLElement;
+      clone.querySelectorAll('.heading-anchor').forEach((el) => el.remove());
       tocItems.push({
         id,
-        text: h.textContent || '',
-        level: h.tagName === 'H2' ? 2 : 3,
+        text: (clone.textContent || '').trim(),
         num: i + 1,
       });
     });
@@ -49,7 +56,7 @@ export function TableOfContents() {
           setActiveId(visible[0].target.id);
         }
       },
-      { rootMargin: '-30% 0px -55% 0px', threshold: 0 }
+      { rootMargin: '-18% 0px -65% 0px', threshold: 0 }
     );
 
     items.forEach((item) => {
@@ -60,11 +67,9 @@ export function TableOfContents() {
     return () => observer.disconnect();
   }, [items]);
 
-  // Hide the floating sidebar once the reader scrolls past the end of the
-  // article body (conclusion) — or before reaching it (hero area) — so it
-  // never blocks content while scrolling up and down. Reappears on scroll-back.
+  // Quiet progress & remaining reading time for the desktop sidebar card
   useEffect(() => {
-    if (items.length === 0) return;
+    if (variant !== 'sidebar' || items.length === 0) return;
     const prose = document.querySelector('.prose');
     if (!prose) return;
 
@@ -73,8 +78,9 @@ export function TableOfContents() {
       raf = 0;
       const r = prose.getBoundingClientRect();
       const vh = window.innerHeight || 800;
-      setPastEnd(r.bottom < vh * 0.5);
-      setBeforeStart(r.top > vh * 0.5);
+      const total = Math.max(r.height - vh * 0.55, 1);
+      const passed = Math.min(Math.max(vh * 0.25 - r.top, 0), total);
+      setProgress(Math.round((passed / total) * 100));
     };
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -88,104 +94,128 @@ export function TableOfContents() {
       window.removeEventListener('resize', onScroll);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [items]);
+  }, [variant, items]);
 
   if (items.length < 3) return null;
 
-  const sidebarVisible = !pastEnd && !beforeStart;
+  const minsLeft =
+    readTime && readTime > 0
+      ? Math.max(0, Math.ceil(readTime * (1 - progress / 100)))
+      : null;
+
+  if (variant === 'sidebar') {
+    return (
+      <nav aria-label="Table of contents" className="sticky top-20 print:hidden">
+        <div className="bg-[#FFF7E6] border-2 border-black rounded-2xl shadow-pop p-4">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className="font-mono font-bold text-[10px] tracking-[0.16em] uppercase text-[#0b1120] bg-[#FFE642] border-2 border-black px-2 py-0.5 rounded">
+              In This Piece
+            </span>
+            {minsLeft !== null && (
+              <span className="font-mono text-[10.5px] font-semibold text-ink-muted tabular-nums">
+                {progress >= 96 ? 'Done ✓' : `~${minsLeft} min left`}
+              </span>
+            )}
+          </div>
+
+          {/* Quiet progress hairline inside the TOC card */}
+          <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden mb-3.5 border border-black/15">
+            <div
+              className="h-full bg-gradient-to-r from-[#FF00B8] via-[#FF7900] to-[#FFE642] transition-[width] duration-150 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          <ol className="space-y-1 list-none pl-0 m-0 max-h-[64vh] overflow-y-auto pr-1">
+            {items.map((item, i) => {
+              const active = activeId === item.id;
+              return (
+                <li key={item.id}>
+                  <a
+                    href={`#${item.id}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className={`group flex items-start gap-2.5 px-2.5 py-2 rounded-lg text-[12.5px] leading-snug transition-all border-l-[3px] ${
+                      active
+                        ? 'border-l-[#FF00B8] bg-white font-bold text-[#0b1120] shadow-sm'
+                        : 'border-l-transparent text-[#2B2418] hover:bg-white/70 hover:text-black font-medium'
+                    }`}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full border border-black shrink-0 mt-1.5"
+                      style={{ backgroundColor: DOT_COLORS[i % DOT_COLORS.length] }}
+                    />
+                    <span className="min-w-0 line-clamp-2">
+                      <span className="font-mono text-[10.5px] font-bold text-black/60 mr-1.5">
+                        {String(item.num).padStart(2, '0')}
+                      </span>
+                      {item.text}
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      </nav>
+    );
+  }
 
   return (
-    <>
-      {/* Floating sidebar TOC — desktop only (aligned with 1300px CSS media query) */}
-      <nav
-        aria-label="Table of contents"
-        aria-hidden={!sidebarVisible}
-        className={`article-layout-toc hidden min-[1300px]:block transition-all duration-300 ${
-          sidebarVisible
-            ? 'opacity-100 translate-x-0'
-            : 'opacity-0 -translate-x-3 pointer-events-none invisible'
-        }`}
+    <nav
+      aria-label="Table of contents"
+      className="xl:hidden my-6 p-4 sm:p-5 rounded-2xl bg-[#FFF7E6] border-2 border-black shadow-[4px_4px_0_#000] max-w-[66ch] mx-auto print:hidden"
+    >
+      <button
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="flex items-center gap-3 w-full text-left"
       >
-        <div className="toc-card">
-          <span className="toc-label">IN THIS PIECE</span>
-          <div className="mt-3">
-            {items.map((item, i) => (
+        <span className="inline-block w-3.5 h-6 bg-[#FFE642] border-2 border-black shadow-[2px_2px_0_#000] rounded-md shrink-0" />
+        <span className="font-display font-bold text-base sm:text-lg text-black">
+          In This Piece
+        </span>
+        <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-white border border-black/25 text-ink-muted">
+          {items.length} sections
+        </span>
+        <span className="ml-auto text-xs font-bold text-black/75">
+          {open ? '▲ Hide' : '▼ Show'}
+        </span>
+      </button>
+      {open && (
+        <ol className="mt-4 space-y-1.5 list-none pl-0">
+          {items.map((item, i) => (
+            <li key={item.id}>
               <a
-                key={item.id}
                 href={`#${item.id}`}
                 onClick={(e) => {
                   e.preventDefault();
+                  setOpen(false);
                   document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
-                className={`toc-link ${activeId === item.id ? 'toc-active' : ''}`}
+                className={`group flex items-start gap-2.5 text-sm rounded-lg px-2.5 py-2 transition-all duration-150 ${
+                  activeId === item.id
+                    ? 'bg-black text-[#FFE642] font-bold border-2 border-black shadow-[2px_2px_0_#000]'
+                    : 'text-black font-medium hover:bg-white hover:border-2 hover:border-black hover:shadow-[2px_2px_0_#000]'
+                }`}
               >
                 <span
-                  className="w-2 h-2 rounded-full border border-black shrink-0"
+                  className="w-2.5 h-2.5 rounded-full border-2 border-black shrink-0 mt-1"
                   style={{ backgroundColor: DOT_COLORS[i % DOT_COLORS.length] }}
                 />
-                <span className="truncate">
-                  <span className="font-bold">{String(item.num).padStart(2, '0')}</span>
-                  {' · '}
+                <span className="leading-snug">
+                  <span className="font-mono text-xs font-bold mr-1.5 opacity-75">
+                    {String(item.num).padStart(2, '0')}
+                  </span>
                   {item.text}
                 </span>
               </a>
-            ))}
-          </div>
-        </div>
-      </nav>
-
-      {/* Inline TOC — mobile/tablet (collapsed by default so paragraph 1 starts sooner) */}
-      <nav
-        aria-label="Table of contents"
-        className="min-[1300px]:hidden my-6 p-4 sm:p-5 rounded-2xl bg-[#FFF7E6] border-2 border-black shadow-[4px_4px_0_#000] max-w-[66ch] mx-auto"
-      >
-        <button
-          onClick={() => setOpen(!open)}
-          aria-expanded={open}
-          className="flex items-center gap-3 w-full text-left"
-        >
-          <span className="inline-block w-3.5 h-6 bg-[#FFE642] border-2 border-black shadow-[2px_2px_0_#000] rounded-md shrink-0" />
-          <span className="font-display font-bold text-base sm:text-lg text-black">
-            Table of Contents
-          </span>
-          <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-black/5 border border-black/15 text-ink-muted">
-            {items.length} sections
-          </span>
-          <span className="ml-auto text-xs font-bold text-black/70">
-            {open ? '▲ Hide' : '▼ Show'}
-          </span>
-        </button>
-        {open && (
-          <ol className="mt-4 space-y-1.5 list-none pl-0">
-            {items.map((item, i) => (
-              <li key={item.id}>
-                <a
-                  href={`#${item.id}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                  className={`group flex items-center gap-2.5 text-sm rounded-lg px-2 py-1.5 transition-all duration-150 ${
-                    activeId === item.id
-                      ? 'bg-black text-[#C6F23A] font-bold border-2 border-black shadow-[2px_2px_0_#000]'
-                      : 'text-black font-medium hover:bg-white hover:border-2 hover:border-black hover:shadow-[2px_2px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5'
-                  }`}
-                >
-                  <span
-                    className="w-2.5 h-2.5 rounded-full border-2 border-black shrink-0"
-                    style={{ backgroundColor: DOT_COLORS[i % DOT_COLORS.length] }}
-                  />
-                  <span>
-                    <span className="font-bold">{String(item.num).padStart(2, '0')}</span>
-                    {' · '}
-                    {item.text}
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ol>
-        )}
-      </nav>
-    </>
+            </li>
+          ))}
+        </ol>
+      )}
+    </nav>
   );
 }

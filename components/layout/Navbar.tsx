@@ -30,6 +30,27 @@ export function Navbar({ siteName, categories }: NavbarProps) {
   // slide out fully before unmounting instead of vanishing mid-animation.
   const [mounted, setMounted] = useState(false);
   const [shown, setShown] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Slim down the sticky navbar on scroll (collapses secondary topic bar)
+  // to give readers ~50px more vertical reading canvas.
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const y = window.scrollY;
+        setScrolled((prev) => (prev ? y > 24 : y > 64));
+      });
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
 
   const openDrawer = () => {
     setMounted(true);
@@ -53,10 +74,10 @@ export function Navbar({ siteName, categories }: NavbarProps) {
   }, [mounted]);
 
   return (
-    <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur-md border-b-2 border-black">
+    <header className="sticky top-0 z-40 bg-surface/95 backdrop-blur-md border-b-2 border-black transition-all duration-200 print:hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Top bar */}
-        <div className="flex items-center justify-between h-16">
+        <div className={`flex items-center justify-between transition-all duration-200 ${scrolled ? 'h-14' : 'h-16'}`}>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -116,8 +137,13 @@ export function Navbar({ siteName, categories }: NavbarProps) {
           </div>
         </div>
 
-        {/* Category bar (desktop) */}
-        <div className="hidden md:flex items-center gap-1 pb-2 overflow-x-auto scrollbar-hide">
+        {/* Category bar (desktop) — smoothly collapses on scroll to maximize reading space */}
+        <div
+          aria-hidden={scrolled}
+          className={`hidden md:flex items-center gap-1 overflow-x-auto scrollbar-hide transition-all duration-200 ${
+            scrolled ? 'max-h-0 opacity-0 pb-0 pointer-events-none' : 'max-h-12 opacity-100 pb-2'
+          }`}
+        >
           {categories.slice(0, 8).map((cat) => (
             <Link
               key={cat.id}
