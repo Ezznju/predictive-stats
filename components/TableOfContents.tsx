@@ -29,16 +29,34 @@ export function TableOfContents({ variant = 'inline', readTime }: TableOfContent
 
     const headings = prose.querySelectorAll('h2');
     const tocItems: TocItem[] = [];
+    const usedIds = new Set<string>();
 
     headings.forEach((h, i) => {
-      const id = h.id || `heading-${i}`;
-      if (!h.id) h.id = id;
       // Exclude injected "#" anchor button text if already present
       const clone = h.cloneNode(true) as HTMLElement;
       clone.querySelectorAll('.heading-anchor').forEach((el) => el.remove());
+      const text = (clone.textContent || '').trim();
+
+      let id = h.id;
+      if (!id) {
+        const slug = text
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '')
+          .slice(0, 60);
+        const base = slug || `section-${i + 1}`;
+        id = base;
+        let n = 2;
+        while (usedIds.has(id) || document.getElementById(id)) {
+          id = `${base}-${n++}`;
+        }
+        h.id = id;
+      }
+      usedIds.add(id);
+
       tocItems.push({
         id,
-        text: (clone.textContent || '').trim(),
+        text,
         num: i + 1,
       });
     });

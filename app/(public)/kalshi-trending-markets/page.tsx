@@ -17,22 +17,24 @@ function monthLabel(): string {
 
 export async function generateMetadata(): Promise<Metadata> {
   const month = monthLabel();
+  const title = `Kalshi Trending Markets Today — Top 25 by 24h Volume (${month})`;
+  const description =
+    "See Kalshi's most active trending markets today — live top 25 CFTC-regulated contracts by 24-hour volume, YES/NO prices, spreads, and expiry countdown. Free, no signup.";
   return {
-    title: `Kalshi Trending Markets — Live Board (${month})`,
-    description:
-      "See Kalshi's most active markets right now — the top markets by 24-hour volume with live YES/NO prices, spreads and time remaining. Board refreshed regularly. Free, no signup.",
+    title,
+    description,
     alternates: { canonical: `${BASE}/kalshi-trending-markets` },
     openGraph: {
       type: 'website',
-      title: `Kalshi Trending Markets — Live Board (${month})`,
-      description:
-        'The most active Kalshi markets right now, ranked by 24-hour volume with live prices. Board refreshed regularly.',
+      url: `${BASE}/kalshi-trending-markets`,
+      title,
+      description,
       images: [{ url: '/kalshi-trending-markets/og', width: 1200, height: 630, type: 'image/png' }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'Kalshi Trending Markets — Live Board',
-      description: 'The most active Kalshi markets right now, ranked by 24-hour volume. Board refreshed regularly.',
+      title,
+      description,
       images: ['/kalshi-trending-markets/og'],
     },
   };

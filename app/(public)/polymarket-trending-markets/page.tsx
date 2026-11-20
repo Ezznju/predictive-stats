@@ -16,22 +16,24 @@ function monthLabel(): string {
 
 export async function generateMetadata(): Promise<Metadata> {
   const month = monthLabel();
+  const title = `Polymarket Trending Markets Today — Top 25 by 24h Volume (${month})`;
+  const description =
+    "See Polymarket's hottest trending markets today — live top 25 ranked by 24-hour volume with real-time YES/NO odds, biggest 24h movers, and liquidity. Free, no signup.";
   return {
-    title: `Polymarket Trending Markets — Live Board (${month})`,
-    description:
-      "See Polymarket's most active markets right now — the top markets by 24-hour volume with live YES/NO prices, liquidity and time remaining. Board refreshed regularly. Free, no signup.",
+    title,
+    description,
     alternates: { canonical: `${BASE}/polymarket-trending-markets` },
     openGraph: {
       type: 'website',
-      title: `Polymarket Trending Markets — Live Board (${month})`,
-      description:
-        'The most active Polymarket markets right now, ranked by 24-hour volume with live prices. Board refreshed regularly.',
+      url: `${BASE}/polymarket-trending-markets`,
+      title,
+      description,
       images: [{ url: '/polymarket-trending-markets/og', width: 1200, height: 630, type: 'image/png' }],
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'Polymarket Trending Markets — Live Board',
-      description: 'The most active Polymarket markets right now, ranked by 24-hour volume. Board refreshed regularly.',
+      title,
+      description,
       images: ['/polymarket-trending-markets/og'],
     },
   };

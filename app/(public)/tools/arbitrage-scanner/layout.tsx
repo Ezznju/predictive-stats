@@ -2,21 +2,22 @@ import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Polymarket × Kalshi Arbitrage Scanner — Free & Live',
+  title: 'Polymarket × Kalshi Arbitrage Scanner & Calculator — Live Spreads',
   description:
-    'Free Polymarket arbitrage scanner. Spot price differences between Polymarket and Kalshi on the same prediction market events in real time — with execution plans net of fees and slippage.',
+    'Free live Polymarket and Kalshi arbitrage scanner and calculator. Find cross-platform mispricings with real order-book depth, net-of-fee profit math, and instant execution plans.',
   openGraph: {
-    title: 'Polymarket × Kalshi Arbitrage Scanner — Free & Live',
+    title: 'Polymarket × Kalshi Arbitrage Scanner & Calculator — Live Spreads',
     description:
-      'Compare prices across Polymarket and Kalshi. Find arbitrage opportunities on matching prediction market events.',
+      'Free live Polymarket and Kalshi arbitrage scanner and calculator. Find cross-platform mispricings net of fees and slippage.',
     type: 'website',
+    url: 'https://predictionsmarketfans.com/tools/arbitrage-scanner',
     images: [{ url: '/tools/arbitrage-scanner/og', width: 1200, height: 630, type: 'image/png' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Polymarket × Kalshi Arbitrage Scanner — Free & Live',
+    title: 'Polymarket × Kalshi Arbitrage Scanner & Calculator — Live Spreads',
     description:
-      'Compare prices across Polymarket and Kalshi. Find arbitrage opportunities on matching prediction market events.',
+      'Free live Polymarket and Kalshi arbitrage scanner and calculator. Find cross-platform mispricings net of fees and slippage.',
     images: ['/tools/arbitrage-scanner/og'],
   },
   alternates: {
