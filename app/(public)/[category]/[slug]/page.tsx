@@ -7,7 +7,6 @@ import { Clock, Calendar, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-rea
 import { ArticleCard } from '@/components/ArticleCard';
 import { NewsletterBlock } from '@/components/NewsletterBlock';
 import { ReadingProgressBar } from '@/components/ReadingProgressBar';
-import { ReadingMiniBar } from '@/components/ReadingMiniBar';
 import { HeadingAnchors } from '@/components/HeadingAnchors';
 import { TableOfContents } from '@/components/TableOfContents';
 import { GiscusComments } from '@/components/GiscusComments';
@@ -325,7 +324,6 @@ export default async function CategoryArticlePage({ params }: Props) {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(faqJsonLd)}} />
       )}
       <ReadingProgressBar />
-      <ReadingMiniBar title={cleanTitle} />
 
       <article className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         {/* Breadcrumbs */}
