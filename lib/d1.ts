@@ -114,22 +114,36 @@ function toSettings(row: any): SiteSettings {
 
 // ─── Query Functions ────────────────────────────────────────────────
 
+// Article list queries never render body HTML. Excluding `content` cuts D1
+// REST payload & Worker JSON.parse CPU by ~100x (~6MB -> ~60KB), keeping
+// SSR well inside Cloudflare Workers' 10ms free-tier CPU limit.
+const ARTICLE_SUMMARY_COLS =
+  'id, title, slug, excerpt, featured_image, author_id, category_slug, tags, publish_date, updated_date, read_time, featured, status, seo_title, meta_description, pull_quote';
+
+// Lightweight per-isolate cache for tiny global lookup tables (settings,
+// categories, authors) so PublicLayout doesn't burn D1 round-trips & JSON
+// parses on every single page view. Automatically invalidated on admin writes.
+const LOOKUP_TTL_MS = 5 * 60 * 1000;
+let cachedSettings: { at: number; val: SiteSettings } | null = null;
+let cachedCategories: { at: number; val: Category[] } | null = null;
+let cachedAuthors: { at: number; val: Author[] } | null = null;
+
 export async function getPublishedArticles(): Promise<Article[]> {
   const rows = await d1Query(
-    `SELECT * FROM articles WHERE status = 'published' ORDER BY publish_date DESC`
+    `SELECT ${ARTICLE_SUMMARY_COLS} FROM articles WHERE status = 'published' ORDER BY publish_date DESC`
   );
   return rows.map(toArticle);
 }
 
 export async function getFeaturedArticles(): Promise<Article[]> {
   const rows = await d1Query(
-    `SELECT * FROM articles WHERE featured = 1 AND status = 'published' ORDER BY publish_date DESC`
+    `SELECT ${ARTICLE_SUMMARY_COLS} FROM articles WHERE featured = 1 AND status = 'published' ORDER BY publish_date DESC`
   );
   return rows.map(toArticle);
 }
 
 export async function getArticles(): Promise<Article[]> {
-  const rows = await d1Query(`SELECT * FROM articles ORDER BY publish_date DESC`);
+  const rows = await d1Query(`SELECT ${ARTICLE_SUMMARY_COLS} FROM articles ORDER BY publish_date DESC`);
   return rows.map(toArticle);
 }
 
@@ -145,7 +159,7 @@ export async function getArticleById(id: string): Promise<Article | null> {
 
 export async function getArticlesByCategory(categorySlug: string): Promise<Article[]> {
   const rows = await d1Query(
-    `SELECT * FROM articles WHERE category_slug = ? AND status = 'published' ORDER BY publish_date DESC`,
+    `SELECT ${ARTICLE_SUMMARY_COLS} FROM articles WHERE category_slug = ? AND status = 'published' ORDER BY publish_date DESC`,
     [categorySlug]
   );
   return rows.map(toArticle);
@@ -153,40 +167,53 @@ export async function getArticlesByCategory(categorySlug: string): Promise<Artic
 
 export async function getArticlesByAuthor(authorId: string): Promise<Article[]> {
   const rows = await d1Query(
-    `SELECT * FROM articles WHERE author_id = ? AND status = 'published' ORDER BY publish_date DESC`,
+    `SELECT ${ARTICLE_SUMMARY_COLS} FROM articles WHERE author_id = ? AND status = 'published' ORDER BY publish_date DESC`,
     [authorId]
   );
   return rows.map(toArticle);
 }
 
 export async function getAuthors(): Promise<Author[]> {
+  if (cachedAuthors && Date.now() - cachedAuthors.at < LOOKUP_TTL_MS) {
+    return cachedAuthors.val;
+  }
   const rows = await d1Query(`SELECT * FROM authors ORDER BY name`);
-  return rows.map(toAuthor);
+  const val = rows.map(toAuthor);
+  cachedAuthors = { at: Date.now(), val };
+  return val;
 }
 
 export async function getAuthorById(id: string): Promise<Author | null> {
-  const rows = await d1Query(`SELECT * FROM authors WHERE id = ? LIMIT 1`, [id]);
-  return rows.length > 0 ? toAuthor(rows[0]) : null;
+  const all = await getAuthors();
+  return all.find((a) => a.id === id) ?? null;
 }
 
 export async function getAuthorBySlug(slug: string): Promise<Author | null> {
-  const rows = await d1Query(`SELECT * FROM authors WHERE slug = ? LIMIT 1`, [slug]);
-  return rows.length > 0 ? toAuthor(rows[0]) : null;
+  const all = await getAuthors();
+  return all.find((a) => a.slug === slug) ?? null;
 }
 
 export async function getCategories(): Promise<Category[]> {
+  if (cachedCategories && Date.now() - cachedCategories.at < LOOKUP_TTL_MS) {
+    return cachedCategories.val;
+  }
   const rows = await d1Query(`SELECT * FROM categories ORDER BY name`);
-  return rows.map(toCategory);
+  const val = rows.map(toCategory);
+  cachedCategories = { at: Date.now(), val };
+  return val;
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  const rows = await d1Query(`SELECT * FROM categories WHERE slug = ? LIMIT 1`, [slug]);
-  return rows.length > 0 ? toCategory(rows[0]) : null;
+  const all = await getCategories();
+  return all.find((c) => c.slug === slug) ?? null;
 }
 
 export async function getSiteSettings(): Promise<SiteSettings> {
+  if (cachedSettings && Date.now() - cachedSettings.at < LOOKUP_TTL_MS) {
+    return cachedSettings.val;
+  }
   const rows = await d1Query(`SELECT * FROM site_settings WHERE id = 1 LIMIT 1`);
-  return rows.length > 0 ? toSettings(rows[0]) : {
+  const val: SiteSettings = rows.length > 0 ? toSettings(rows[0]) : {
     siteName: 'Predictions Market Fans',
     siteTagline: 'Sharp analysis for uncertain markets',
     siteDescription: '',
@@ -199,6 +226,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     socialLinkedin: '',
     socialGithub: '',
   };
+  cachedSettings = { at: Date.now(), val };
+  return val;
 }
 
 export function formatDate(dateStr: string): string {
@@ -209,7 +238,7 @@ export function formatDate(dateStr: string): string {
 
 export async function getLatestArticles(count = 10): Promise<Article[]> {
   const rows = await d1Query(
-    `SELECT * FROM articles WHERE status = 'published' ORDER BY publish_date DESC LIMIT ?`,
+    `SELECT ${ARTICLE_SUMMARY_COLS} FROM articles WHERE status = 'published' ORDER BY publish_date DESC LIMIT ?`,
     [count]
   );
   return rows.map(toArticle);
@@ -227,7 +256,7 @@ export async function getRelatedArticles(article: Article, count = 3): Promise<A
   let rows: any[];
   if (tagConditions) {
     rows = await d1Query(
-      `SELECT * FROM articles
+      `SELECT ${ARTICLE_SUMMARY_COLS} FROM articles
        WHERE id != ? AND status = 'published'
        AND (${tagConditions} OR category_slug = ?)
        ORDER BY publish_date DESC
@@ -236,7 +265,7 @@ export async function getRelatedArticles(article: Article, count = 3): Promise<A
     );
   } else {
     rows = await d1Query(
-      `SELECT * FROM articles
+      `SELECT ${ARTICLE_SUMMARY_COLS} FROM articles
        WHERE id != ? AND status = 'published' AND category_slug = ?
        ORDER BY publish_date DESC
        LIMIT ?`,
@@ -299,6 +328,7 @@ export async function insertCategory(row: Record<string, any>): Promise<any> {
     `INSERT INTO categories (${cols.join(', ')}) VALUES (${placeholders})`,
     values
   );
+  cachedCategories = null;
   return row;
 }
 
@@ -312,11 +342,13 @@ export async function updateCategory(id: string, row: Record<string, any>): Prom
     `UPDATE categories SET ${setClauses} WHERE id = ?`,
     values
   );
+  cachedCategories = null;
   return { id, ...row };
 }
 
 export async function deleteCategory(id: string): Promise<void> {
   await d1Execute(`DELETE FROM categories WHERE id = ?`, [id]);
+  cachedCategories = null;
 }
 
 export async function insertAuthor(row: Record<string, any>): Promise<any> {
@@ -327,6 +359,7 @@ export async function insertAuthor(row: Record<string, any>): Promise<any> {
     `INSERT INTO authors (${cols.join(', ')}) VALUES (${placeholders})`,
     values
   );
+  cachedAuthors = null;
   return row;
 }
 
@@ -340,11 +373,13 @@ export async function updateAuthor(id: string, row: Record<string, any>): Promis
     `UPDATE authors SET ${setClauses} WHERE id = ?`,
     values
   );
+  cachedAuthors = null;
   return { id, ...row };
 }
 
 export async function deleteAuthor(id: string): Promise<void> {
   await d1Execute(`DELETE FROM authors WHERE id = ?`, [id]);
+  cachedAuthors = null;
 }
 
 export async function countArticlesByAuthor(authorId: string): Promise<number> {
@@ -366,6 +401,7 @@ export async function updateSiteSettings(row: Record<string, any>): Promise<any>
     `UPDATE site_settings SET ${setClauses} WHERE id = 1`,
     values
   );
+  cachedSettings = null;
   return row;
 }
 

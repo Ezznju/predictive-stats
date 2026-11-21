@@ -9,7 +9,7 @@ export async function GET() {
   try {
     const board = await fetchKalshiSmartMoney(10);
     return NextResponse.json(board, {
-      headers: { 'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=300' },
+      headers: { 'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=1800' },
     });
   } catch {
     return NextResponse.json(

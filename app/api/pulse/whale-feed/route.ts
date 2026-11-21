@@ -267,14 +267,21 @@ export async function GET(request: Request) {
     };
   });
 
-  return NextResponse.json({
-    data: result.payload?.feed ?? [],
-    cards: result.payload?.cards ?? [],
-    aggregatedFlow: result.payload?.aggregatedFlow ?? null,
-    meta: {
-      updatedAt: result.updatedAt,
-      stale: result.stale,
-      source: result.source,
+  return NextResponse.json(
+    {
+      data: result.payload?.feed ?? [],
+      cards: result.payload?.cards ?? [],
+      aggregatedFlow: result.payload?.aggregatedFlow ?? null,
+      meta: {
+        updatedAt: result.updatedAt,
+        stale: result.stale,
+        source: result.source,
+      },
     },
-  });
+    {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900',
+      },
+    }
+  );
 }

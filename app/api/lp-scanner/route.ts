@@ -10,6 +10,10 @@ export const maxDuration = 60;
 
 const CACHE_KEY = 'lp-scanner';
 
+// Memoize scored LP array per isolate keyed by snapshot timestamp so
+// scoreLP() doesn't re-run across all markets on every single request.
+let scoredCache: { updatedAt: string | null; markets: any[] } | null = null;
+
 /* ── GET /api/lp-scanner ──────────────────────────────────────────── */
 
 export async function GET(request: NextRequest) {
@@ -42,38 +46,40 @@ export async function GET(request: NextRequest) {
       { softTtlMs: 55 * 60 * 1000, hardTtlMs: 48 * 60 * 60 * 1000 }
     );
 
-    // Enrich each market with risk-adjusted LP scoring
-    const enriched = (result.payload || []).map((market) => {
-      const liquidityUsd = market.volume24h || 50000;
-      const spreadPct = market.currentSpread || 0.02;
-      // Derive hidden-cost inputs from real market fields instead of flat constants:
-      //  - wider spread ⇒ more informed flow ⇒ higher adverse selection (bps)
-      //  - competition count ⇒ more reward dilution for this LP
-      //  - higher volume-to-liquidity ⇒ more fee capture opportunity
-      const adverseSelectionBps = Math.round(Math.min(40, Math.max(3, spreadPct * 100)));
-      const volatilityDaily = Math.round((0.01 + spreadPct * 10) * 1000) / 1000;
-      const rewardDilutionPctAnnual = Math.min(0.25, Math.max(0.02, market.competition * 0.01));
-      const feeCaptureShare = Math.min(0.12, Math.max(0.02, market.volume24h / Math.max(1, liquidityUsd)));
+    // Reuse memoized scored array when snapshot hasn't changed
+    let enriched: any[];
+    if (scoredCache && result.updatedAt && scoredCache.updatedAt === result.updatedAt) {
+      enriched = scoredCache.markets;
+    } else {
+      enriched = (result.payload || []).map((market) => {
+        const liquidityUsd = market.volume24h || 50000;
+        const spreadPct = market.currentSpread || 0.02;
+        const adverseSelectionBps = Math.round(Math.min(40, Math.max(3, spreadPct * 100)));
+        const volatilityDaily = Math.round((0.01 + spreadPct * 10) * 1000) / 1000;
+        const rewardDilutionPctAnnual = Math.min(0.25, Math.max(0.02, market.competition * 0.01));
+        const feeCaptureShare = Math.min(0.12, Math.max(0.02, market.volume24h / Math.max(1, liquidityUsd)));
 
-      const lpResult = scoreLP({
-        marketId: market.conditionId || market.yesTokenId || '',
-        name: market.question || '',
-        liquidityUsd,
-        dailyRewardUsd: market.rewardPerDay || 0,
-        volume24hUsd: market.volume24h || 0,
-        spreadDecimal: market.currentSpread || 0.02,
-        adverseSelectionBps,
-        volatilityDaily,
-        rewardDilutionPctAnnual,
-        feeCaptureShare,
-        platformRiskScore: 0.2,
+        const lpResult = scoreLP({
+          marketId: market.conditionId || market.yesTokenId || '',
+          name: market.question || '',
+          liquidityUsd,
+          dailyRewardUsd: market.rewardPerDay || 0,
+          volume24hUsd: market.volume24h || 0,
+          spreadDecimal: market.currentSpread || 0.02,
+          adverseSelectionBps,
+          volatilityDaily,
+          rewardDilutionPctAnnual,
+          feeCaptureShare,
+          platformRiskScore: 0.2,
+        });
+
+        return {
+          ...market,
+          lpScoring: lpResult || null,
+        };
       });
-
-      return {
-        ...market,
-        lpScoring: lpResult || null,
-      };
-    });
+      scoredCache = { updatedAt: result.updatedAt ?? null, markets: enriched };
+    }
 
     return NextResponse.json(
       {
@@ -84,7 +90,7 @@ export async function GET(request: NextRequest) {
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+          'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1800',
         },
       }
     );

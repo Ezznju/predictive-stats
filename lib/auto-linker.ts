@@ -1,25 +1,22 @@
 /**
- * Auto-linker for article HTML content.
+ * Single-pass O(N) auto-linker for article HTML content.
  *
- * Scans rendered article HTML and injects internal links for key terms,
+ * Scans rendered article HTML once and injects internal links for key terms,
  * tools, and platform names — strictly on plain text nodes outside HTML tags,
- * attributes, <a>, <h1-h6>, <code>, <pre>, <script>, and <style>.
+ * attributes, <a>, <h1-h6>, <code>, <pre>, <script>, <style>, and <figcaption>.
  *
- * Multi-word specific rules run BEFORE single-word platform rules so phrases
- * like "most active Polymarket markets" or "Kalshi smart money" link to the
- * dedicated tool page rather than being preempted by "Polymarket" / "Kalshi".
+ * Pre-compiled combined regex (longest terms first) keeps execution < 0.2ms
+ * per article so it stays far below Cloudflare Workers' 10ms CPU cap.
  */
 
 interface LinkRule {
-  /** Plain-text terms (case-insensitive). First match wins per article. */
   terms: string[];
   href: string;
-  /** Optional title attribute for the link */
   title?: string;
 }
 
 const LINK_RULES: LinkRule[] = [
-  // Multi-word tool & live-board phrases FIRST so they aren't preempted by single platform names
+  // Multi-word tool & live-board phrases FIRST
   {
     terms: ['LP reward scanner', 'liquidity reward scanner', 'LP scanner'],
     href: '/tools/lp-scanner',
@@ -119,73 +116,67 @@ const LINK_RULES: LinkRule[] = [
   },
 ];
 
-const SKIP_TAGS = new Set(['a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'code', 'pre', 'script', 'style', 'figcaption']);
+// Build one pre-compiled regex sorted by descending term length so longer
+// phrases (e.g. "Polymarket whale tracker") always beat shorter words ("Polymarket").
+const TERM_TO_RULE = new Map<string, LinkRule>();
+const ALL_TERMS: string[] = [];
+for (const rule of LINK_RULES) {
+  for (const term of rule.terms) {
+    const key = term.toLowerCase();
+    if (!TERM_TO_RULE.has(key)) {
+      TERM_TO_RULE.set(key, rule);
+      ALL_TERMS.push(term);
+    }
+  }
+}
+ALL_TERMS.sort((a, b) => b.length - a.length);
+
+const COMBINED_REGEX = new RegExp(
+  `\\b(${ALL_TERMS.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`,
+  'gi'
+);
+
+const SKIP_OPEN_RE = /^<(a|h[1-6]|code|pre|script|style|figcaption)(?:[\s>]|$)/i;
+const SKIP_CLOSE_RE = /^<\/(a|h[1-6]|code|pre|script|style|figcaption)>/i;
 
 /**
- * Inject internal links into article HTML safely on text nodes only.
+ * Inject internal links into article HTML in a single O(N) pass on text nodes only.
  */
 export function autoLink(html: string): string {
-  // Extract existing hrefs so we don't double-link to a destination already present
-  const existingHrefs = new Set(
-    Array.from(html.matchAll(/href=["']([^"']+)["']/gi)).map((m) => m[1])
-  );
-  const alreadyLinked = new Set<string>();
+  if (!html) return html;
 
-  // Split HTML into tag tokens (<...>) and plain text tokens
+  const linkedHrefs = new Set<string>();
+  const hrefRe = /href=["']([^"']+)["']/gi;
+  let hm: RegExpExecArray | null;
+  while ((hm = hrefRe.exec(html))) {
+    linkedHrefs.add(hm[1]);
+  }
+
   const tokens = html.split(/(<[^>]+>)/g);
+  let skipDepth = 0;
 
-  for (const rule of LINK_RULES) {
-    if (existingHrefs.has(rule.href) || alreadyLinked.has(rule.href)) {
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    if (!tok) continue;
+
+    if (tok.charCodeAt(0) === 60 /* '<' */) {
+      if (SKIP_CLOSE_RE.test(tok)) {
+        if (skipDepth > 0) skipDepth--;
+      } else if (!tok.endsWith('/>') && SKIP_OPEN_RE.test(tok)) {
+        skipDepth++;
+      }
       continue;
     }
 
-    let linkedThisRule = false;
+    if (skipDepth > 0) continue;
 
-    for (const term of rule.terms) {
-      if (linkedThisRule) break;
-      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`\\b(${escaped})\\b`, 'i');
-
-      const depth: Record<string, number> = {};
-
-      for (let i = 0; i < tokens.length; i++) {
-        const tok = tokens[i];
-        if (!tok) continue;
-
-        if (tok.startsWith('<')) {
-          const closeMatch = tok.match(/^<\/([a-z0-9]+)/i);
-          if (closeMatch) {
-            const tag = closeMatch[1].toLowerCase();
-            if (SKIP_TAGS.has(tag) && depth[tag] > 0) depth[tag]--;
-          } else if (!tok.endsWith('/>')) {
-            const openMatch = tok.match(/^<([a-z0-9]+)[\s>]/i);
-            if (openMatch) {
-              const tag = openMatch[1].toLowerCase();
-              if (SKIP_TAGS.has(tag)) depth[tag] = (depth[tag] || 0) + 1;
-            }
-          }
-          continue;
-        }
-
-        // Skip text inside forbidden tags
-        const inSkipped = Object.values(depth).some((d) => d > 0);
-        if (inSkipped) continue;
-
-        const m = tok.match(regex);
-        if (m && m.index !== undefined) {
-          const original = m[0];
-          const titleAttr = rule.title ? ` title="${rule.title}"` : '';
-          const before = tok.slice(0, m.index);
-          const after = tok.slice(m.index + original.length);
-          // Replace the single text token with [before, <a>, original, </a>, after]
-          // so subsequent rules see the newly inserted <a> tag as forbidden!
-          tokens.splice(i, 1, before, `<a href="${rule.href}"${titleAttr}>`, original, '</a>', after);
-          alreadyLinked.add(rule.href);
-          linkedThisRule = true;
-          break;
-        }
-      }
-    }
+    tokens[i] = tok.replace(COMBINED_REGEX, (match) => {
+      const rule = TERM_TO_RULE.get(match.toLowerCase());
+      if (!rule || linkedHrefs.has(rule.href)) return match;
+      linkedHrefs.add(rule.href);
+      const titleAttr = rule.title ? ` title="${rule.title}"` : '';
+      return `<a href="${rule.href}"${titleAttr}>${match}</a>`;
+    });
   }
 
   return tokens.join('');
