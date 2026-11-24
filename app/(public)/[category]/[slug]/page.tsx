@@ -83,6 +83,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cleanTitle = stripHtml(article.seoTitle || article.title);
   const cleanDesc = stripHtml(article.metaDescription || article.excerpt);
 
+  const fallbackOgUrl = `${SITE_URL}/${canonicalCategory}/${article.slug}/og?v=2`;
+  const rawImg = article.featuredImage?.trim();
+  // Use the article's actual featured image (thumbnail) for X/Twitter, LinkedIn,
+  // Telegram, and WhatsApp previews; fall back to generated /og PNG only when
+  // missing or .avif (which some social scrapers don't decode).
+  const absoluteFeatured =
+    rawImg && !/\.avif(\?|$)/i.test(rawImg)
+      ? /^https?:\/\//i.test(rawImg)
+        ? rawImg
+        : `${SITE_URL}${rawImg.startsWith('/') ? '' : '/'}${rawImg}`
+      : null;
+
+  const socialImage = absoluteFeatured
+    ? { url: absoluteFeatured, width: 1200, height: 630, alt: cleanTitle }
+    : { url: fallbackOgUrl, width: 1200, height: 630, type: 'image/png', alt: cleanTitle };
+
   return {
     title: cleanTitle,
     description: cleanDesc,
@@ -97,13 +113,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       modifiedTime: article.updatedDate || article.publishDate,
       authors: author ? [author.name] : undefined,
       tags: article.tags,
-      images: [{ url: `${SITE_URL}/${canonicalCategory}/${article.slug}/og?v=2`, width: 1200, height: 630, type: 'image/png', alt: cleanTitle }],
+      images: [socialImage],
     },
     twitter: {
       card: 'summary_large_image',
       title: cleanTitle,
       description: cleanDesc,
-      images: [{ url: `${SITE_URL}/${canonicalCategory}/${article.slug}/og?v=2`, width: 1200, height: 630, type: 'image/png', alt: cleanTitle }],
+      images: [socialImage],
     },
   };
 }
