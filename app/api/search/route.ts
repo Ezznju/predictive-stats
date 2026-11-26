@@ -48,5 +48,9 @@ export async function GET(request: NextRequest) {
     .slice(0, 24)
     .map(({ _score, ...row }: any) => row);
 
-  return NextResponse.json(ranked);
+  return NextResponse.json(ranked, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900',
+    },
+  });
 }

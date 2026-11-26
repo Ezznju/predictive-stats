@@ -37,6 +37,7 @@ jobs:
       - name: Warm Polymarket LP & Whale caches
         if: github.event.schedule != '45 * * * *'
         run: |
+          curl -sf --max-time 25 "https://predictionsmarketfans.com/api/lp-rewards" > /dev/null || true
           curl -sf --max-time 25 "https://predictionsmarketfans.com/api/lp-scanner" > /dev/null || true
           curl -sf --max-time 25 "https://predictionsmarketfans.com/api/pulse/whale-feed" > /dev/null || true
       - name: Refresh arbitrage board

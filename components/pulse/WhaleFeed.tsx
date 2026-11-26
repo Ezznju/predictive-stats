@@ -57,11 +57,23 @@ export function WhaleFeed() {
     fetchFeed();
   }, [fetchFeed]);
 
-  // Auto-refresh every 30s
+  // Auto-refresh every 30s — paused automatically while tab is hidden
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(fetchFeed, 30_000);
-    return () => clearInterval(interval);
+    const tick = () => {
+      if (document.visibilityState === 'visible') {
+        fetchFeed();
+      }
+    };
+    const interval = setInterval(tick, 30_000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') fetchFeed();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [autoRefresh, fetchFeed]);
 
   // Apply client-side filters to raw trades

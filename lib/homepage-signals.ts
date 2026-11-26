@@ -56,6 +56,7 @@ const getCachedSignals = cachedByKey<HomepageSignals>(
     const [entries, polyTrending] = await Promise.all([
       getCacheEntries([
         'arbitrage-scanner',
+        'lp-rewards-board',
         'lp-scanner',
         'pulse:whale-feed',
         'kalshi-trending-board',
@@ -68,33 +69,44 @@ const getCachedSignals = cachedByKey<HomepageSignals>(
     const rawArb = entries.get('arbitrage-scanner')?.payload;
     if (Array.isArray(rawArb)) {
       const sorted = [...rawArb]
-        .filter((p: any) => p && (p.question || p.polymarketTitle || p.kalshiTitle))
-        .sort((a: any, b: any) => Number(b.netSpreadCents ?? b.spread ?? 0) - Number(a.netSpreadCents ?? a.spread ?? 0))
+        .filter((p: any) => p && (p.eventName || p.poly?.question || p.kalshi?.question))
+        .sort(
+          (a: any, b: any) =>
+            Number(b.depth?.netPerContractCents ?? b.priceDiffCents ?? 0) -
+            Number(a.depth?.netPerContractCents ?? a.priceDiffCents ?? 0)
+        )
         .slice(0, 4);
       for (const p of sorted) {
-        const netCents = Number(p.netSpreadCents ?? (Number(p.spread ?? 0) * 100));
-        const conf = Math.min(99, Math.max(50, Math.round(Number(p.confidence ?? p.matchScore ?? 78) * (Number(p.confidence ?? 0) <= 1 ? 100 : 1))));
+        const netCents = Number(p.depth?.netPerContractCents ?? p.priceDiffCents ?? 0);
+        const rawConf = Number(p.matchConfidence ?? p.matchScore ?? 78);
+        const conf = Math.min(99, Math.max(50, Math.round(rawConf <= 1 ? rawConf * 100 : rawConf)));
+        const risk =
+          p.depth?.capitalUsd != null && Number(p.depth.capitalUsd) < 250
+            ? 'thin book'
+            : Array.isArray(p.anomalies) && p.anomalies.length > 0
+            ? String(p.anomalies[0].kind ?? 'check book').slice(0, 18)
+            : undefined;
         arb.push({
-          mkt: String(p.question ?? p.polymarketTitle ?? p.kalshiTitle ?? 'Cross-platform market'),
+          mkt: String(p.eventName ?? p.poly?.question ?? p.kalshi?.question ?? 'Cross-platform market'),
           net: Number.isFinite(netCents) ? Math.max(0.1, netCents) : 1.2,
           conf,
-          risk: p.depth?.fillableUsd != null && Number(p.depth.fillableUsd) < 250 ? 'thin book' : undefined,
+          risk,
         });
       }
     }
 
     const lp: LpCell[] = [];
-    const rawLp = entries.get('lp-scanner')?.payload;
+    const rawLp = entries.get('lp-rewards-board')?.payload ?? entries.get('lp-scanner')?.payload;
     if (Array.isArray(rawLp)) {
       const sorted = [...rawLp]
-        .filter((m: any) => m && m.question && Number(m.rewardPerDay ?? 0) > 0)
-        .sort((a: any, b: any) => Number(b.rewardPerDay ?? 0) - Number(a.rewardPerDay ?? 0))
+        .filter((m: any) => m && m.question && Number(m.dailyReward ?? m.rewardPerDay ?? 0) > 0)
+        .sort((a: any, b: any) => Number(b.dailyReward ?? b.rewardPerDay ?? 0) - Number(a.dailyReward ?? a.rewardPerDay ?? 0))
         .slice(0, 4);
       for (const m of sorted) {
-        const daily = Number(m.rewardPerDay ?? 0);
-        const vol = Math.max(10_000, Number(m.volume24h ?? 50_000));
+        const daily = Number(m.dailyReward ?? m.rewardPerDay ?? 0);
+        const vol = Math.max(10_000, Number(m.volume24hr ?? m.volume24h ?? m.liquidity ?? 50_000));
         const estRealApr = Math.min(3.5, Math.max(0.05, (daily * 365) / (vol * 0.35)));
-        const comp = Number(m.competition ?? 0);
+        const comp = Number(m.competitiveness ?? m.competition ?? 0);
         lp.push({
           mkt: String(m.question),
           real: estRealApr,

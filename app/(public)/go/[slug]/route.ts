@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { waitUntil } from '@vercel/functions';
+import { cfWaitUntil } from '@/lib/cf-runtime';
 import { getPlatformBySlug, getOutboundUrl } from '@/lib/platforms';
 import { insertOutboundClick } from '@/lib/db';
 export const runtime = 'edge';
@@ -18,11 +18,13 @@ export async function GET(
   const { url, isAffiliate } = getOutboundUrl(platform);
   const ctx = request.nextUrl.searchParams.get('ctx');
   const referer = request.headers.get('referer');
-  const country = request.headers.get('x-vercel-ip-country') ?? request.headers.get('x-vercel-ip-city');
+  const country =
+    request.headers.get('cf-ipcountry') ??
+    request.headers.get('x-vercel-ip-country') ??
+    request.headers.get('x-vercel-ip-city');
   const userAgent = request.headers.get('user-agent');
 
-  // Track click without taxing the redirect: hand the write to the
-  // background via waitUntil, and only wait up to 300ms for the fast path.
+  // Track click reliably on Cloudflare Workers without blocking the 307 redirect.
   const p = insertOutboundClick({
     platform_slug: platform.slug,
     ctx,
@@ -31,11 +33,7 @@ export async function GET(
     country,
     user_agent: userAgent,
   });
-  try {
-    waitUntil(p);
-  } catch {
-    // waitUntil unavailable — fall through to the awaited race below
-  }
+  cfWaitUntil(p);
   try {
     await Promise.race([
       p,

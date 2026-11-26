@@ -43,6 +43,19 @@ const nextConfig = {
         ],
       },
       {
+        // Explicit edge + browser caching for static free tool & calculator pages
+        source: '/tools/:path(kalshi-combo-calculator|kalshi-fee-calculator)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400' },
+        ],
+      },
+      {
+        source: '/tools',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400' },
+        ],
+      },
+      {
         // Embeddable widgets (/embed/*) must be frameable by third-party
         // sites. A CSP frame-ancestors directive overrides the global
         // X-Frame-Options in every modern browser, so only these paths

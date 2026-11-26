@@ -29,15 +29,19 @@ export async function GET(
     }
 
     const contentType = object.headers.get('content-type') || 'application/octet-stream';
-    const arrayBuffer = await object.arrayBuffer();
+    const responseHeaders: Record<string, string> = {
+      'content-type': contentType,
+      'cache-control': 'public, max-age=31536000, s-maxage=31536000, immutable',
+    };
+    const contentLength = object.headers.get('content-length');
+    if (contentLength) responseHeaders['content-length'] = contentLength;
+    const etag = object.headers.get('etag');
+    if (etag) responseHeaders['etag'] = etag;
 
-    return new NextResponse(arrayBuffer, {
+    // Stream directly from R2 without buffering full files into Worker RAM
+    return new NextResponse(object.body, {
       status: 200,
-      headers: {
-        'content-type': contentType,
-        'cache-control': 'public, max-age=31536000, immutable',
-        'content-length': String(arrayBuffer.byteLength),
-      },
+      headers: responseHeaders,
     });
   } catch (error) {
     return NextResponse.json(
