@@ -15,6 +15,7 @@ import { TwitterEmbeds } from '@/components/TwitterEmbeds';
 import { ShareButtons } from '@/components/ShareButtons';
 import { ImageLightbox } from '@/components/ImageLightbox';
 import { ReactionsBar } from '@/components/ReactionsBar';
+import { CodeBlocks } from '@/components/CodeBlocks';
 import {
   getArticleBySlug,
   getPublishedArticles,
@@ -550,13 +551,13 @@ export default async function CategoryArticlePage({ params }: Props) {
                 prose-p:text-ink-secondary
                 prose-strong:text-ink
                 prose-blockquote:border-l-black prose-blockquote:text-ink-secondary
-                prose-code:text-black prose-code:bg-black/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
                 prose-li:text-ink-secondary"
               dangerouslySetInnerHTML={{ __html: finalBody }}
             />
 
-            {/* Deep-link anchors on section headings */}
+            {/* Deep-link anchors on section headings + syntax-highlighted copyable code blocks */}
             <HeadingAnchors />
+            <CodeBlocks />
 
             {/* Unified Engagement Footer (Tags + Reactions + Share) */}
             <footer className="mt-12 pt-6 border-t border-black/10 max-w-[66ch] mx-auto space-y-6 no-print">

@@ -140,15 +140,15 @@
 }
 
 .tiptap-editor .ProseMirror code {
-  @apply bg-white/20 text-ink px-1.5 py-0.5 rounded text-sm font-mono;
+  @apply bg-[#FFF0C2] text-[#0b1120] border border-black/20 px-1.5 py-0.5 rounded-md text-sm font-mono;
 }
 
 .tiptap-editor .ProseMirror pre {
-  @apply bg-white/10 rounded-lg p-4 my-4 overflow-x-auto;
+  @apply bg-[#0F172A] text-[#E2E8F0] border-2 border-black rounded-xl p-4 my-4 overflow-x-auto font-mono text-sm leading-relaxed shadow-pop-sm;
 }
 
 .tiptap-editor .ProseMirror pre code {
-  @apply bg-transparent px-0 py-0;
+  @apply bg-transparent text-[#E2E8F0] border-0 px-0 py-0;
 }
 
 .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
@@ -466,9 +466,11 @@
   margin-right: auto;
 }
 
-/* Asymmetric wide breakouts for charts, tables, embeds & standalone media */
+/* Asymmetric wide breakouts for charts, tables, code blocks, embeds & standalone media */
 .article-prose > figure,
 .article-prose > .table-scroll,
+.article-prose > .code-block-shell,
+.article-prose > pre,
 .article-prose > .yt-embed,
 .article-prose > [data-polymarket-market],
 .article-prose > [data-polymarket-event] {
@@ -476,6 +478,152 @@
   margin-left: auto;
   margin-right: auto;
 }
+
+/* ── Professional Editorial Inline Code & Code Blocks ── */
+.prose :not(pre) > code {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.86em;
+  font-weight: 600;
+  color: #0b1120;
+  background: #FFF0C2;
+  border: 1.5px solid rgba(0, 0, 0, 0.22);
+  border-radius: 6px;
+  padding: 0.12em 0.42em;
+  word-break: break-word;
+}
+.prose :not(pre) > code::before,
+.prose :not(pre) > code::after {
+  content: none !important;
+}
+
+/* Base <pre> fallback (renders crisp light-on-dark even before JS hydration) */
+.prose pre {
+  background: #0F172A !important;
+  color: #E2E8F0 !important;
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875rem;
+  line-height: 1.72;
+  padding: 1.25rem 1.4rem;
+  margin: 1.75rem auto;
+  border: 2px solid #000;
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 #000;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  tab-size: 2;
+}
+
+.prose pre code {
+  background: transparent !important;
+  color: #E2E8F0 !important;
+  border: none !important;
+  padding: 0 !important;
+  font-weight: 400 !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  display: block;
+  white-space: pre;
+}
+
+.prose pre code::before,
+.prose pre code::after {
+  content: none !important;
+}
+
+/* Enhanced window shell added by <CodeBlocks /> */
+.code-block-shell {
+  margin: 2rem auto;
+  border: 2px solid #000;
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 #000;
+  overflow: hidden;
+  background: #0F172A;
+}
+
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #1E293B;
+  border-bottom: 2px solid #000;
+}
+
+.code-block-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.code-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.code-dots > span {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  border: 1.5px solid #000;
+  display: inline-block;
+}
+
+.code-lang {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #CBD5E1;
+}
+
+.code-copy-btn {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #F8FAFC;
+  background: #334155;
+  border: 1.5px solid #000;
+  border-radius: 8px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+
+.code-copy-btn:hover {
+  background: #FFE642;
+  color: #0b1120;
+  transform: translateY(-1px);
+}
+
+.code-copy-btn.is-copied {
+  background: #C6F23A;
+  color: #0b1120;
+}
+
+.code-block-shell pre {
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  max-width: none !important;
+}
+
+/* High-contrast syntax token colors on #0F172A slate */
+.code-block-shell .tok-comment { color: #94A3B8; font-style: italic; }
+.code-block-shell .tok-string  { color: #4ADE80; }
+.code-block-shell .tok-keyword { color: #38BDF8; font-weight: 600; }
+.code-block-shell .tok-number  { color: #FFE642; }
+.code-block-shell .tok-fn      { color: #C084FC; }
+
+/* Slim dark scrollbar inside code blocks */
+.prose pre::-webkit-scrollbar { height: 7px; }
+.prose pre::-webkit-scrollbar-track { background: #0B1120; }
+.prose pre::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+.prose pre::-webkit-scrollbar-thumb:hover { background: #475569; }
 
 .article-prose > p {
   font-size: 1.075rem;
@@ -1230,11 +1378,28 @@ main {
   .article-prose figure,
   .article-prose table,
   .article-prose blockquote,
+  .article-prose pre,
+  .code-block-shell,
   .auto-pullquote {
     break-inside: avoid;
     page-break-inside: avoid;
     box-shadow: none !important;
   }
+  .code-block-shell,
+  .prose pre {
+    background: #F8FAFC !important;
+    color: #0b1120 !important;
+    border: 1px solid #94A3B8 !important;
+  }
+  .prose pre code {
+    color: #0b1120 !important;
+    white-space: pre-wrap !important;
+  }
+  .code-block-header {
+    background: #E2E8F0 !important;
+    color: #0b1120 !important;
+  }
+  .code-copy-btn { display: none !important; }
   a[href^="http"]::after {
     content: " (" attr(href) ")";
     font-size: 0.8em;
