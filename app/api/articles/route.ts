@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
   // Edge cache (7d TTL) must be purged or a new article won't appear.
   purgeArticleUrls(row.category_slug, row.slug).catch(() => {});
 
-  if (row.category_slug && row.slug) {
+  if (row.status === 'published' && row.category_slug && row.slug) {
     const url = `https://predictionsmarketfans.com/${row.category_slug}/${row.slug}`;
     submitIndexNow([url]).catch(() => {});
   }

@@ -87,56 +87,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const knowledgeGraph = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'Organization',
-        '@id': `${SITE_URL}/#organization`,
-        name: 'Predictions Market Fans',
-        alternateName: 'PMF',
-        url: SITE_URL,
-        description:
-          'Independent prediction market analysis, live Polymarket & Kalshi scanners, whale tracking, and platform reviews.',
-        logo: {
-          '@type': 'ImageObject',
-          '@id': `${SITE_URL}/#logo`,
-          url: `${SITE_URL}/apple-touch-icon.png`,
-          width: 180,
-          height: 180,
-        },
-        sameAs: ['https://www.youtube.com/@predictionsmarketfans'],
-      },
-      {
-        '@type': 'WebSite',
-        '@id': `${SITE_URL}/#website`,
-        name: 'Predictions Market Fans',
-        url: SITE_URL,
-        publisher: { '@id': `${SITE_URL}/#organization` },
-        inLanguage: 'en-US',
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: {
-            '@type': 'EntryPoint',
-            urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
-          },
-          'query-input': 'required name=search_term_string',
-        },
-      },
-    ],
-  };
-
   return (
     <html lang="en" className={`${inter.variable} ${sora.variable} ${ibmPlexMono.variable}`}>
       <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(knowledgeGraph),
-          }}
-        />
-        {/* NOTE: third-party scripts (Clarity, AdSense) live in
-            app/(public)/layout.tsx so they never load inside /admin. */}
+        {/* NOTE: Knowledge Graph JSON-LD (with dynamic sameAs) and third-party
+            scripts (Clarity, AdSense) live in app/(public)/layout.tsx so they
+            reuse the cached site settings and never load inside /admin. */}
       </head>
       <body className="font-body min-h-screen flex flex-col">
         {children}

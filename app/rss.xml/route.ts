@@ -1,4 +1,4 @@
-import { getPublishedArticles, getCategories, getSiteSettings } from '@/lib/db';
+import { getPublishedArticles, getCategories, getAuthors, getSiteSettings } from '@/lib/db';
 import { slimArticles } from '@/lib/isolate-cache';
 import { SITE_URL, stripHtml } from '@/lib/seo-utils';
 
@@ -14,22 +14,32 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;');
 }
 
+function toAbsoluteImageUrl(raw: string | undefined, baseUrl: string): string | null {
+  const trimmed = raw?.trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `${baseUrl}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
+}
+
 export async function GET() {
   let articles: Awaited<ReturnType<typeof getPublishedArticles>> = [];
   let categoryNameBySlug = new Map<string, string>();
+  let authorNameById = new Map<string, string>();
   let siteName = 'Predictions Market Fans';
   let siteDesc =
     'Independent prediction market analysis, live Polymarket & Kalshi scanners, whale tracking, and platform reviews.';
   let baseUrl = SITE_URL;
 
   try {
-    const [rawArticles, categories, settings] = await Promise.all([
+    const [rawArticles, categories, authors, settings] = await Promise.all([
       getPublishedArticles(),
       getCategories(),
+      getAuthors(),
       getSiteSettings(),
     ]);
     articles = slimArticles(rawArticles).slice(0, 50);
     categoryNameBySlug = new Map(categories.map((c) => [c.slug, c.name]));
+    authorNameById = new Map(authors.map((a) => [a.id, a.name]));
     if (settings.siteName) siteName = settings.siteName;
     if (settings.siteDescription) siteDesc = settings.siteDescription;
     if (settings.siteUrl) baseUrl = settings.siteUrl.replace(/\/+$/, '');
@@ -49,14 +59,18 @@ export async function GET() {
       const desc = escapeXml(stripHtml(a.metaDescription || a.excerpt));
       const pubDate = new Date(a.publishDate).toUTCString();
       const catName = categoryNameBySlug.get(a.categorySlug);
+      const authorName = authorNameById.get(a.authorId);
+      const imageUrl = toAbsoluteImageUrl(a.featuredImage, baseUrl);
       return [
         '    <item>',
         `      <title>${title}</title>`,
         `      <link>${escapeXml(link)}</link>`,
         `      <guid isPermaLink="true">${escapeXml(link)}</guid>`,
         `      <pubDate>${pubDate}</pubDate>`,
+        authorName ? `      <dc:creator>${escapeXml(authorName)}</dc:creator>` : '',
         catName ? `      <category>${escapeXml(catName)}</category>` : '',
         `      <description>${desc}</description>`,
+        imageUrl ? `      <media:content url="${escapeXml(imageUrl)}" medium="image" />` : '',
         '    </item>',
       ]
         .filter(Boolean)
@@ -65,7 +79,7 @@ export async function GET() {
     .join('\n');
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
     <title>${escapeXml(siteName)}</title>
     <link>${escapeXml(baseUrl)}</link>

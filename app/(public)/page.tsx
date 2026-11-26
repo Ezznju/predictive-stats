@@ -65,13 +65,13 @@ export default async function Home() {
           <MascotBand />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 relative z-10">
-            {/* Editorial masthead H1 (stable site-level heading for SEO & clarity) */}
+            {/* Editorial masthead H1 (stable keyword-rich heading for SEO & clarity) */}
             <div className="flex flex-wrap items-baseline justify-between gap-2 pb-5 mb-6 border-b-2 border-black">
               <h1 className="font-display font-extrabold text-xl sm:text-2xl text-black tracking-tight">
-                {settings.siteTagline || 'Sharp analysis for prediction markets'}
+                Prediction Market Analysis, Live Polymarket &amp; Kalshi Tools
               </h1>
               <p className="text-xs sm:text-sm font-semibold text-black/80">
-                Polymarket &amp; Kalshi research, live scanners &amp; data
+                {settings.siteTagline || 'Sharp analysis for uncertain markets'}
               </p>
             </div>
 

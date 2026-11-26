@@ -1,3 +1,4 @@
+import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronRight, ExternalLink, ArrowRight, DollarSign, TrendingUp, Clock } from 'lucide-react';
@@ -25,6 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: { canonical: `${BASE}/kalshi-smart-money` },
     openGraph: {
       type: 'website',
+      url: `${BASE}/kalshi-smart-money`,
       title: 'Kalshi Smart Money Signals — Where Big Money Is Resting',
       description:
         'The Kalshi markets with serious capital in the order book, the biggest 24h price changes, and expiring-heavy markets.',
@@ -174,24 +176,28 @@ export default async function KalshiSmartMoneyPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson({
         '@context': 'https://schema.org',
         '@type': 'WebApplication',
         name: 'Kalshi Smart Money Signals',
         url: `${BASE}/kalshi-smart-money`,
+        description:
+          'Live board of where serious capital is resting in Kalshi order books, biggest 24h momentum shifts, and high-volume expiring markets.',
         applicationCategory: 'FinanceApplication',
         operatingSystem: 'Any',
         offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        creator: { '@type': 'Organization', '@id': `${BASE}/#organization`, name: 'Predictions Market Fans', url: BASE },
       }) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson({
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
         itemListElement: [
           { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
-          { '@type': 'ListItem', position: 2, name: 'Kalshi Smart Money', item: `${BASE}/kalshi-smart-money` },
+          { '@type': 'ListItem', position: 2, name: 'Free Tools', item: `${BASE}/tools` },
+          { '@type': 'ListItem', position: 3, name: 'Kalshi Smart Money', item: `${BASE}/kalshi-smart-money` },
         ],
       }) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson({
         '@context': 'https://schema.org',
         '@type': 'FAQPage',
         mainEntity: faq.map((f) => ({
@@ -205,6 +211,8 @@ export default async function KalshiSmartMoneyPage() {
         {/* Breadcrumbs */}
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-black/80 mb-5">
           <Link href="/" className="hover:text-black hover:underline transition-colors">Home</Link>
+          <ChevronRight className="w-3 h-3" aria-hidden="true" />
+          <Link href="/tools" className="hover:text-black hover:underline transition-colors">Tools</Link>
           <ChevronRight className="w-3 h-3" aria-hidden="true" />
           <span className="text-black font-bold">Kalshi Smart Money</span>
         </nav>
@@ -288,11 +296,12 @@ export default async function KalshiSmartMoneyPage() {
 
         {/* Sibling tools */}
         <section className="mt-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { n: 'Kalshi Trending', d: 'Most active Kalshi markets by 24h volume.', href: '/kalshi-trending-markets', bg: 'var(--neon-green)' as string },
-              { n: 'Polymarket Whale Tracker', d: 'Live whale trades, graded by skill.', href: '/pulse', bg: 'var(--neon-lime)' as string },
-              { n: 'Arbitrage Scanner', d: 'Cross-platform gaps, net of fees.', href: '/tools/arbitrage-scanner', bg: 'var(--neon-cyan)' as string },
+              { n: 'Kalshi Combo Calculator', d: 'Simulate combo payouts & Blue Arrow DNP settlements.', href: '/tools/kalshi-combo-calculator', bg: '#29C5F6' },
+              { n: 'Kalshi Fee Calculator', d: 'Exact taker/maker fees & break-even win %.', href: '/tools/kalshi-fee-calculator', bg: '#FFE642' },
+              { n: 'Kalshi Trending', d: 'Most active Kalshi markets by 24h volume.', href: '/kalshi-trending-markets', bg: '#2BD96E' },
+              { n: 'Arbitrage Scanner', d: 'Cross-platform gaps, net of fees.', href: '/tools/arbitrage-scanner', bg: '#D9F24B' },
             ].map((t) => (
               <Link key={t.href} href={t.href} className="group bg-white border-2 border-black rounded-2xl shadow-pop p-5 hover:-translate-y-1 transition-transform">
                 <div className="w-9 h-9 rounded-lg border-2 border-black mb-3" style={{ backgroundColor: t.bg }} />

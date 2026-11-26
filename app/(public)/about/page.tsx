@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
-import { BarChart3, Target, Eye, Shield } from 'lucide-react';
+import { BarChart3, Target, Eye, Shield, ChevronRight } from 'lucide-react';
 import { getAuthors, getSiteSettings } from '@/lib/db';
+import { ldJson } from '@/lib/json-ld';
 import { DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo-utils';
 import Link from 'next/link';
 import {
@@ -47,8 +48,29 @@ export default async function AboutPage() {
     { icon: BarChart3, title: 'Depth Over Speed', desc: 'We publish fewer articles at higher quality. Every piece goes through rigorous fact-checking.', color: '#4A6CF7' },
   ];
 
+  const baseUrl = (settings.siteUrl || SITE_URL).replace(/\/+$/, '');
+  const aboutJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: `About ${settings.siteName || 'Predictions Market Fans'}`,
+    url: `${baseUrl}/about`,
+    description: settings.siteDescription,
+    mainEntity: { '@id': `${baseUrl}/#organization` },
+  };
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
+      { '@type': 'ListItem', position: 2, name: 'About', item: `${baseUrl}/about` },
+    ],
+  };
+
   return (
     <div className="relative">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(aboutJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbJsonLd) }} />
+
       {/* Top decorative band */}
       <div className="relative overflow-hidden bg-black/5 py-14 sm:py-16 border-b-2 border-black">
         <CornerDotSquare size={72} color="#2BD96E" dotColor="#9D5CFF" className="absolute top-6 left-6 -rotate-3 opacity-50 hidden lg:block pointer-events-none" />
@@ -57,6 +79,11 @@ export default async function AboutPage() {
         <HalfCircle size={72} color="#D9F24B" direction="left" className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-50 hidden md:block pointer-events-none" />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-black/80 mb-5">
+            <Link href="/" className="hover:text-black hover:underline transition-colors">Home</Link>
+            <ChevronRight className="w-3 h-3" aria-hidden="true" />
+            <span className="text-black font-bold">About</span>
+          </nav>
           <h1 className="font-display font-extrabold text-4xl md:text-5xl text-ink mb-4">About {settings.siteName}</h1>
           <p className="text-lg sm:text-xl text-black/85 font-medium leading-relaxed max-w-2xl">{settings.siteDescription}</p>
         </div>

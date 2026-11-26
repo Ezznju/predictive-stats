@@ -63,7 +63,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   const categorySlug = finalArticle?.categorySlug ?? row.category_slug;
   purgeArticleUrls(categorySlug, slug).catch(() => {});
 
-  if (categorySlug && slug) {
+  const finalStatus = finalArticle?.status ?? row.status;
+  if (finalStatus === 'published' && categorySlug && slug) {
     const url = `https://predictionsmarketfans.com/${categorySlug}/${slug}`;
     submitIndexNow([url]).catch(() => {});
   }

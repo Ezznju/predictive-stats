@@ -1,7 +1,7 @@
 import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Check, X as XIcon, ExternalLink } from 'lucide-react';
+import { ArrowRight, Check, X as XIcon, ExternalLink, ChevronRight } from 'lucide-react';
 import { getPlatforms } from '@/lib/platforms';
 import { getSiteSettings } from '@/lib/db';
 import { AffiliateDisclosure } from '@/components/AffiliateDisclosure';
@@ -59,11 +59,24 @@ export default async function PlatformsPage() {
     })),
   };
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
+      { '@type': 'ListItem', position: 2, name: 'Platforms', item: `${baseUrl}/platforms` },
+    ],
+  };
+
   return (
     <div className="relative">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: ldJson(itemListJsonLd)}}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbJsonLd)}}
       />
 
       {/* Header band */}
@@ -76,6 +89,11 @@ export default async function PlatformsPage() {
         <HalfCircle size={80} color="#D9F24B" direction="left" className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-80 hidden md:block" />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-black/80 mb-5">
+            <Link href="/" className="hover:text-black hover:underline transition-colors">Home</Link>
+            <ChevronRight className="w-3 h-3" aria-hidden="true" />
+            <span className="text-black font-bold">Platforms</span>
+          </nav>
           <h1 className="font-display font-bold text-4xl md:text-5xl text-ink mb-4">
             Prediction Market Platforms, Compared
           </h1>

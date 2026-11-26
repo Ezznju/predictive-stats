@@ -1,3 +1,4 @@
+import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronRight, ExternalLink } from 'lucide-react';
@@ -122,6 +123,19 @@ export default async function KalshiTrendingMarketsPage() {
     },
   ];
 
+  const webAppJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: 'Kalshi Trending Markets — Live Volume Board',
+    url: `${BASE}/kalshi-trending-markets`,
+    description:
+      'Live board of the top 25 most active CFTC-regulated Kalshi markets ranked by 24-hour trading volume, YES/NO prices, and spreads.',
+    applicationCategory: 'FinanceApplication',
+    operatingSystem: 'Any',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    creator: { '@type': 'Organization', '@id': `${BASE}/#organization`, name: 'Predictions Market Fans', url: BASE },
+  };
+
   const itemJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -139,7 +153,8 @@ export default async function KalshiTrendingMarketsPage() {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: BASE },
-      { '@type': 'ListItem', position: 2, name: 'Trending Markets', item: `${BASE}/kalshi-trending-markets` },
+      { '@type': 'ListItem', position: 2, name: 'Free Tools', item: `${BASE}/tools` },
+      { '@type': 'ListItem', position: 3, name: 'Kalshi Trending Markets', item: `${BASE}/kalshi-trending-markets` },
     ],
   };
 
@@ -155,18 +170,21 @@ export default async function KalshiTrendingMarketsPage() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(webAppJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(itemJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(faqJsonLd) }} />
       {/* No auto client refresh (usage control): the server board regenerates
           every 2h and the age badge below always shows the data's true age. */}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         {/* Breadcrumbs */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-ink-muted mb-5">
-          <Link href="/" className="hover:text-ink transition-colors">Home</Link>
-          <ChevronRight className="w-3 h-3" />
-          <span className="text-ink-secondary font-semibold">Trending Markets</span>
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-black/80 mb-5">
+          <Link href="/" className="hover:text-black hover:underline transition-colors">Home</Link>
+          <ChevronRight className="w-3 h-3" aria-hidden="true" />
+          <Link href="/tools" className="hover:text-black hover:underline transition-colors">Tools</Link>
+          <ChevronRight className="w-3 h-3" aria-hidden="true" />
+          <span className="text-black font-bold">Kalshi Trending Markets</span>
         </nav>
 
         {/* Header */}
@@ -386,11 +404,12 @@ export default async function KalshiTrendingMarketsPage() {
             <div className="heading-chip bg-neon-cyan" />
             <h2 className="font-display font-bold text-[26px] text-black">Go deeper — free tools</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { n: 'Arbitrage Scanner', d: 'Cross-platform price gaps between Polymarket and Kalshi, net of fees.', href: '/tools/arbitrage-scanner', bg: 'var(--neon-cyan)' as string },
-              { n: 'Polymarket Trending', d: 'The most active Polymarket markets right now, ranked by 24h volume.', href: '/polymarket-trending-markets', bg: 'var(--neon-lime)' as string },
-              { n: 'Polymarket Whale Tracker', d: 'Live whale trades, graded by skill — see who is behind the volume.', href: '/pulse', bg: 'var(--neon-green)' as string },
+              { n: 'Kalshi Combo Calculator', d: 'Simulate multi-leg combo payouts & Blue Arrow / DNP scalar settlements.', href: '/tools/kalshi-combo-calculator', bg: '#29C5F6' },
+              { n: 'Kalshi Fee Calculator', d: 'Exact quadratic taker/maker fees, break-even win %, and Polymarket savings.', href: '/tools/kalshi-fee-calculator', bg: '#FFE642' },
+              { n: 'Kalshi Smart Money', d: 'Where large resting capital sits in Kalshi order books right now.', href: '/kalshi-smart-money', bg: '#2BD96E' },
+              { n: 'Arbitrage Scanner', d: 'Cross-platform price gaps between Polymarket and Kalshi, net of fees.', href: '/tools/arbitrage-scanner', bg: '#D9F24B' },
             ].map((t) => (
               <Link key={t.href} href={t.href} className="group bg-white border-2 border-black rounded-2xl shadow-pop p-5 hover:-translate-y-1 transition-transform">
                 <div className="w-9 h-9 rounded-lg border-2 border-black mb-3" style={{ backgroundColor: t.bg }} />
