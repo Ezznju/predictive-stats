@@ -384,15 +384,7 @@ export default async function CategoryArticlePage({ params }: Props) {
       )}
       <ReadingProgressBar />
 
-      <div className="max-w-[1160px] mx-auto px-4 sm:px-6 py-8">
-        <div className="xl:grid xl:grid-cols-[240px_minmax(0,1fr)] xl:gap-8 xl:items-start">
-          {/* Desktop sticky TOC rail (true grid column — never clips or overlaps) */}
-          <aside className="hidden xl:block pt-10 no-print">
-            <TableOfContents variant="sidebar" readTime={article.readTime} />
-          </aside>
-
-          {/* Main article column */}
-          <article className="min-w-0 max-w-4xl mx-auto w-full">
+      <article className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
             {/* Breadcrumbs */}
             <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-semibold text-black/80 mb-5 no-print">
               <Link href="/" className="hover:text-black hover:underline transition-colors">Home</Link>
@@ -531,7 +523,7 @@ export default async function CategoryArticlePage({ params }: Props) {
               </figure>
             )}
 
-            {/* Inline Table of Contents (mobile/tablet only) */}
+            {/* Inline Table of Contents */}
             <TableOfContents variant="inline" readTime={article.readTime} />
 
             {/* Pull Quote */}
@@ -720,9 +712,7 @@ export default async function CategoryArticlePage({ params }: Props) {
             <div className="no-print">
               <GiscusComments slug={article.slug} />
             </div>
-          </article>
-        </div>
-      </div>
+      </article>
 
       {/* Read Next */}
       {related.length > 0 && (

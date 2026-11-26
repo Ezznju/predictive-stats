@@ -184,7 +184,7 @@ export function TableOfContents({ variant = 'inline', readTime }: TableOfContent
   return (
     <nav
       aria-label="Table of contents"
-      className="xl:hidden my-6 p-4 sm:p-5 rounded-2xl bg-[#FFF7E6] border-2 border-black shadow-[4px_4px_0_#000] max-w-[66ch] mx-auto print:hidden"
+      className="my-6 p-4 sm:p-5 rounded-2xl bg-[#FFF7E6] border-2 border-black shadow-[4px_4px_0_#000] max-w-[66ch] mx-auto print:hidden"
     >
       <button
         onClick={() => setOpen(!open)}
