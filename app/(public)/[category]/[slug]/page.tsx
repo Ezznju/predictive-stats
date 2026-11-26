@@ -29,6 +29,7 @@ import {
 import { autoLink } from '@/lib/auto-linker';
 import { embedTools, insertMidArticleTool, pickContextualTools, TOOL_CARDS } from '@/lib/tool-embed';
 import { cachedByKey, slimArticles } from '@/lib/isolate-cache';
+import { getConsolidatedRedirect, getMatchSlateLifecycle, isConsolidatedArticle } from '@/lib/seo-lifecycle';
 import { SITE_URL, countWords, getContrastInk, stripHtml } from '@/lib/seo-utils';
 
 export const dynamic = 'force-dynamic';
@@ -57,15 +58,16 @@ const getCachedArticlePage = cachedByKey(
       getPublishedArticles(),
     ]);
     // Chronological neighbours (list is newest-first): index-1 is newer ("next"),
-    // index+1 is older ("previous"). Stops readers dead-ending at the last paragraph.
-    const idx = allPublished.findIndex((a) => a.id === article.id);
-    const nextArticle = idx > 0 ? allPublished[idx - 1] : null;
-    const prevArticle = idx >= 0 && idx < allPublished.length - 1 ? allPublished[idx + 1] : null;
+    // index+1 is older ("previous"). Skip consolidated 308 duplicates.
+    const livePublished = allPublished.filter((a) => !isConsolidatedArticle(a.slug));
+    const idx = livePublished.findIndex((a) => a.id === article.id);
+    const nextArticle = idx > 0 ? livePublished[idx - 1] : null;
+    const prevArticle = idx >= 0 && idx < livePublished.length - 1 ? livePublished[idx + 1] : null;
     return {
       article,
       author,
       category,
-      related: slimArticles(related),
+      related: slimArticles(related.filter((a) => !isConsolidatedArticle(a.slug))),
       settings,
       allAuthors,
       allCategories,
@@ -76,12 +78,20 @@ const getCachedArticlePage = cachedByKey(
 );
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  if (getConsolidatedRedirect(params.slug)) {
+    return { robots: { index: false, follow: true } };
+  }
   const data = await getCachedArticlePage(params.slug);
   if (!data) return { title: 'Article Not Found' };
   const { article, author } = data;
   const canonicalCategory = article.categorySlug || params.category;
   const cleanTitle = stripHtml(article.seoTitle || article.title);
   const cleanDesc = stripHtml(article.metaDescription || article.excerpt);
+  const slateLifecycle = getMatchSlateLifecycle({
+    categorySlug: canonicalCategory,
+    slug: article.slug,
+    publishDate: article.publishDate,
+  });
 
   const fallbackOgUrl = `${SITE_URL}/${canonicalCategory}/${article.slug}/og?v=2`;
   const rawImg = article.featuredImage?.trim();
@@ -103,6 +113,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: cleanTitle,
     description: cleanDesc,
     alternates: { canonical: `${SITE_URL}/${canonicalCategory}/${article.slug}` },
+    ...(slateLifecycle.shouldNoindex
+      ? { robots: { index: false, follow: true } }
+      : {}),
     authors: author ? [{ name: author.name }] : undefined,
     openGraph: {
       type: 'article',
@@ -252,6 +265,12 @@ function extractFaq(html: string): { q: string; a: string }[] {
 }
 
 export default async function CategoryArticlePage({ params }: Props) {
+  // Single-hop 308 redirect for consolidated duplicate articles (before D1 lookup)
+  const consolidatedTarget = getConsolidatedRedirect(params.slug);
+  if (consolidatedTarget) {
+    permanentRedirect(consolidatedTarget);
+  }
+
   const data = await getCachedArticlePage(params.slug);
   if (!data) notFound();
 
@@ -261,6 +280,12 @@ export default async function CategoryArticlePage({ params }: Props) {
   if (article.categorySlug && params.category !== article.categorySlug) {
     permanentRedirect(`/${article.categorySlug}/${article.slug}`);
   }
+
+  const slateLifecycle = getMatchSlateLifecycle({
+    categorySlug: article.categorySlug || params.category,
+    slug: article.slug,
+    publishDate: article.publishDate,
+  });
 
   const authorMap = new Map(allAuthors.map(a => [a.id, a]));
   const categoryMap = new Map(allCategories.map(c => [c.slug, c]));
@@ -387,6 +412,41 @@ export default async function CategoryArticlePage({ params }: Props) {
 
             {/* ── Warm editorial reading sheet (#FFFDF9 ivory paper, 66ch text measure) ── */}
             <div className="reading-sheet bg-[#FFFDF9] border-2 border-black rounded-2xl shadow-pop-lg p-5 sm:p-8 lg:p-12">
+
+            {/* Archived daily match-slate notice (>14 days old) */}
+            {slateLifecycle.showExpiredBanner && (
+              <aside
+                aria-label="Archived match slate notice"
+                className="mb-8 max-w-[66ch] mx-auto rounded-2xl bg-[#FFE642] border-2 border-black shadow-pop-sm p-4 sm:p-5 no-print"
+              >
+                <p className="font-mono text-[11px] font-extrabold uppercase tracking-wider text-black">
+                  Archived Match Slate · Published {formatDate(article.publishDate)}
+                </p>
+                <p className="text-sm font-semibold text-black/85 mt-1 leading-relaxed">
+                  The fixtures in this daily slate have already settled. Check today&apos;s live markets and sports odds instead:
+                </p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <Link
+                    href="/kalshi-trending-markets"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-black text-[#FFE642] text-xs font-display font-bold hover:bg-black/85 transition-colors"
+                  >
+                    Kalshi Live Markets →
+                  </Link>
+                  <Link
+                    href="/polymarket-trending-markets"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border-2 border-black text-black text-xs font-display font-bold hover:bg-[#C6F23A] transition-colors"
+                  >
+                    Polymarket Live Markets →
+                  </Link>
+                  <Link
+                    href="/how-to-guides/football-prediction-markets"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border-2 border-black text-black text-xs font-display font-bold hover:bg-[#29C5F6] transition-colors"
+                  >
+                    Football Markets Guide →
+                  </Link>
+                </div>
+              </aside>
+            )}
 
             {/* Magazine Header */}
             <header className="mb-8 max-w-[66ch] mx-auto">

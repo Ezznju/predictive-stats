@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { getPublishedArticles, getCategories, getAuthors, getSiteSettings } from '@/lib/db';
 import { getPlatforms } from '@/lib/platforms';
+import { getMatchSlateLifecycle, isConsolidatedArticle } from '@/lib/seo-lifecycle';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,7 +60,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/embed`, lastModified: staticDate, changeFrequency: 'monthly', priority: 0.5 },
   ];
 
-  const articlePages = articles.map((a) => ({
+  // Exclude consolidated 308 duplicates and expired (>30d) daily match slates marked noindex
+  const indexableArticles = articles.filter(
+    (a) =>
+      !isConsolidatedArticle(a.slug) &&
+      !getMatchSlateLifecycle({
+        categorySlug: a.categorySlug,
+        slug: a.slug,
+        publishDate: a.publishDate,
+      }).shouldNoindex
+  );
+
+  const articlePages = indexableArticles.map((a) => ({
     url: `${baseUrl}/${a.categorySlug}/${a.slug}`,
     lastModified: new Date(a.updatedDate || a.publishDate),
     changeFrequency: 'weekly' as const,

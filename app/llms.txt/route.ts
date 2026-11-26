@@ -1,6 +1,7 @@
 import { getPublishedArticles, getCategories } from '@/lib/db';
 import { slimArticles } from '@/lib/isolate-cache';
 import { getPlatforms } from '@/lib/platforms';
+import { getMatchSlateLifecycle, isConsolidatedArticle } from '@/lib/seo-lifecycle';
 import { SITE_URL, stripHtml } from '@/lib/seo-utils';
 
 export const runtime = 'edge';
@@ -19,7 +20,17 @@ export async function GET() {
       getPublishedArticles(),
       getCategories(),
     ]);
-    recentArticles = slimArticles(rawArticles).slice(0, 30);
+    recentArticles = slimArticles(rawArticles)
+      .filter(
+        (a) =>
+          !isConsolidatedArticle(a.slug) &&
+          !getMatchSlateLifecycle({
+            categorySlug: a.categorySlug,
+            slug: a.slug,
+            publishDate: a.publishDate,
+          }).shouldNoindex
+      )
+      .slice(0, 30);
     categories = cats;
   } catch (err) {
     console.warn('[llms.txt] D1 unavailable, serving static directory', err);

@@ -1,5 +1,6 @@
 import { getPublishedArticles, getCategories, getAuthors, getSiteSettings } from '@/lib/db';
 import { slimArticles } from '@/lib/isolate-cache';
+import { isConsolidatedArticle } from '@/lib/seo-lifecycle';
 import { SITE_URL, stripHtml } from '@/lib/seo-utils';
 
 export const runtime = 'edge';
@@ -37,7 +38,9 @@ export async function GET() {
       getAuthors(),
       getSiteSettings(),
     ]);
-    articles = slimArticles(rawArticles).slice(0, 50);
+    articles = slimArticles(rawArticles)
+      .filter((a) => !isConsolidatedArticle(a.slug))
+      .slice(0, 50);
     categoryNameBySlug = new Map(categories.map((c) => [c.slug, c.name]));
     authorNameById = new Map(authors.map((a) => [a.id, a.name]));
     if (settings.siteName) siteName = settings.siteName;
