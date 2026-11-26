@@ -38,12 +38,9 @@ export async function GET(request: NextRequest) {
     const result = await withSharedCache<ScannerMarket[]>(
       CACHE_KEY,
       fetchRewardMarkets,
-      // Long soft TTL on purpose: the free Cloudflare tier allows 10ms of
-      // CPU per request, and re-running the paginated crawl in the isolate
-      // can blow that. Data refreshes hourly-ish from the shared cache; the
-      // 48h hard TTL is the disaster backstop (compute is allowed then, since
-      // Polymarket — unlike Kalshi — is reachable from Cloudflare).
-      { softTtlMs: 55 * 60 * 1000, hardTtlMs: 48 * 60 * 60 * 1000 }
+      // Workers Paid Plan: 15-min soft TTL refreshed silently via Cloudflare
+      // ctx.waitUntil() so visitors always get fast, fresh LP reward pools.
+      { softTtlMs: 15 * 60 * 1000, hardTtlMs: 48 * 60 * 60 * 1000 }
     );
 
     // Reuse memoized scored array when snapshot hasn't changed
@@ -90,7 +87,7 @@ export async function GET(request: NextRequest) {
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1800',
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900',
         },
       }
     );

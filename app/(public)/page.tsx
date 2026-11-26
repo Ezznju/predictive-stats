@@ -13,6 +13,7 @@ import {
   getCategories, getAuthors, getSiteSettings,
 } from '@/lib/db';
 import { buildHomepageContent } from '@/lib/homepage-content';
+import { getHomepageSignals, type HomepageSignals } from '@/lib/homepage-signals';
 import { DecisionLabStrip } from '@/components/golden/DecisionLabStrip';
 import { MascotBand } from '@/components/MascotBand';
 import { SITE_URL, stripHtml } from '@/lib/seo-utils';
@@ -38,13 +39,15 @@ export default async function Home() {
     socialLinkedin: '',
     socialGithub: '',
   };
+  let signals: HomepageSignals | undefined;
   try {
-    [featured, allArticles, categories, authors, settings] = await Promise.all([
+    [featured, allArticles, categories, authors, settings, signals] = await Promise.all([
       getFeaturedArticles(),
       getPublishedArticles(),
       getCategories(),
       getAuthors(),
       getSiteSettings(),
+      getHomepageSignals(),
     ]);
   } catch (e) {
     console.warn('[home] D1 unavailable, serving stale/empty', e);
@@ -169,8 +172,8 @@ export default async function Home() {
         </section>
       )}
 
-      {/* ── FREE TOOLS × DECISION LAB (merged live section) ───────────── */}
-      <DecisionLabStrip />
+      {/* ── FREE TOOLS × DECISION LAB (server-seeded live snapshots) ──── */}
+      <DecisionLabStrip initialSignals={signals} />
 
       {/* Free Tools now render live inside <DecisionLabStrip /> above — merged pairwise. */}
 

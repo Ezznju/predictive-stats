@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ChevronRight,
@@ -13,6 +13,9 @@ import {
   AlertTriangle,
   ArrowRight,
   RotateCcw,
+  Link2,
+  ClipboardCopy,
+  Check,
 } from 'lucide-react';
 import { ToolShareBar } from '@/components/ToolShareBar';
 import { TrackedLink } from '@/components/TrackedLink';
@@ -92,6 +95,87 @@ export default function KalshiComboCalculatorPage() {
   const [feeMode, setFeeMode] = useState<FeeMode>('taker');
   const [useCustomQuote, setUseCustomQuote] = useState<boolean>(false);
   const [customQuoteCents, setCustomQuoteCents] = useState<string>('17');
+  const [copiedMode, setCopiedMode] = useState<'link' | 'receipt' | null>(null);
+
+  // Hydrate scenario from URL query params (?stake=100&fee=taker&legs=55:dnp:25,60:win:60,50:win:50&q=17)
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const s = sp.get('stake');
+      if (s && Number(s) > 0) setStakeInput(String(Math.min(100000, Math.max(1, Number(s)))));
+      const f = sp.get('fee');
+      if (f === 'taker' || f === 'maker' || f === 'none') setFeeMode(f);
+      const q = sp.get('q');
+      if (q && Number(q) >= 1 && Number(q) <= 99) {
+        setUseCustomQuote(true);
+        setCustomQuoteCents(String(Math.round(Number(q))));
+      }
+      const legsParam = sp.get('legs');
+      if (legsParam) {
+        const parsed = legsParam
+          .split(',')
+          .slice(0, 5)
+          .map((seg, i): ComboLeg | null => {
+            const [eStr, outStr, scStr] = seg.split(':');
+            const entry = Math.min(99, Math.max(1, Number(eStr) || 50));
+            const outcome: LegOutcome = outStr === 'dnp' || outStr === 'loss' ? outStr : 'win';
+            const scalar = Math.min(99, Math.max(1, Number(scStr) || entry));
+            return {
+              id: i + 1,
+              label: `Leg ${i + 1} · ${outcome === 'dnp' ? 'Blue Arrow / DNP' : outcome === 'loss' ? 'Lost Leg' : 'Winning Leg'}`,
+              entryCents: entry,
+              outcome,
+              scalarCents: scalar,
+            };
+          })
+          .filter((x): x is ComboLeg => x !== null);
+        if (parsed.length >= 2) setLegs(parsed);
+      }
+    } catch {
+      // ignore invalid query strings
+    }
+  }, []);
+
+  const buildShareUrl = () => {
+    const sp = new URLSearchParams();
+    sp.set('stake', String(Math.max(1, Number(stakeInput) || 100)));
+    sp.set('fee', feeMode);
+    sp.set('legs', legs.map((l) => `${l.entryCents}:${l.outcome}:${l.scalarCents}`).join(','));
+    if (useCustomQuote) sp.set('q', String(Math.min(99, Math.max(1, Number(customQuoteCents) || 1))));
+    return `${SITE_URL}/tools/kalshi-combo-calculator?${sp.toString()}`;
+  };
+
+  const copyScenarioLink = async () => {
+    const url = buildShareUrl();
+    window.history.replaceState(null, '', `?${url.split('?')[1]}`);
+    await navigator.clipboard.writeText(url).catch(() => {});
+    setCopiedMode('link');
+    setTimeout(() => setCopiedMode(null), 1800);
+  };
+
+  const copyTradeReceipt = async () => {
+    const url = buildShareUrl();
+    const legLines = legs
+      .map(
+        (l, i) =>
+          `  ${i + 1}. ${l.label} (${l.entryCents}¢) → ${
+            l.outcome === 'dnp' ? `Blue Arrow Scalar @ ${l.scalarCents}¢` : l.outcome === 'win' ? 'WIN ($1.00)' : 'LOSS ($0.00)'
+          }`
+      )
+      .join('\n');
+    const receipt = [
+      `Kalshi ${legs.length}-Leg Combo Breakdown (${calc.contracts} contracts @ ${Math.round(calc.rawComboPrice * 100)}¢)`,
+      legLines,
+      `Cost + Fee (${feeMode}): ${fmtUsd(calc.totalOutlay)} | Payout: ${fmtUsd(calc.scenarioGross)} (${fmtSignedUsd(calc.scenarioNet)})`,
+      calc.hasDnp && !calc.hasLoss
+        ? `Sportsbook Void Payout would be ${fmtUsd(calc.sportsbookGross)} (${fmtSignedUsd(calc.blueArrowDiff)} diff)`
+        : `All-Win Payout: ${fmtUsd(calc.fullWinGross)}`,
+      `Interactive simulator: ${url}`,
+    ].join('\n');
+    await navigator.clipboard.writeText(receipt).catch(() => {});
+    setCopiedMode('receipt');
+    setTimeout(() => setCopiedMode(null), 1800);
+  };
 
   const addLeg = () => {
     if (legs.length >= 5) return;
@@ -592,6 +676,26 @@ export default function KalshiComboCalculatorPage() {
                 </dd>
               </div>
             </dl>
+
+            {/* Shareable Scenario URL & X/Reddit Receipt */}
+            <div className="mt-4 pt-4 border-t-2 border-black/10 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={copyScenarioLink}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#FFF7E6] border-2 border-black text-xs font-bold text-black hover:bg-[#FFE642] transition-colors"
+              >
+                {copiedMode === 'link' ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
+                {copiedMode === 'link' ? 'Link Copied!' : 'Copy Scenario URL'}
+              </button>
+              <button
+                type="button"
+                onClick={copyTradeReceipt}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-black text-[#C6F23A] border-2 border-black text-xs font-bold hover:bg-black/85 transition-colors"
+              >
+                {copiedMode === 'receipt' ? <Check className="w-3.5 h-3.5" /> : <ClipboardCopy className="w-3.5 h-3.5" />}
+                {copiedMode === 'receipt' ? 'Copied Receipt!' : 'Copy X/Reddit Receipt'}
+              </button>
+            </div>
           </div>
 
           {/* Blue Arrow vs Sportsbook Void Alert Box */}

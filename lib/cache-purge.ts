@@ -56,3 +56,32 @@ export async function purgeArticleUrls(
   if (categorySlug) files.push(`${BASE}/category/${categorySlug}`);
   await purgeFiles(Array.from(new Set(files)));
 }
+
+/** Purge live board pages & homepage when /api/board-ingest updates D1 snapshots. */
+export async function purgeBoardUrls(
+  updated: Array<'trending' | 'smartMoney' | 'arbitrage'>
+): Promise<void> {
+  if (updated.length === 0) return;
+  const files: string[] = [`${BASE}/`];
+  if (updated.includes('trending')) {
+    files.push(
+      `${BASE}/kalshi-trending-markets`,
+      `${BASE}/kalshi-trending-markets/og`,
+      `${BASE}/api/kalshi-trending`
+    );
+  }
+  if (updated.includes('smartMoney')) {
+    files.push(
+      `${BASE}/kalshi-smart-money`,
+      `${BASE}/kalshi-smart-money/og`,
+      `${BASE}/api/kalshi-smart-money`
+    );
+  }
+  if (updated.includes('arbitrage')) {
+    files.push(
+      `${BASE}/tools/arbitrage-scanner`,
+      `${BASE}/api/arbitrage-scanner`
+    );
+  }
+  await purgeFiles(Array.from(new Set(files)));
+}

@@ -23,14 +23,12 @@ export const PULSE_KEYS = {
 
 /* ── TTLs ──
  *
- * These were 30s soft / 2min hard, which meant a full whale-data recompute
- * ran inside the isolate constantly — and on Cloudflare's free tier a Worker
- * gets 10ms CPU per request, so those recomputes were dying mid-run and
- * spamming the CPU-limit notifications. 5min/30min keeps the tracker fresh
- * enough (the feed also ticks client-side) at a fraction of the CPU. */
+ * Workers Paid Plan (30s CPU + real ctx.waitUntil background refreshes):
+ * 2min soft / 15min hard keeps whale signals near-real-time while serving
+ * visitors instantaneously from D1 + edge cache. */
 
-const PULSE_SOFT_TTL_MS = 5 * 60 * 1000;   // 5 min soft TTL
-const PULSE_HARD_TTL_MS = 30 * 60 * 1000;  // 30 min hard TTL
+const PULSE_SOFT_TTL_MS = 2 * 60 * 1000;   // 2 min soft TTL
+const PULSE_HARD_TTL_MS = 15 * 60 * 1000;  // 15 min hard TTL
 
 /** Wrapper around withSharedCache with Pulse-specific defaults. */
 export async function withPulseCache<T>(

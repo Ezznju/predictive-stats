@@ -1,18 +1,41 @@
 ﻿import { Article, Author, Category, SiteSettings } from '@/types';
+import { getCloudflareD1 } from '@/lib/cf-runtime';
 
 const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID!;
 const DATABASE_ID = process.env.D1_DATABASE_ID!;
 const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!;
 const BASE = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database/${DATABASE_ID}`;
 
+function normalizeD1Params(params?: any[]): any[] {
+  if (!params || params.length === 0) return [];
+  return params.map((p) => (p === undefined ? null : p));
+}
+
 export async function d1Query<T = any>(sql: string, params?: any[]): Promise<T[]> {
+  const cleanParams = normalizeD1Params(params);
+
+  // Fast path: native Cloudflare D1 binding (~3-8ms in-datacenter, zero REST overhead)
+  const nativeDb = getCloudflareD1();
+  if (nativeDb) {
+    try {
+      const stmt = cleanParams.length > 0
+        ? nativeDb.prepare(sql).bind(...cleanParams)
+        : nativeDb.prepare(sql);
+      const res = await stmt.all<T>();
+      if (res?.results) return res.results;
+    } catch (err) {
+      console.warn('[d1] native binding query failed, falling back to REST:', String(err));
+    }
+  }
+
   const res = await fetch(`${BASE}/raw`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${API_TOKEN}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ sql, params }),
+    body: JSON.stringify({ sql, params: cleanParams }),
+    signal: AbortSignal.timeout(8000),
   });
   const data = await res.json();
   if (!data.success) {
@@ -32,13 +55,33 @@ export async function d1Query<T = any>(sql: string, params?: any[]): Promise<T[]
 }
 
 export async function d1Execute(sql: string, params?: any[]): Promise<{ changes: number; last_row_id: number }> {
+  const cleanParams = normalizeD1Params(params);
+
+  // Fast path: native Cloudflare D1 binding
+  const nativeDb = getCloudflareD1();
+  if (nativeDb) {
+    try {
+      const stmt = cleanParams.length > 0
+        ? nativeDb.prepare(sql).bind(...cleanParams)
+        : nativeDb.prepare(sql);
+      const res = await stmt.run();
+      return {
+        changes: res?.meta?.changes || 0,
+        last_row_id: res?.meta?.last_row_id || 0,
+      };
+    } catch (err) {
+      console.warn('[d1] native binding execute failed, falling back to REST:', String(err));
+    }
+  }
+
   const res = await fetch(`${BASE}/raw`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${API_TOKEN}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ sql, params }),
+    body: JSON.stringify({ sql, params: cleanParams }),
+    signal: AbortSignal.timeout(8000),
   });
   const data = await res.json();
   if (!data.success) {

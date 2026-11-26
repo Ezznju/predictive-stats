@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   ChevronRight,
@@ -9,6 +9,9 @@ import {
   ExternalLink,
   Scale,
   TrendingUp,
+  Link2,
+  ClipboardCopy,
+  Check,
 } from 'lucide-react';
 import { ToolShareBar } from '@/components/ToolShareBar';
 import { TrackedLink } from '@/components/TrackedLink';
@@ -42,6 +45,63 @@ export default function KalshiFeeCalculatorPage() {
   const [dollarsInput, setDollarsInput] = useState<string>('250');
   const [tier, setTier] = useState<OrderTier>('taker');
   const [roundTrip, setRoundTrip] = useState<boolean>(false);
+  const [copiedMode, setCopiedMode] = useState<'link' | 'receipt' | null>(null);
+
+  // Hydrate scenario from URL query params (?price=50&mode=contracts&qty=500&tier=taker&rt=0)
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const p = sp.get('price');
+      if (p && Number(p) >= 1 && Number(p) <= 99) setPriceCents(Math.round(Number(p)));
+      const m = sp.get('mode');
+      const qty = sp.get('qty');
+      if (m === 'dollars') {
+        setSizeMode('dollars');
+        if (qty && Number(qty) > 0) setDollarsInput(String(Math.min(1000000, Number(qty))));
+      } else if (m === 'contracts') {
+        setSizeMode('contracts');
+        if (qty && Number(qty) > 0) setContractsInput(String(Math.min(1000000, Math.round(Number(qty)))));
+      }
+      const t = sp.get('tier');
+      if (t === 'taker' || t === 'maker' || t === 'index_taker') setTier(t);
+      const rt = sp.get('rt');
+      if (rt === '1' || rt === 'true') setRoundTrip(true);
+    } catch {
+      // ignore invalid query strings
+    }
+  }, []);
+
+  const buildShareUrl = () => {
+    const sp = new URLSearchParams();
+    sp.set('price', String(priceCents));
+    sp.set('mode', sizeMode);
+    sp.set('qty', sizeMode === 'contracts' ? contractsInput : dollarsInput);
+    sp.set('tier', tier);
+    if (roundTrip) sp.set('rt', '1');
+    return `${SITE_URL}/tools/kalshi-fee-calculator?${sp.toString()}`;
+  };
+
+  const copyScenarioLink = async () => {
+    const url = buildShareUrl();
+    window.history.replaceState(null, '', `?${url.split('?')[1]}`);
+    await navigator.clipboard.writeText(url).catch(() => {});
+    setCopiedMode('link');
+    setTimeout(() => setCopiedMode(null), 1800);
+  };
+
+  const copyFeeReceipt = async () => {
+    const url = buildShareUrl();
+    const receipt = [
+      `Kalshi vs. Polymarket Fee Breakdown (${calc.contracts.toLocaleString()} contracts @ ${priceCents}¢${roundTrip ? ', Round-Trip' : ''})`,
+      `• Kalshi ${TIER_RATES[tier].label} Fee: ${fmtUsd(calc.totalFee)} (${calc.feePerContractCents.toFixed(2)}¢/contract) → Break-even: ${calc.breakEvenProb.toFixed(2)}%`,
+      `• Kalshi Maker Fee: ${fmtUsd(calc.makerFee)} (saves ${fmtUsd(calc.makerSavings)} vs. Taker)`,
+      `• Polymarket (0% fee): $0.00 (saves ${fmtUsd(calc.polySavings)} vs. Kalshi Taker)`,
+      `Run your own trade: ${url}`,
+    ].join('\n');
+    await navigator.clipboard.writeText(receipt).catch(() => {});
+    setCopiedMode('receipt');
+    setTimeout(() => setCopiedMode(null), 1800);
+  };
 
   const calc = useMemo(() => {
     const P = Math.min(0.99, Math.max(0.01, priceCents / 100));
@@ -375,6 +435,26 @@ export default function KalshiFeeCalculatorPage() {
                 </dd>
               </div>
             </dl>
+
+            {/* Shareable Scenario URL & X/Reddit Receipt */}
+            <div className="mt-4 pt-4 border-t-2 border-black/10 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={copyScenarioLink}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#FFF7E6] border-2 border-black text-xs font-bold text-black hover:bg-[#FFE642] transition-colors"
+              >
+                {copiedMode === 'link' ? <Check className="w-3.5 h-3.5" /> : <Link2 className="w-3.5 h-3.5" />}
+                {copiedMode === 'link' ? 'Link Copied!' : 'Copy Scenario URL'}
+              </button>
+              <button
+                type="button"
+                onClick={copyFeeReceipt}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-black text-[#C6F23A] border-2 border-black text-xs font-bold hover:bg-black/85 transition-colors"
+              >
+                {copiedMode === 'receipt' ? <Check className="w-3.5 h-3.5" /> : <ClipboardCopy className="w-3.5 h-3.5" />}
+                {copiedMode === 'receipt' ? 'Copied Receipt!' : 'Copy X/Reddit Receipt'}
+              </button>
+            </div>
           </div>
 
           {/* Quadratic Fee Curve Visualizer */}

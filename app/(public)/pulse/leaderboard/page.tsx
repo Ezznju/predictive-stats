@@ -2,6 +2,7 @@ import { ldJson } from '@/lib/json-ld';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { PulseHeader } from '@/components/pulse/PulseHeader';
+import { WalletLookupBar } from '@/components/pulse/WalletLookupBar';
 import { fetchLeaderboard } from '@/lib/pulse/polymarket-data';
 import { classifyWhalesFromLeaderboard } from '@/lib/pulse/whale-detection';
 
@@ -88,6 +89,11 @@ export default async function LeaderboardPage() {
               { label: 'Skill Leaderboard' },
             ]}
           />
+
+          {/* Lookup any Polymarket wallet */}
+          <div className="mb-6">
+            <WalletLookupBar />
+          </div>
 
           {/* How skill is computed */}
           <div className="bg-white border-2 border-black rounded-2xl p-5 shadow-pop mb-8">

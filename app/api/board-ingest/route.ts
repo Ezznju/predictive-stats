@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { setCacheEntry } from '@/lib/scanner-cache';
+import { purgeBoardUrls } from '@/lib/cache-purge';
+import { cfWaitUntil } from '@/lib/cf-runtime';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -45,6 +47,14 @@ export async function POST(request: NextRequest) {
     if (Object.keys(written).length === 0) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
     }
+
+    // Auto-purge edge-cached HTML & APIs so fresh hourly board data goes live immediately
+    const purgeKeys: Array<'trending' | 'smartMoney' | 'arbitrage'> = [];
+    if (written.trending) purgeKeys.push('trending');
+    if (written.smartMoney) purgeKeys.push('smartMoney');
+    if (written.arbitrage) purgeKeys.push('arbitrage');
+    cfWaitUntil(purgeBoardUrls(purgeKeys));
+
     return NextResponse.json({ ok: true, ...written });
   } catch {
     return NextResponse.json({ error: 'Failed to ingest' }, { status: 500 });

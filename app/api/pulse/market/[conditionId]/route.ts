@@ -15,12 +15,19 @@ export async function GET(
     fetchMarketStatsData(conditionId)
   );
 
-  return NextResponse.json({
-    data: result.payload,
-    meta: {
-      updatedAt: result.updatedAt,
-      stale: result.stale,
-      source: result.source,
+  return NextResponse.json(
+    {
+      data: result.payload,
+      meta: {
+        updatedAt: result.updatedAt,
+        stale: result.stale,
+        source: result.source,
+      },
     },
-  });
+    {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900',
+      },
+    }
+  );
 }

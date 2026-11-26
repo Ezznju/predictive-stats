@@ -2,60 +2,26 @@
  * Shared, cross-instance cache for the scanner tools, backed by the D1
  * `scanner_cache` table.
  *
- * Replaces the old per-serverless-instance in-memory cache (which forced every
- * cold instance to re-run the 10-15s upstream scan). Now all instances share
- * one cached payload, so the heavy scan runs at most once per TTL window.
- *
- * Every operation is wrapped so a cache failure degrades gracefully to a
- * direct compute rather than breaking the route.
+ * Uses native Cloudflare D1 binding when available (via lib/d1.ts) and
+ * Cloudflare Workers' real `ctx.waitUntil()` (via lib/cf-runtime.ts) so
+ * stale-while-revalidate background refreshes complete reliably on the
+ * Workers Paid Plan without blocking visitor responses.
  */
 
-import { waitUntil } from '@vercel/functions';
+import { d1Query as sharedD1Query, d1Execute as sharedD1Execute } from '@/lib/d1';
+import { cfWaitUntil } from '@/lib/cf-runtime';
 
-const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID!;
-const DATABASE_ID = process.env.D1_DATABASE_ID!;
-const API_TOKEN = process.env.CLOUDFLARE_API_TOKEN!;
-const BASE = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/d1/database/${DATABASE_ID}`;
-
-async function d1Query(sql: string, params?: any[]): Promise<any[]> {
+async function safeD1Query<T = any>(sql: string, params?: any[]): Promise<T[]> {
   try {
-    const res = await fetch(`${BASE}/raw`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${API_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sql, params }),
-      // Bound the read: a hung Cloudflare API call must fail fast instead of
-      // eating the route's whole timeout budget (which 502s the visitor).
-      signal: AbortSignal.timeout(8000),
-    });
-    const data = await res.json();
-    if (!data.success) return [];
-    const result = data.result;
-    if (Array.isArray(result) && result[0]?.results?.rows) {
-      const cols: string[] = result[0].results.columns || [];
-      return result[0].results.rows.map((row: any[]) => {
-        const obj: any = {};
-        cols.forEach((col, i) => { obj[col] = row[i]; });
-        return obj;
-      });
-    }
-    return [];
+    return await sharedD1Query<T>(sql, params);
   } catch {
     return [];
   }
 }
 
-async function d1Execute(sql: string, params?: any[]): Promise<void> {
+async function safeD1Execute(sql: string, params?: any[]): Promise<void> {
   try {
-    const res = await fetch(`${BASE}/raw`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${API_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sql, params }),
-      signal: AbortSignal.timeout(8000),
-    });
-    const data = await res.json().catch(() => null);
-    if (!data?.success) {
-      console.warn('[scanner-cache] D1 write not applied:', JSON.stringify(data?.errors ?? 'unparseable response'));
-    }
+    await sharedD1Execute(sql, params);
   } catch (err) {
     console.warn('[scanner-cache] D1 write error:', String(err));
   }
@@ -69,7 +35,7 @@ export interface CacheEntry<T> {
 
 export async function getCacheEntry<T>(key: string): Promise<CacheEntry<T> | null> {
   try {
-    const rows = await d1Query(
+    const rows = await safeD1Query<{ payload: string; updated_at: string }>(
       `SELECT payload, updated_at FROM scanner_cache WHERE cache_key = ? LIMIT 1`,
       [key]
     );
@@ -87,8 +53,40 @@ export async function getCacheEntry<T>(key: string): Promise<CacheEntry<T> | nul
   }
 }
 
+/**
+ * Batch-read multiple scanner cache snapshots in a single D1 round-trip.
+ */
+export async function getCacheEntries(
+  keys: string[]
+): Promise<Map<string, CacheEntry<unknown>>> {
+  const out = new Map<string, CacheEntry<unknown>>();
+  if (keys.length === 0) return out;
+  try {
+    const placeholders = keys.map(() => '?').join(', ');
+    const rows = await safeD1Query<{ cache_key: string; payload: string; updated_at: string }>(
+      `SELECT cache_key, payload, updated_at FROM scanner_cache WHERE cache_key IN (${placeholders})`,
+      keys
+    );
+    const now = Date.now();
+    for (const row of rows) {
+      try {
+        out.set(row.cache_key, {
+          payload: JSON.parse(row.payload),
+          updatedAt: row.updated_at,
+          ageMs: now - new Date(row.updated_at).getTime(),
+        });
+      } catch {
+        // skip malformed entry
+      }
+    }
+  } catch (err) {
+    console.warn('[scanner-cache] batch read failed:', String(err));
+  }
+  return out;
+}
+
 export async function setCacheEntry(key: string, payload: unknown): Promise<void> {
-  await d1Execute(
+  await safeD1Execute(
     `INSERT OR REPLACE INTO scanner_cache (cache_key, payload, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
     [key, JSON.stringify(payload)]
   );
@@ -106,14 +104,6 @@ export interface CachedResult<T> {
   source: 'memory' | 'shared' | 'fresh' | 'stale-fallback';
 }
 
-function scheduleBackground(p: Promise<unknown>): void {
-  try {
-    waitUntil(p);
-  } catch {
-    void p.catch(() => {});
-  }
-}
-
 export async function withSharedCache<T>(
   key: string,
   compute: () => Promise<T>,
@@ -122,26 +112,22 @@ export async function withSharedCache<T>(
   const softTtl = opts.softTtlMs ?? DEFAULT_SOFT_TTL_MS;
   const hardTtl = opts.hardTtlMs ?? DEFAULT_HARD_TTL_MS;
 
-  // serveStaleOnly: for scans that are refreshed by an EXTERNAL worker
-  // (the hourly GitHub action posting to /api/board-ingest). Cloudflare's
-  // free tier gives a Worker 10ms of CPU per request, and these scans cost
-  // seconds — computing them in the isolate blows the limit and kills the
-  // response. With this flag the isolate only ever READS; on a complete
-  // miss it throws so the route can return a friendly warming state.
+  // serveStaleOnly: for scans refreshed by an external worker (GitHub Actions
+  // posting to /api/board-ingest because Kalshi 429s Cloudflare egress IPs).
   if (opts.serveStaleOnly) {
     const mem = l1.get(key);
-    if (mem) {
+    if (mem && Date.now() - mem.ts < softTtl) {
       return {
         payload: mem.payload as T,
         updatedAt: new Date(mem.ts).toISOString(),
-        stale: true,
+        stale: false,
         source: 'memory',
       };
     }
     const entry = await getCacheEntry<T>(key);
     if (entry) {
       l1.set(key, { payload: entry.payload, ts: Date.now() - entry.ageMs });
-      return { payload: entry.payload, updatedAt: entry.updatedAt, stale: true, source: 'shared' };
+      return { payload: entry.payload, updatedAt: entry.updatedAt, stale: entry.ageMs > hardTtl, source: 'shared' };
     }
     throw new Error(`[scanner-cache] ${key} is empty and compute is disabled`);
   }
@@ -158,11 +144,8 @@ export async function withSharedCache<T>(
 
   let entry = await getCacheEntry<T>(key);
 
-  // One retry on a miss: distinguishes a transient D1 read blip / replica lag
-  // from a genuinely cold cache. Costs one extra read (~300ms) in the worst
-  // case, saves a 10-25s cold compute + potential 502 in the common one.
   if (!entry) {
-    await new Promise((r) => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, 300));
     entry = await getCacheEntry<T>(key);
   }
 
@@ -172,7 +155,7 @@ export async function withSharedCache<T>(
   }
 
   if (entry && entry.ageMs < hardTtl) {
-    scheduleBackground(refreshAndStore(key, compute));
+    cfWaitUntil(refreshAndStore(key, compute));
     return { payload: entry.payload, updatedAt: entry.updatedAt, stale: true, source: 'shared' };
   }
 
