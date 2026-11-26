@@ -38,7 +38,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: latestArticleDate, changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/articles`, lastModified: latestArticleDate, changeFrequency: 'daily', priority: 0.9 },
-    { url: `${baseUrl}/tools`, lastModified: staticDate, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/tools`, lastModified: new Date('2026-11-26'), changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/tools/kalshi-combo-calculator`, lastModified: new Date('2026-11-26'), changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/tools/kalshi-fee-calculator`, lastModified: new Date('2026-11-26'), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/tools/lp-scanner`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/tools/arbitrage-scanner`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
     { url: `${baseUrl}/platforms`, lastModified: staticDate, changeFrequency: 'weekly', priority: 0.8 },

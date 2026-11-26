@@ -37,6 +37,8 @@ export async function GET() {
     `Sitemap: ${SITE_URL}/sitemap.xml`,
     '',
     '## Free Live Prediction Market Tools',
+    `- [Kalshi Combo Payout & Blue Arrow Simulator](${SITE_URL}/tools/kalshi-combo-calculator): Interactive 2–5 leg Kalshi combo payout calculator with exact fees and Blue Arrow / DNP intermediate scalar settlement simulation.`,
+    `- [Kalshi vs. Polymarket Fee & Break-Even Calculator](${SITE_URL}/tools/kalshi-fee-calculator): Exact Kalshi taker & maker quadratic fee calculator with break-even win probability and side-by-side Polymarket 0% fee comparison.`,
     `- [Arbitrage Scanner (Polymarket × Kalshi)](${SITE_URL}/tools/arbitrage-scanner): Real-time cross-platform arbitrage scanner with order-book depth and execution plans net of fees and slippage.`,
     `- [Polymarket LP Reward Scanner](${SITE_URL}/tools/lp-scanner): Live ranking of Polymarket liquidity provider reward pools by realistic APR net of fees, spread, and competition.`,
     `- [Polymarket Whale Tracker (Pulse)](${SITE_URL}/pulse): Live whale trade feed graded by historical wallet skill, win rate, P&L, and conviction.`,

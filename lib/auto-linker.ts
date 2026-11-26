@@ -18,6 +18,25 @@ interface LinkRule {
 const LINK_RULES: LinkRule[] = [
   // Multi-word tool & live-board phrases FIRST
   {
+    terms: [
+      'Kalshi combo calculator',
+      'combo payout calculator',
+      'Blue Arrow calculator',
+      'Kalshi combo payout',
+    ],
+    href: '/tools/kalshi-combo-calculator',
+    title: 'Free Kalshi Combo & Blue Arrow Payout Simulator',
+  },
+  {
+    terms: [
+      'Kalshi fee calculator',
+      'Kalshi trading fees',
+      'Kalshi fees',
+    ],
+    href: '/tools/kalshi-fee-calculator',
+    title: 'Free Kalshi vs. Polymarket Fee & Break-Even Calculator',
+  },
+  {
     terms: ['LP reward scanner', 'liquidity reward scanner', 'LP scanner'],
     href: '/tools/lp-scanner',
     title: 'Free LP Reward Scanner tool',

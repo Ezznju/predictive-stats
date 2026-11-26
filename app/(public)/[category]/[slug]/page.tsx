@@ -27,7 +27,7 @@ import {
   formatDate,
 } from '@/lib/db';
 import { autoLink } from '@/lib/auto-linker';
-import { embedTools } from '@/lib/tool-embed';
+import { embedTools, insertMidArticleTool, pickContextualTools, TOOL_CARDS } from '@/lib/tool-embed';
 import { cachedByKey, slimArticles } from '@/lib/isolate-cache';
 import { SITE_URL, countWords, getContrastInk, stripHtml } from '@/lib/seo-utils';
 
@@ -320,12 +320,20 @@ export default async function CategoryArticlePage({ params }: Props) {
   };
 
   // Article body with embeds + auto-links, then an auto pull quote for long
-  // reads that have no manual one (manual pullQuote keeps its top slot).
+  // reads that have no manual one (manual pullQuote keeps its top slot),
+  // plus a topic-matched mid-article free tool callout (skipped if author embedded one).
   const bodyHtml = autoLink(embedTweet(embedYouTube(embedPolymarket(embedTools(wrapTables(article.content))))));
   const autoQuote = article.pullQuote ? null : extractPullQuote(bodyHtml);
   const citeText = `${article.title.replace(/<[^>]*>/g, '')}, ${new Date(article.publishDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
     .replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const finalBody = autoQuote ? insertPullQuote(bodyHtml, autoQuote, citeText) : bodyHtml;
+  const quotedBody = autoQuote ? insertPullQuote(bodyHtml, autoQuote, citeText) : bodyHtml;
+  const { midTool, bottomTools } = pickContextualTools({
+    title: cleanTitle,
+    slug: article.slug,
+    tags: article.tags,
+    categorySlug,
+  });
+  const finalBody = insertMidArticleTool(quotedBody, midTool);
 
   const faqPairs = extractFaq(finalBody);
   const faqJsonLd =
@@ -580,34 +588,33 @@ export default async function CategoryArticlePage({ params }: Props) {
               />
             </div>
 
-            {/* CTA Cards */}
+            {/* Context-Matched Tool CTA Cards */}
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-5 no-print">
-              <Link
-                href="/tools/lp-scanner"
-                className="group relative block border-2 border-black bg-[#C6F23A] rounded-2xl p-6 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_#000] transition-all"
-              >
-                <span className="inline-block font-mono font-bold text-[10px] tracking-[0.12em] uppercase bg-white border-2 border-black px-2 py-0.5 mb-3">
-                  See the numbers
-                </span>
-                <h3 className="font-display font-bold text-2xl text-black mb-2">LP Scanner</h3>
-                <p className="text-sm text-black/80 leading-relaxed">Rank every live Polymarket reward pool by competition, minimum capital, and yield per $1,000.</p>
-                <span className="absolute top-5 right-5 w-8 h-8 bg-black text-[#C6F23A] rounded-full flex items-center justify-center font-mono font-bold text-sm group-hover:translate-x-1 transition-transform">
-                  →
-                </span>
-              </Link>
-              <Link
-                href="/tools/arbitrage-scanner"
-                className="group relative block border-2 border-black bg-[#29C5F6] rounded-2xl p-6 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_#000] transition-all"
-              >
-                <span className="inline-block font-mono font-bold text-[10px] tracking-[0.12em] uppercase bg-white border-2 border-black px-2 py-0.5 mb-3">
-                  Find the spread
-                </span>
-                <h3 className="font-display font-bold text-2xl text-black mb-2">Arbitrage Scanner</h3>
-                <p className="text-sm text-black/80 leading-relaxed">Compare odds across Polymarket, Kalshi, and Metaculus to find mispriced markets in real time.</p>
-                <span className="absolute top-5 right-5 w-8 h-8 bg-black text-[#29C5F6] rounded-full flex items-center justify-center font-mono font-bold text-sm group-hover:translate-x-1 transition-transform">
-                  →
-                </span>
-              </Link>
+              {bottomTools.map((key, idx) => {
+                const tool = TOOL_CARDS[key];
+                const firstColor = TOOL_CARDS[bottomTools[0]].color;
+                const cardBg = idx === 1 && tool.color === firstColor ? '#FFE642' : tool.color;
+                return (
+                  <Link
+                    key={key}
+                    href={tool.href}
+                    style={{ backgroundColor: cardBg }}
+                    className="group relative block border-2 border-black rounded-2xl p-6 shadow-[4px_4px_0_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[2px_2px_0_#000] transition-all"
+                  >
+                    <span className="inline-block font-mono font-bold text-[10px] tracking-[0.12em] uppercase bg-white border-2 border-black px-2 py-0.5 mb-3 text-black">
+                      {tool.kicker}
+                    </span>
+                    <h3 className="font-display font-bold text-2xl text-black mb-2 pr-10">{tool.title}</h3>
+                    <p className="text-sm text-black/80 leading-relaxed">{tool.description}</p>
+                    <span
+                      style={{ color: cardBg }}
+                      className="absolute top-5 right-5 w-8 h-8 bg-black rounded-full flex items-center justify-center font-mono font-bold text-sm group-hover:translate-x-1 transition-transform"
+                    >
+                      →
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
 
             {/* Prev / Next */}

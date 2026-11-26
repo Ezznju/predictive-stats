@@ -11,6 +11,8 @@ import {
   Flame,
   BarChart3,
   DollarSign,
+  Calculator,
+  Percent,
 } from 'lucide-react';
 import {
   FlowerShape,
@@ -21,26 +23,55 @@ import {
 import { SITE_URL } from '@/lib/seo-utils';
 
 export const metadata: Metadata = {
-  title: 'Free Prediction Market Tools — Polymarket & Kalshi Scanners',
+  title: 'Free Prediction Market Tools — Polymarket & Kalshi Scanners & Calculators',
   description:
-    'Free live tools for prediction market traders — scan Polymarket LP rewards, find Polymarket × Kalshi arbitrage, track whale wallets, and monitor trending markets.',
+    'Free live tools & calculators for prediction market traders — simulate Kalshi combo payouts & fees, scan Polymarket LP rewards, find arbitrage, and track whales.',
   alternates: { canonical: `${SITE_URL}/tools` },
   openGraph: {
     type: 'website',
     url: `${SITE_URL}/tools`,
-    title: 'Free Prediction Market Tools — Polymarket & Kalshi Scanners',
+    title: 'Free Prediction Market Tools — Polymarket & Kalshi Scanners & Calculators',
     description:
-      'Free live tools for prediction market traders — scan Polymarket LP rewards, find Polymarket × Kalshi arbitrage, track whale wallets, and monitor trending markets.',
+      'Free live tools & calculators for prediction market traders — simulate Kalshi combo payouts & fees, scan Polymarket LP rewards, find arbitrage, and track whales.',
     images: [{ url: '/tools/og', width: 1200, height: 630, type: 'image/png' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Free Prediction Market Tools — Polymarket & Kalshi Scanners',
+    title: 'Free Prediction Market Tools — Polymarket & Kalshi Scanners & Calculators',
     description:
-      'Free live tools for prediction market traders — scan Polymarket LP rewards, find Polymarket × Kalshi arbitrage, track whale wallets, and monitor trending markets.',
+      'Free live tools & calculators for prediction market traders — simulate Kalshi combo payouts & fees, scan Polymarket LP rewards, find arbitrage, and track whales.',
     images: ['/tools/og'],
   },
 };
+
+const CALCULATORS = [
+  {
+    slug: 'kalshi-combo-calculator',
+    href: '/tools/kalshi-combo-calculator',
+    name: 'Kalshi Combo & Blue Arrow Simulator',
+    platform: 'Kalshi · Free Calculator',
+    question: 'What happens to my Kalshi combo payout if a player is DNP (Blue Arrow)?',
+    description:
+      'Build 2–5 leg Kalshi combos, model exact trading fees, and simulate how a Blue Arrow / Blue Shield intermediate scalar settlement affects your payout vs. a sportsbook void.',
+    highlights: ['2–5 leg builder', 'Blue Arrow scalar math', 'Sportsbook void diff'],
+    icon: Calculator,
+    color: '#29C5F6',
+    ctaLabel: 'OPEN SIMULATOR',
+  },
+  {
+    slug: 'kalshi-fee-calculator',
+    href: '/tools/kalshi-fee-calculator',
+    name: 'Kalshi vs. Polymarket Fee Calculator',
+    platform: 'Kalshi × Polymarket · Calculator',
+    question: 'How much do Kalshi fees eat into my edge, and what is my real break-even?',
+    description:
+      'Calculate exact Kalshi taker and maker fees with Kalshi’s quadratic formula, see round-trip fee drag, and compare savings against 0%-fee venues like Polymarket.',
+    highlights: ['Exact quadratic formula', 'Taker vs. Maker vs. 0%', 'Break-even win %'],
+    icon: Percent,
+    color: '#C6F23A',
+    ctaLabel: 'OPEN CALCULATOR',
+  },
+];
 
 const TOOLS = [
   {
@@ -124,16 +155,17 @@ const TOOLS = [
 ];
 
 export default function ToolsPage() {
+  const allTools = [...CALCULATORS, ...TOOLS];
   const itemListJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Free Prediction Market Tools',
     url: `${SITE_URL}/tools`,
-    description: 'Free live utilities and scanners for Polymarket and Kalshi traders.',
+    description: 'Free live utilities, scanners, and calculators for Polymarket and Kalshi traders.',
     mainEntity: {
       '@type': 'ItemList',
-      numberOfItems: TOOLS.length,
-      itemListElement: TOOLS.map((t, i) => ({
+      numberOfItems: allTools.length,
+      itemListElement: allTools.map((t, i) => ({
         '@type': 'ListItem',
         position: i + 1,
         url: `${SITE_URL}${t.href}`,
@@ -204,8 +236,73 @@ export default function ToolsPage() {
         </div>
       </div>
 
-      {/* Tool Cards — balanced 3x2 grid */}
+      {/* Instant Free Calculators (2-column feature row) */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 relative">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="heading-chip bg-[#FFE642]" />
+          <h2 className="font-display font-bold text-2xl text-ink">Instant Calculators</h2>
+          <span className="text-[11px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-black text-[#C6F23A]">
+            NEW
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {CALCULATORS.map((tool) => (
+            <Link
+              key={tool.slug}
+              href={tool.href}
+              className="group bg-[#FFFDF9] rounded-2xl border-2 border-black p-6 shadow-pop hover:-translate-y-1 hover:shadow-pop-lg transition-all flex flex-col"
+            >
+              <div className="flex items-center gap-3.5 mb-4">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 border-2 border-black"
+                  style={{ backgroundColor: tool.color }}
+                >
+                  <tool.icon className="w-6 h-6 text-black" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-xl text-ink group-hover:text-brand-orange transition-colors leading-tight">
+                    {tool.name}
+                  </h3>
+                  <p className="text-xs font-mono font-semibold text-ink-muted mt-0.5">{tool.platform}</p>
+                </div>
+              </div>
+
+              <div className="bg-[#FFE642] rounded-xl border-2 border-black p-3 mb-4">
+                <p className="text-xs sm:text-sm font-bold text-black leading-snug">
+                  &ldquo;{tool.question}&rdquo;
+                </p>
+              </div>
+
+              <p className="text-sm text-ink-secondary leading-relaxed mb-4">
+                {tool.description}
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 mb-6 mt-auto">
+                {tool.highlights.map((h) => (
+                  <span
+                    key={h}
+                    className="text-[11px] font-mono font-semibold px-2.5 py-1 rounded-lg bg-[#FFF7E6] border border-black/25 text-ink"
+                  >
+                    {h}
+                  </span>
+                ))}
+              </div>
+
+              <span className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-xl bg-black text-[#FFE642] font-display font-bold text-xs tracking-wider uppercase btn-pop">
+                {tool.ctaLabel}
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Live Scanners & Market Boards — balanced 3x2 grid */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 relative">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="heading-chip bg-neon-green" />
+          <h2 className="font-display font-bold text-2xl text-ink">Live Scanners &amp; Market Boards</h2>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {TOOLS.map((tool) => (
             <Link
