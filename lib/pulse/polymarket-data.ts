@@ -118,6 +118,52 @@ export async function fetchWalletProfile(address: string): Promise<WalletProfile
   }
 }
 
+/* ── Wallet positions (real open & closed PnL) ────────────── */
+
+export interface RawPosition {
+  conditionId?: string;
+  title?: string;
+  slug?: string;
+  outcome?: string;
+  size?: number;
+  avgPrice?: number;
+  curPrice?: number;
+  initialValue?: number;
+  currentValue?: number;
+  cashPnl?: number;
+  realizedPnl?: number;
+  totalBought?: number;
+  redeemable?: boolean;
+}
+
+export async function fetchWalletPositions(address: string, limit = 100): Promise<RawPosition[]> {
+  try {
+    const res = await safeFetchJson<RawPosition[]>(
+      `${DATA_API}/positions?user=${encodeURIComponent(address)}&limit=${limit}&sortBy=CURRENT&sortDirection=DESC`,
+      undefined,
+      {},
+      { label: 'pulse-wallet-positions', retries: 1 }
+    );
+    return Array.isArray(res) ? res : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchWalletClosedPositions(address: string, limit = 100): Promise<RawPosition[]> {
+  try {
+    const res = await safeFetchJson<RawPosition[]>(
+      `${DATA_API}/closed-positions?user=${encodeURIComponent(address)}&limit=${limit}&sortBy=REALIZEDPNL&sortDirection=DESC`,
+      undefined,
+      {},
+      { label: 'pulse-wallet-closed-positions', retries: 1 }
+    );
+    return Array.isArray(res) ? res : [];
+  } catch {
+    return [];
+  }
+}
+
 /* ── Gamma events (market metadata) ──────────────────────── */
 
 export async function fetchGammaEvents(opts: {

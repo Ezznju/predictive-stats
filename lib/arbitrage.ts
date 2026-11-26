@@ -101,6 +101,10 @@ export interface ArbitragePair {
   priceDiffCents: number;
   cheaperYes: 'polymarket' | 'kalshi';
   arbPercent: number;
+  /** Annualized APY % using real market close_time (capital lockup aware). */
+  annualizedApy?: number;
+  /** Days remaining until Kalshi close_time. */
+  daysToResolution?: number;
 
   /** 0..1 confidence both platforms price the SAME event. */
   matchConfidence: number;
@@ -311,22 +315,56 @@ export function findArbitragePairs(
         priceChange24h: 0,
       });
 
-      // ── Optimal execution plan ──────────────────────────────────
+      // ── Optimal execution plan (real ask-to-ask + exact Kalshi quadratic fee) ─
+      const polyYesAsk = polyBestAsk > 0 ? polyBestAsk : polyMid;
+      const polyNoAsk = polyBestBid > 0 ? 1 - polyBestBid : 1 - polyMid;
+      const kYesAsk = kalshiYesAsk > 0 ? kalshiYesAsk : kalshiYesMid;
+      const kNoAsk = kalshiYesBid > 0 ? 1 - kalshiYesBid : 1 - kalshiYesMid;
+
       const plan = buildExecutionPlan({
-        polyYesAsk: polyBestAsk > 0 ? polyBestAsk : polyMid,
-        polyNoAsk: polyBestBid > 0 ? 1 - polyBestBid : 1 - polyMid,
-        kalshiYesAsk: kalshiYesAsk > 0 ? kalshiYesAsk : kalshiYesMid,
-        kalshiNoAsk: kalshiYesBid > 0 ? 1 - kalshiYesBid : 1 - kalshiYesMid,
+        polyYesAsk,
+        polyNoAsk,
+        kalshiYesAsk: kYesAsk,
+        kalshiNoAsk: kNoAsk,
         maxShares: 100,
       });
 
+      // Prefer real ask-based net ROI when executable asks are present so wide
+      // bid-ask spreads don't create "phantom mid-price arbitrage".
+      const hasRealAsks = polyBestAsk > 0 && polyBestBid > 0 && kalshiYesAsk > 0 && kalshiYesBid > 0;
+      const effectiveArbPercent = hasRealAsks ? Math.max(0, plan.roiPct) : arbPercent;
+
+      // Real time-to-resolution from Kalshi close_time (not hardcoded 7d)
+      const closeMs = km.close_time ? Date.parse(km.close_time) : NaN;
+      const hoursToExpiry =
+        Number.isFinite(closeMs) && closeMs > Date.now()
+          ? Math.max(1, (closeMs - Date.now()) / 3_600_000)
+          : 24 * 14;
+      const daysToResolution = Math.max(0.5, hoursToExpiry / 24);
+      const roiDecimal = effectiveArbPercent / 100;
+      const annualizedApy =
+        roiDecimal > 0
+          ? Math.min(9999, Math.round((Math.pow(1 + roiDecimal, 365 / Math.max(1, daysToResolution)) - 1) * 1000) / 10)
+          : 0;
+
+      // Flag cross-venue oracle/resolution basis risk explicitly
+      const anomalies = [...integrity.flags];
+      if (daysToResolution > 60) {
+        anomalies.push({
+          kind: 'capital_lockup',
+          severity: 'warn',
+          message: `Capital locked ~${Math.round(daysToResolution)}d until resolution (${annualizedApy.toFixed(1)}% APY)`,
+          value: daysToResolution,
+        });
+      }
+
       // ── Blended opportunity score ───────────────────────────────
       const scoreBreakdown = scoreOpportunity({
-        edgePct: arbPercent,
+        edgePct: effectiveArbPercent,
         volumeUsd: Math.max(polyMarket.volume24hr || 0, parseFloat(km.volume_fp) || 0),
         confidence: matchConfidence,
         risk: Math.max(integrity.riskScore, polySpread > 0 ? Math.min(1, polySpread * 4) : 0.2),
-        hoursToExpiry: 24 * 7, // unknown → assume ~1 week
+        hoursToExpiry,
       });
 
       pairs.push({
@@ -359,10 +397,12 @@ export function findArbitragePairs(
 
         priceDiffCents,
         cheaperYes,
-        arbPercent,
+        arbPercent: effectiveArbPercent,
+        annualizedApy,
+        daysToResolution: Math.round(daysToResolution),
         matchConfidence,
         opportunityScore: scoreBreakdown.total,
-        anomalies: integrity.flags,
+        anomalies,
         plan: plan.viable ? plan : null,
       });
     }

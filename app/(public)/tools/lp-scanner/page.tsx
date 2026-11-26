@@ -46,6 +46,15 @@ interface LPRewardMarket {
   yesPrice: number;
   noPrice: number;
   tokenId: string;
+  entryCostUsd?: number;
+  spreadViolation?: boolean;
+  twoSidedRequired?: boolean;
+  spreadEfficiency?: number;
+  grossAprPct?: number;
+  netAprPct?: number;
+  headlineTrap?: boolean;
+  score100?: number;
+  riskFlags?: string[];
 }
 
 interface OrderBook {
@@ -83,7 +92,7 @@ function daysUntil(dateStr: string) {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
-type SortKey = 'dailyReward' | 'spread' | 'volume24hr' | 'liquidity' | 'competitiveness' | 'minSize';
+type SortKey = 'netAprPct' | 'dailyReward' | 'spread' | 'volume24hr' | 'liquidity' | 'competitiveness' | 'minSize';
 
 /* ── Main Page ──────────────────────────────────────────────────────── */
 
@@ -92,8 +101,9 @@ export default function LPScannerPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState('');
-  const [sortKey, setSortKey] = useState<SortKey>('dailyReward');
+  const [sortKey, setSortKey] = useState<SortKey>('netAprPct');
   const [sortDir, setSortDir] = useState<-1 | 1>(-1);
+  const [myCapital, setMyCapital] = useState<number>(1000);
   const [selectedMarket, setSelectedMarket] = useState<LPRewardMarket | null>(null);
   const [orderBook, setOrderBook] = useState<OrderBook | null>(null);
   const [obLoading, setObLoading] = useState(false);
@@ -133,7 +143,7 @@ export default function LPScannerPage() {
     const qq = p.get('q');
     if (qq) setQ(qq);
     const sk = p.get('sort');
-    if (sk && ['dailyReward', 'spread', 'minSize', 'volume24hr', 'liquidity', 'competitiveness'].includes(sk)) {
+    if (sk && ['netAprPct', 'dailyReward', 'spread', 'minSize', 'volume24hr', 'liquidity', 'competitiveness'].includes(sk)) {
       setSortKey(sk as SortKey);
     }
     const dir = p.get('dir');
@@ -219,8 +229,18 @@ export default function LPScannerPage() {
   const filtered = useMemo(() => {
     return markets
       .filter((m) => !q || m.question.toLowerCase().includes(q.toLowerCase()))
-      .sort((a, b) => ((a[sortKey] as number) - (b[sortKey] as number)) * sortDir);
+      .sort((a, b) => (((a[sortKey] as number | undefined) ?? 0) - ((b[sortKey] as number | undefined) ?? 0)) * sortDir);
   }, [markets, q, sortKey, sortDir]);
+
+  // Personalized daily USDC reward estimate for `myCapital` using quadratic spread weight
+  const estUserDailyUsd = (m: LPRewardMarket): number => {
+    if (m.spreadViolation || myCapital <= 0) return 0;
+    const minEntry = m.entryCostUsd ?? 0;
+    if (minEntry > 0 && myCapital < minEntry) return 0;
+    const poolDepth = Math.max(m.liquidity || 0, minEntry * 15, 5000);
+    const share = myCapital / (poolDepth + myCapital);
+    return m.dailyReward * share * Math.max(0.25, m.spreadEfficiency ?? 0.75);
+  };
 
   const handleSort = (k: SortKey) => {
     if (sortKey === k) setSortDir(-sortDir as -1 | 1);
@@ -353,6 +373,35 @@ export default function LPScannerPage() {
             <Filter className="w-4 h-4" />
             Sort
           </button>
+          {/* Personalized My Capital ($) selector */}
+          <div className="flex items-center gap-1.5 bg-[#FFFDF9] border-2 border-black rounded-lg px-2.5 py-1.5 shadow-pop-sm">
+            <span className="text-[11px] font-mono font-bold uppercase text-black/75">My Capital:</span>
+            <span className="font-mono font-bold text-xs text-black">$</span>
+            <input
+              type="number"
+              min={50}
+              max={1000000}
+              step={100}
+              value={myCapital}
+              onChange={(e) => setMyCapital(Math.max(0, Number(e.target.value) || 0))}
+              aria-label="Your LP capital in USD"
+              className="w-20 font-mono font-bold text-xs text-black bg-transparent focus:outline-none"
+            />
+            <div className="hidden sm:flex items-center gap-1 pl-1 border-l border-black/15">
+              {[500, 1000, 5000].map((amt) => (
+                <button
+                  key={amt}
+                  type="button"
+                  onClick={() => setMyCapital(amt)}
+                  className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-colors ${
+                    myCapital === amt ? 'bg-black text-[#C6F23A]' : 'bg-black/5 text-black hover:bg-[#FFE642]'
+                  }`}
+                >
+                  ${amt >= 1000 ? `${amt / 1000}k` : amt}
+                </button>
+              ))}
+            </div>
+          </div>
           <span className="text-xs font-mono font-bold text-black/80">{filtered.length} markets</span>
           <ScannerLiveStatus updatedAt={updatedAt} />
         </div>
@@ -361,6 +410,7 @@ export default function LPScannerPage() {
         {showFilters && (
           <div className="flex flex-wrap gap-2 mb-4">
             {([
+              ['netAprPct', 'Net APR %'],
               ['dailyReward', 'Daily Reward'],
               ['spread', 'Spread'],
               ['volume24hr', '24h Volume'],
@@ -408,8 +458,12 @@ export default function LPScannerPage() {
                 <thead>
                   <tr className="bg-black text-white">
                     <th className="px-4 py-3 text-left font-display text-xs uppercase tracking-wider" style={{ minWidth: 280 }}>Market</th>
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none" onClick={() => handleSort('netAprPct')}>
+                      <span className="flex items-center justify-center gap-1">Net APR {sortKey === 'netAprPct' && (sortDir === -1 ? '▼' : '▲')}</span>
+                    </th>
+                    <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider">Est. / Day</th>
                     <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none" onClick={() => handleSort('dailyReward')}>
-                      <span className="flex items-center justify-center gap-1">$/Day {sortKey === 'dailyReward' && (sortDir === -1 ? '▼' : '▲')}</span>
+                      <span className="flex items-center justify-center gap-1">Pool/Day {sortKey === 'dailyReward' && (sortDir === -1 ? '▼' : '▲')}</span>
                     </th>
                     <th className="px-3 py-3 text-center font-display text-xs uppercase tracking-wider cursor-pointer hover:text-neon-lime select-none" onClick={() => handleSort('spread')}>
                       <span className="flex items-center justify-center gap-1">Spread {sortKey === 'spread' && (sortDir === -1 ? '▼' : '▲')}</span>
@@ -433,13 +487,34 @@ export default function LPScannerPage() {
                 <tbody className="divide-y divide-gray-100">
                   {filtered.map((m) => {
                     const days = daysUntil(m.endDate);
+                    const userDaily = estUserDailyUsd(m);
+                    const netApr = m.netAprPct ?? 0;
                     return (
                       <tr key={m.conditionId} data-hi={hiParam === m.conditionId ? 'true' : undefined} className={`hover:bg-gray-50/50 transition-colors cursor-pointer ${hiParam === m.conditionId ? 'bg-brand-yellow/40' : ''}`} onClick={() => setSelectedMarket(m)}>
                         <td className="px-4 py-3 max-w-xs">
                           <div className="flex items-center gap-1.5">
                             <div className="min-w-0 flex-1">
                               <div className="font-display font-semibold text-sm leading-tight truncate">{m.question}</div>
-                              <div className="text-xs text-ink-faint mt-0.5">{m.slug}</div>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                {m.spreadViolation && (
+                                  <span className="text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-red-600 text-white">
+                                    SPREAD VIOLATION ($0)
+                                  </span>
+                                )}
+                                {m.headlineTrap && (
+                                  <span className="text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-[#FFE642] text-black border border-black">
+                                    HEADLINE TRAP
+                                  </span>
+                                )}
+                                {m.twoSidedRequired && (
+                                  <span className="text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded bg-[#29C5F6]/30 text-black border border-black/40">
+                                    2-SIDED REQ
+                                  </span>
+                                )}
+                                {!m.spreadViolation && !m.headlineTrap && !m.twoSidedRequired && (
+                                  <span className="text-xs text-ink-faint truncate">{m.slug}</span>
+                                )}
+                              </div>
                             </div>
                             <button
                               onClick={(e) => { e.stopPropagation(); copyRowLink(m.conditionId); }}
@@ -454,6 +529,22 @@ export default function LPScannerPage() {
                               {copiedKey === m.conditionId ? <span className="text-[10px] font-bold">✓</span> : <Link2 className="w-3.5 h-3.5" />}
                             </button>
                           </div>
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          <span
+                            className={`font-mono text-sm font-extrabold px-2 py-0.5 rounded-md border border-black/25 ${
+                              m.spreadViolation || netApr <= 0
+                                ? 'bg-red-100 text-red-700'
+                                : netApr >= 25
+                                ? 'bg-[#C6F23A] text-black'
+                                : 'bg-[#FFF7E6] text-black'
+                            }`}
+                          >
+                            {netApr > 0 ? `+${netApr.toFixed(1)}%` : `${netApr.toFixed(1)}%`}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-center font-mono text-xs font-bold text-ink">
+                          {userDaily > 0 ? `$${userDaily.toFixed(2)}` : m.entryCostUsd && myCapital < m.entryCostUsd ? <span className="text-red-600" title={`Needs $${m.entryCostUsd.toFixed(0)} min`}>&lt;min</span> : '$0.00'}
                         </td>
                         <td className="px-3 py-3 text-center">
                           <span className="font-mono text-sm font-bold" style={{ color: BRAND }}>${m.dailyReward.toFixed(2)}</span>

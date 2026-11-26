@@ -88,10 +88,13 @@ export function classifyWhalesFromLeaderboard(
   return entries.slice(0, TOP_WHALE_RANKS).map((entry) => {
     const pnl = entry.pnl ?? 0;
     const vol = entry.vol ?? 0;
-    const winRate = vol > 0 ? Math.max(0, Math.min(1, (pnl / vol) * 5 + 0.5)) : 0.5;
+    const roiOnVol = vol > 0 ? pnl / vol : 0;
+    // Honest normalized ROI efficiency (0..1) used inside composite skill score
+    const roiScore = clamp(sigmoid(roiOnVol * 10), 0, 1);
     const skillScore = clamp(
-      0.3 * winRate + 0.3 * Math.min(1, pnl / 500000) + 0.4 * Math.min(1, vol / 1000000),
-      0, 1
+      0.35 * roiScore + 0.35 * clamp(pnl / 500000, 0, 1) + 0.30 * clamp(vol / 1000000, 0, 1),
+      0,
+      1
     );
     return {
       address: entry.proxyWallet,
@@ -102,7 +105,8 @@ export function classifyWhalesFromLeaderboard(
       rank: parseInt(entry.rank, 10) || 0,
       pnl,
       volume: vol,
-      winRate,
+      // Store actual ROI-on-volume ratio (displayed honestly as ROI / Vol on leaderboard)
+      winRate: roiOnVol,
       tradeCount: 0,
       isSmart: pnl > 0 && vol > 100000,
       skillScore,
@@ -193,12 +197,14 @@ export function scoreWhaleTrade(
     ? clamp(Math.log10(trade.liquidityUsd + 10) / 6, 0, 1)
     : 0.5;
 
-  // Final conviction — multiplicative combination
-  const conviction = clamp(
-    sizeScore * walletSkill * categoryExpertise * liquidityFactor * recencyScore,
-    0,
-    1
-  );
+  // Final conviction — calibrated weighted composite modulated by recency
+  // (avoids multiplying 5 decimals together which previously crushed strong trades to ~0.09).
+  const baseConviction =
+    0.34 * sizeScore +
+    0.32 * walletSkill +
+    0.16 * liquidityFactor +
+    0.18 * categoryExpertise;
+  const conviction = clamp(baseConviction * (0.45 + 0.55 * recencyScore), 0, 1);
 
   return {
     walletSkill: round(walletSkill),
@@ -211,7 +217,9 @@ export function scoreWhaleTrade(
 /**
  * Aggregate whale flow across markets using conviction-weighted notional.
  *
- * Returns markets ranked by absolute conviction-weighted net flow.
+ * Correctly accounts for BOTH side (BUY/SELL) AND outcome (YES/NO):
+ *  - BUY YES / SELL NO -> bullish YES (+)
+ *  - BUY NO / SELL YES -> bearish YES (-)
  */
 export function aggregateWhaleFlow(
   trades: WhaleTradeInput[],
@@ -232,7 +240,10 @@ export function aggregateWhaleFlow(
     const stats = statsMap.get(t.wallet) ?? null;
     const s = scoreWhaleTrade(t, stats, now);
 
-    const signed = t.side === 'BUY' ? t.sizeUsd : -t.sizeUsd;
+    const isNoOutcome = /^no$/i.test((t.outcome ?? '').trim());
+    const isBullishYes =
+      (t.side === 'BUY' && !isNoOutcome) || (t.side === 'SELL' && isNoOutcome);
+    const signed = isBullishYes ? t.sizeUsd : -t.sizeUsd;
 
     const e =
       map[t.marketId] ||

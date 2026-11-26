@@ -6,7 +6,7 @@ const KALSHI_ORDERBOOK = 'https://api.elections.kalshi.com/trade-api/v2/markets'
 // up to 8 orderbooks keeps a full board build around a dozen Kalshi requests,
 // well clear of their rate limits (Code 429 from shared datacenter egress).
 const MAX_PAGES = 4;
-const MAX_ORDERBOOKS = 8;
+const MAX_ORDERBOOKS = 15;
 
 // Kalshi persistently 429s Cloudflare Workers' shared egress, so the site
 // reads D1 snapshots written by the GitHub refresh action
@@ -39,6 +39,12 @@ export interface KalshiSignal {
   restingYes: number; // total YES dollars in book
   restingNo: number; // total NO dollars in book
   totalResting: number;
+  /** Resting capital within ±10¢ of midpoint (filters out 1¢ spoof walls). */
+  nearTouchYes?: number;
+  nearTouchNo?: number;
+  nearTouchTotal?: number;
+  /** Near-touch YES share of order book (0..100). */
+  yesImbalancePct?: number;
   biggestWall: { side: 'YES' | 'NO'; price: number; size: number } | null;
   kalshiUrl: string;
 }
@@ -150,13 +156,28 @@ export async function fetchKalshiSmartMoney(limit = 15): Promise<KalshiSmartMone
     const mid = bid > 0 && ask > 0 ? (bid + ask) / 2 : last;
     const prev = m.previous_price_dollars != null ? Number(m.previous_price_dollars) : null;
 
-    // Walls: find the largest resting level across both sides
+    // Filter out 1¢/99¢ dust spoof walls when picking biggest meaningful wall,
+    // and compute Near-Touch Depth (±10¢ around midpoint) + YES/NO book imbalance.
+    const nearYes = book.yes
+      .filter((lv) => Math.abs(lv[0] - mid) <= 0.10)
+      .reduce((s, lv) => s + lv[1], 0);
+    const nearNo = book.no
+      .filter((lv) => Math.abs(1 - lv[0] - mid) <= 0.10)
+      .reduce((s, lv) => s + lv[1], 0);
+    const nearTouchTotal = nearYes + nearNo;
+    const yesImbalancePct =
+      nearTouchTotal > 0 ? Math.round((nearYes / nearTouchTotal) * 100) : 50;
+
     let wall: KalshiSignal['biggestWall'] | null = null;
     for (const lv of book.yes) {
-      if (!wall || lv[1] > wall.size) wall = { side: 'YES', price: lv[0], size: lv[1] };
+      if (lv[0] >= 0.03 && lv[0] <= 0.97 && (!wall || lv[1] > wall.size)) {
+        wall = { side: 'YES', price: lv[0], size: lv[1] };
+      }
     }
     for (const lv of book.no) {
-      if (!wall || lv[1] > wall.size) wall = { side: 'NO', price: lv[0], size: lv[1] };
+      if (lv[0] >= 0.03 && lv[0] <= 0.97 && (!wall || lv[1] > wall.size)) {
+        wall = { side: 'NO', price: lv[0], size: lv[1] };
+      }
     }
 
     const yesRest = book.yes.reduce((s, lv) => s + lv[1], 0);
@@ -174,13 +195,19 @@ export async function fetchKalshiSmartMoney(limit = 15): Promise<KalshiSmartMone
       restingYes: yesRest,
       restingNo: noRest,
       totalResting: yesRest + noRest,
+      nearTouchYes: nearYes,
+      nearTouchNo: nearNo,
+      nearTouchTotal,
+      yesImbalancePct,
       biggestWall: wall,
       kalshiUrl: m.event_ticker ? `https://kalshi.com/markets/${m.event_ticker}` : 'https://kalshi.com',
     });
   }
 
-  // Big Money: ranked by total resting capital
-  const bigMoney = [...signals].sort((a, b) => b.totalResting - a.totalResting).slice(0, limit);
+  // Big Money: ranked by near-touch resting capital (real actionable depth)
+  const bigMoney = [...signals]
+    .sort((a, b) => (b.nearTouchTotal ?? b.totalResting) - (a.nearTouchTotal ?? a.totalResting))
+    .slice(0, limit);
 
   // Momentum: largest absolute price change among active markets
   const momentum = [...signals]

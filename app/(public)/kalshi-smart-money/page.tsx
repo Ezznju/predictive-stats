@@ -53,6 +53,8 @@ function SignalRow({
     yesPrice: number;
     priceChangeCents: number | null;
     totalResting: number;
+    nearTouchTotal?: number;
+    yesImbalancePct?: number;
     biggestWall: { side: 'YES' | 'NO'; price: number; size: number } | null;
     kalshiUrl: string;
     daysLeft: number | null;
@@ -73,7 +75,27 @@ function SignalRow({
             </span>
             <span className="font-mono font-medium text-ink-muted">{fmtVol(s.volume24h)} vol/24h</span>
             {showResting && (
-              <span className="font-mono font-bold text-ink">{fmtVol(s.totalResting)} resting</span>
+              <>
+                <span className="font-mono font-bold text-ink">
+                  {fmtVol(s.nearTouchTotal != null && s.nearTouchTotal > 0 ? s.nearTouchTotal : s.totalResting)}{' '}
+                  {s.nearTouchTotal != null && s.nearTouchTotal > 0 ? 'near-touch (±10¢)' : 'resting'}
+                </span>
+                {s.yesImbalancePct != null && (
+                  <span
+                    className={`font-mono font-bold px-1.5 py-0.5 rounded border border-black/30 ${
+                      s.yesImbalancePct >= 55
+                        ? 'bg-[#C6F23A] text-black'
+                        : s.yesImbalancePct <= 45
+                        ? 'bg-[#FFE2E2] text-black'
+                        : 'bg-black/5 text-ink'
+                    }`}
+                  >
+                    {s.yesImbalancePct >= 50
+                      ? `${s.yesImbalancePct}% YES lean`
+                      : `${100 - s.yesImbalancePct}% NO lean`}
+                  </span>
+                )}
+              </>
             )}
             {showChange && s.priceChangeCents != null && (
               <span

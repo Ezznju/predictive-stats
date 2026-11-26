@@ -13,7 +13,8 @@ export type AnomalyKind =
   | 'spread_violation'
   | 'volume_outlier'
   | 'stale_data'
-  | 'thin_book';
+  | 'thin_book'
+  | 'capital_lockup';
 
 export type Severity = 'info' | 'warn' | 'critical';
 

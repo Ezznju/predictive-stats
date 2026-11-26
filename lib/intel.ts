@@ -8,18 +8,52 @@
 
 /* ── Text normalisation & tokenisation ─────────────────────────────── */
 
+// NOTE: Direction / polarity words (above, below, over, under, before, after,
+// more, less, not, cut, hike, higher, lower) are INTENTIONALLY excluded from
+// STOP_WORDS and tracked separately as polarity anchors so opposite markets
+// ("BTC above $100k" vs "BTC below $100k") are hard-vetoed instead of matched.
 const STOP_WORDS = new Set([
   'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'by', 'is', 'be',
   'will', 'would', 'could', 'should', 'may', 'might', 'can', 'has', 'have',
   'had', 'do', 'does', 'did', 'are', 'was', 'were', 'been', 'being',
   'this', 'that', 'these', 'those', 'it', 'its', 'or', 'and', 'but',
-  'if', 'then', 'than', 'so', 'not', 'no', 'yes', 'any', 'all',
-  'with', 'from', 'about', 'into', 'over', 'after', 'before',
-  'between', 'under', 'during', 'through', 'above', 'below',
-  'up', 'down', 'out', 'off', 'more', 'less', 'most', 'least',
-  'win', 'next', 'new', 'become', 'what', 'who', 'when', 'where',
+  'if', 'then', 'than', 'so', 'any', 'all',
+  'with', 'from', 'about', 'into', 'between', 'during', 'through',
+  'up', 'down', 'out', 'off', 'most', 'least',
+  'next', 'new', 'become', 'what', 'who', 'when', 'where',
   'how', 'which', 'their', 'there', 'here', 'very', 'just',
 ]);
+
+/** Antonym pairs — if text A carries side 0 and text B carries side 1, hard veto. */
+const POLARITY_PAIRS: ReadonlyArray<readonly [string, string]> = [
+  ['above', 'below'],
+  ['over', 'under'],
+  ['before', 'after'],
+  ['more', 'less'],
+  ['higher', 'lower'],
+  ['cut', 'hike'],
+  ['cuts', 'hikes'],
+  ['increase', 'decrease'],
+  ['rise', 'fall'],
+  ['win', 'lose'],
+];
+
+const NEGATION_WORDS = new Set(['not', 'never', 'wont', "won't", 'without', 'fail', 'fails']);
+
+const MONTH_CANON: Record<string, string> = {
+  jan: 'jan', january: 'jan',
+  feb: 'feb', february: 'feb',
+  mar: 'mar', march: 'mar',
+  apr: 'apr', april: 'apr',
+  may: 'may',
+  jun: 'jun', june: 'jun',
+  jul: 'jul', july: 'jul',
+  aug: 'aug', august: 'aug',
+  sep: 'sep', sept: 'sep', september: 'sep',
+  oct: 'oct', october: 'oct',
+  nov: 'nov', november: 'nov',
+  dec: 'dec', december: 'dec',
+};
 
 /** Collapse common synonyms so cross-platform titles align. */
 const SYNONYMS: Record<string, string> = {
@@ -37,6 +71,8 @@ const SYNONYMS: Record<string, string> = {
   champion: 'title',
   vs: 'v',
   versus: 'v',
+  federal: 'fed',
+  fomc: 'fed',
 };
 
 export interface Tokenized {
@@ -46,37 +82,101 @@ export interface Tokenized {
   set: Set<string>;
   /** 4-digit years (2024, 2025…) — hard date anchors for matching. */
   years: Set<string>;
-  /** First integer found (e.g. "250 electoral votes" → 250). */
+  /** Canonical calendar months ('jan'..'dec') — prevents cross-month mismatches. */
+  months: Set<string>;
+  /** First numeric threshold found (normalized: "$100k" -> 100000, "3.5%" -> 3.5). */
   number: number | null;
+  /** All normalized numeric thresholds found in the text. */
+  thresholds: number[];
+  /** Direction/polarity tokens present. */
+  polarity: Set<string>;
+  /** Whether negation ("not", "never", "won't") appears in the market text. */
+  negated: boolean;
+}
+
+/** Parse numeric tokens including k/m/b suffixes and decimals ("$100k", "3.5%", "2.4m"). */
+function parseScaledNumber(rawToken: string): number | null {
+  const cleaned = rawToken.replace(/[,$%]/g, '');
+  const m = cleaned.match(/^(\d+(?:\.\d+)?)(k|m|b)?$/i);
+  if (!m) return null;
+  const base = parseFloat(m[1]);
+  if (!Number.isFinite(base)) return null;
+  const mult =
+    m[2]?.toLowerCase() === 'k'
+      ? 1_000
+      : m[2]?.toLowerCase() === 'm'
+      ? 1_000_000
+      : m[2]?.toLowerCase() === 'b'
+      ? 1_000_000_000
+      : 1;
+  return base * mult;
 }
 
 export function tokenize(text: string): Tokenized {
-  const clean = (text || '')
+  // Keep dots & commas inside numbers ("$100,000", "3.5%", "$2.5m") before stripping punctuation.
+  const pre = (text || '')
     .toLowerCase()
-    .replace(/[^a-z0-9\s'-]/g, ' ')
+    .replace(/(\d),(\d)/g, '$1$2')
+    .replace(/[^a-z0-9.\s'%-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 
-  const raw = clean ? clean.split(' ') : [];
+  const raw = pre ? pre.split(' ') : [];
   const tokens: string[] = [];
   const years = new Set<string>();
-  let number: number | null = null;
+  const months = new Set<string>();
+  const thresholds: number[] = [];
+  const polarity = new Set<string>();
+  let negated = false;
 
   for (let w of raw) {
+    w = w.replace(/^\.+|\.+$/g, '');
     if (!w) continue;
-    if (/^\d{4}$/.test(w) && +w >= 1900 && +w <= 2100) {
-      years.add(w);
-      continue; // keep years out of the fuzzy token set — they're matched separately
-    }
-    if (number === null && /^\d+$/.test(w)) {
-      number = parseInt(w, 10);
+
+    if (NEGATION_WORDS.has(w)) {
+      negated = true;
       continue;
     }
+
+    if (/^\d{4}$/.test(w) && +w >= 1900 && +w <= 2100) {
+      years.add(w);
+      continue;
+    }
+
+    const num = parseScaledNumber(w);
+    if (num !== null) {
+      thresholds.push(num);
+      continue;
+    }
+
+    const canonMonth = MONTH_CANON[w];
+    if (canonMonth) {
+      months.add(canonMonth);
+      tokens.push(canonMonth);
+      continue;
+    }
+
+    for (const [a, b] of POLARITY_PAIRS) {
+      if (w === a || w === b) {
+        polarity.add(w);
+        break;
+      }
+    }
+
     w = SYNONYMS[w] ?? w;
     if (w.length > 1 && !STOP_WORDS.has(w)) tokens.push(w);
   }
 
-  return { tokens, set: new Set(tokens), years, number };
+  return {
+    tokens,
+    set: new Set(tokens),
+    years,
+    months,
+    number: thresholds.length > 0 ? thresholds[0] : null,
+    thresholds,
+    polarity,
+    negated,
+  };
 }
 
 /* ── Similarity metrics ────────────────────────────────────────────── */
@@ -119,7 +219,7 @@ export interface MatchResult {
   score: number;
   /** Individual signal contributions (for transparency / debugging). */
   signals: { token: number; bigram: number; dateBonus: number; numberBonus: number };
-  /** True when a hard date/number conflict proves these are NOT the same. */
+  /** True when a hard date/number/polarity conflict proves these are NOT the same. */
   conflict: boolean;
 }
 
@@ -127,7 +227,8 @@ export interface MatchResult {
  * Score how likely two event titles describe the same underlying event.
  *
  * Combines fuzzy token overlap and bigram similarity, then applies hard
- * date/number anchors that either boost confidence or veto a false match.
+ * polarity, negation, calendar-month, year, and numeric-threshold anchors
+ * that either boost confidence or hard-veto false matches.
  */
 export function eventSimilarity(aText: string, bText: string): MatchResult {
   const a = tokenize(aText);
@@ -136,31 +237,72 @@ export function eventSimilarity(aText: string, bText: string): MatchResult {
   const token = jaccard(a.set, b.set);
   const bigram = diceBigram(a.tokens.join(' '), b.tokens.join(' '));
 
-  // Date logic: shared year = strong boost; disjoint years (when both have
-  // them) = hard conflict (different cycles entirely).
   let dateBonus = 0;
+  let numberBonus = 0;
   let conflict = false;
-  if (a.years.size > 0 && b.years.size > 0) {
+
+  // 1. Negation mismatch ("Will X happen?" vs "Will X NOT happen?")
+  if (a.negated !== b.negated) {
+    conflict = true;
+  }
+
+  // 2. Polarity / antonym conflict ("above" vs "below", "before" vs "after", "cut" vs "hike")
+  if (!conflict && a.polarity.size > 0 && b.polarity.size > 0) {
+    for (const [left, right] of POLARITY_PAIRS) {
+      const aHasLeft = a.polarity.has(left);
+      const aHasRight = a.polarity.has(right);
+      const bHasLeft = b.polarity.has(left);
+      const bHasRight = b.polarity.has(right);
+      if ((aHasLeft && !aHasRight && bHasRight && !bHasLeft) || (aHasRight && !aHasLeft && bHasLeft && !bHasRight)) {
+        conflict = true;
+        break;
+      }
+    }
+  }
+
+  // 3. Year anchors: disjoint years = different cycles entirely.
+  if (!conflict && a.years.size > 0 && b.years.size > 0) {
     let shared = 0;
     a.years.forEach((y) => {
       if (b.years.has(y)) shared++;
     });
-    if (shared > 0) dateBonus = 0.15;
+    if (shared > 0) dateBonus += 0.15;
     else conflict = true;
   }
 
-  // Number logic: matching numeric thresholds boost, mismatching large
-  // numbers penalise (e.g. "250k" vs "500k" are different markets).
-  let numberBonus = 0;
-  if (a.number !== null && b.number !== null) {
-    if (a.number === b.number) numberBonus = 0.1;
-    else if (Math.abs(a.number - b.number) / Math.max(a.number, b.number) > 0.25)
-      numberBonus = -0.1;
+  // 4. Calendar month anchors: "July FOMC" vs "September FOMC" = hard conflict.
+  if (!conflict && a.months.size > 0 && b.months.size > 0) {
+    let sharedMonth = 0;
+    a.months.forEach((m) => {
+      if (b.months.has(m)) sharedMonth++;
+    });
+    if (sharedMonth > 0) dateBonus += 0.08;
+    else conflict = true;
+  }
+
+  // 5. Numeric thresholds: "$100k" vs "$150k" or "3.0%" vs "3.5%" = hard veto.
+  if (!conflict && a.thresholds.length > 0 && b.thresholds.length > 0) {
+    let anyExactMatch = false;
+    for (const na of a.thresholds) {
+      for (const nb of b.thresholds) {
+        const denom = Math.max(Math.abs(na), Math.abs(nb), 1);
+        if (Math.abs(na - nb) / denom <= 0.01) {
+          anyExactMatch = true;
+          break;
+        }
+      }
+      if (anyExactMatch) break;
+    }
+    if (anyExactMatch) {
+      numberBonus = 0.12;
+    } else {
+      conflict = true;
+    }
   }
 
   const score = conflict
     ? 0
-    : Math.min(1, token * 0.55 + bigram * 0.35 + dateBonus + numberBonus);
+    : clamp(token * 0.55 + bigram * 0.35 + dateBonus + numberBonus, 0, 1);
 
   return { score, signals: { token, bigram, dateBonus, numberBonus }, conflict };
 }
@@ -179,7 +321,7 @@ export interface KellyResult {
 /**
  * Kelly criterion for a binary bet.
  * @param p  estimated win probability (0..1)
- * @param price  price paid per share (0..1); payout is 1 on win, 0 on loss.
+ * @param price  effective cost per share incl. fees (0..1); payout is 1 on win, 0 on loss.
  */
 export function kellyCriterion(p: number, price: number): KellyResult {
   const clamp01 = (n: number) => Math.max(0, Math.min(1, n));

@@ -59,14 +59,27 @@ export interface PlanInput {
   winProb?: number;
 }
 
+export const KALSHI_TAKER_MULTIPLIER = 0.07;
+
+/**
+ * Exact Kalshi quadratic taker fee rounded up to the next cent:
+ * ceil_cent(0.07 * shares * P * (1 - P))
+ */
+export function kalshiTakerFee(shares: number, price: number, rate = KALSHI_TAKER_MULTIPLIER): number {
+  if (shares <= 0 || price <= 0 || price >= 1) return 0;
+  const raw = rate * shares * price * (1 - price);
+  const clean = Math.round(raw * 1e8) / 1e8;
+  return Math.ceil(clean * 100) / 100;
+}
+
 /**
  * Find the best riskless(ish) cross-platform hedge:
  * buy YES where it's cheapest and buy NO where it's cheapest, such that
- * combined cost < $1 (guaranteed $1 payout).
+ * combined cost + exact Kalshi quadratic fee < $1 (guaranteed $1 payout).
  */
 export function buildExecutionPlan(input: PlanInput): ExecutionPlan {
-  const polyFee = input.polyFeeRate ?? 0.0; // Polymarket has no trading fee (maker)
-  const kalshiFee = input.kalshiFeeRate ?? 0.007; // ~0.7% taker approximation
+  const polyFee = input.polyFeeRate ?? 0.0; // Polymarket charges 0% trading fees
+  const kalshiRate = input.kalshiFeeRate ?? KALSHI_TAKER_MULTIPLIER;
   const maxShares = Math.max(1, input.maxShares ?? 100);
 
   // Two candidate structures:
@@ -83,11 +96,16 @@ export function buildExecutionPlan(input: PlanInput): ExecutionPlan {
     },
   ];
 
-  // Choose the structure with the lowest combined cost per share.
+  // Choose the structure with the lowest combined cost + fee per share.
   const best = candidates
-    .map((c) => ({ ...c, combined: c.yesLeg.price + c.noLeg.price }))
     .filter((c) => c.yesLeg.price > 0 && c.noLeg.price > 0)
-    .sort((a, b) => a.combined - b.combined)[0];
+    .map((c) => {
+      const kPrice = c.yesLeg.platform === 'kalshi' ? c.yesLeg.price : c.noLeg.price;
+      const pPrice = c.yesLeg.platform === 'polymarket' ? c.yesLeg.price : c.noLeg.price;
+      const feePerShare = kalshiRate * kPrice * (1 - kPrice) + pPrice * polyFee;
+      return { ...c, combined: c.yesLeg.price + c.noLeg.price, allIn: c.yesLeg.price + c.noLeg.price + feePerShare };
+    })
+    .sort((a, b) => a.allIn - b.allIn)[0];
 
   if (!best || best.combined >= 1) {
     return {
@@ -100,7 +118,7 @@ export function buildExecutionPlan(input: PlanInput): ExecutionPlan {
       roiPct: 0,
       kellyFraction: 0,
       viable: false,
-      steps: ['No profitable hedge — combined cost of YES + NO ≥ $1.00.'],
+      steps: ['No profitable hedge — combined executable asks YES + NO ≥ $1.00.'],
     };
   }
 
@@ -112,24 +130,23 @@ export function buildExecutionPlan(input: PlanInput): ExecutionPlan {
   const grossProfit = payout - totalCost;
 
   const estimatedFees =
-    yesCost * (best.yesLeg.platform === 'kalshi' ? kalshiFee : polyFee) +
-    noCost * (best.noLeg.platform === 'kalshi' ? kalshiFee : polyFee);
+    (best.yesLeg.platform === 'kalshi' ? kalshiTakerFee(shares, best.yesLeg.price, kalshiRate) : yesCost * polyFee) +
+    (best.noLeg.platform === 'kalshi' ? kalshiTakerFee(shares, best.noLeg.price, kalshiRate) : noCost * polyFee);
 
-  const netProfit = grossProfit - estimatedFees;
-  const roiPct = totalCost > 0 ? (netProfit / totalCost) * 100 : 0;
+  const totalOutlay = totalCost + estimatedFees;
+  const netProfit = payout - totalOutlay;
+  const roiPct = totalOutlay > 0 ? (netProfit / totalOutlay) * 100 : 0;
 
-  // Kelly: treat as near-certain hedge; edge comes from the price gap.
-  const impliedWinProb = clamp(input.winProb ?? 0.99, 0.01, 0.99);
-  const kelly = kellyCriterion(impliedWinProb, clamp(totalCost / payout, 0.01, 0.99));
-  const kellyFraction = input.bankroll
-    ? clamp(kelly.half, 0, 1)
-    : clamp(kelly.half, 0, 1);
+  // Kelly: account for real resolution/execution basis risk (~97% certainty)
+  const impliedWinProb = clamp(input.winProb ?? 0.97, 0.01, 0.99);
+  const kelly = kellyCriterion(impliedWinProb, clamp(totalOutlay / payout, 0.01, 0.99));
+  const kellyFraction = clamp(kelly.half, 0, 0.5);
 
   const steps = [
     `Buy ${shares} YES on ${label(best.yesLeg.platform)} @ ${(best.yesLeg.price * 100).toFixed(1)}¢ (cost ${usd(yesCost)})`,
     `Buy ${shares} NO on ${label(best.noLeg.platform)} @ ${(best.noLeg.price * 100).toFixed(1)}¢ (cost ${usd(noCost)})`,
-    `Total cost ${usd(totalCost)} → guaranteed payout ${usd(payout)}`,
-    `Net profit after fees: ${usd(netProfit)} (${round(roiPct, 2)}% ROI)`,
+    `Est. Kalshi quadratic fee: ${usd(estimatedFees)} → all-in outlay ${usd(totalOutlay)}`,
+    `Net profit at $1 settlement: ${usd(netProfit)} (${round(roiPct, 2)}% ROI)`,
   ];
 
   return {

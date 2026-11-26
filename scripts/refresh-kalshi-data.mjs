@@ -27,7 +27,7 @@ const D1_BASE = ACCOUNT_ID && DATABASE_ID ? `https://api.cloudflare.com/client/v
 const KALSHI_EVENTS = 'https://api.elections.kalshi.com/trade-api/v2/events';
 const KALSHI_ORDERBOOK = 'https://api.elections.kalshi.com/trade-api/v2/markets';
 const MAX_PAGES = 4;
-const MAX_ORDERBOOKS = 8;
+const MAX_ORDERBOOKS = 15;
 const MIN_VOLUME = 500;
 
 async function kalshiFetch(url, tries = 3) {
@@ -136,9 +136,14 @@ async function buildSmartMoney(raw) {
     const mid = bid > 0 && ask > 0 ? (bid + ask) / 2 : last;
     const prev = m.previous_price_dollars != null ? Number(m.previous_price_dollars) : null;
 
+    const nearYes = book.yes.filter((lv) => Math.abs(lv[0] - mid) <= 0.10).reduce((s, lv) => s + lv[1], 0);
+    const nearNo = book.no.filter((lv) => Math.abs(1 - lv[0] - mid) <= 0.10).reduce((s, lv) => s + lv[1], 0);
+    const nearTouchTotal = nearYes + nearNo;
+    const yesImbalancePct = nearTouchTotal > 0 ? Math.round((nearYes / nearTouchTotal) * 100) : 50;
+
     let wall = null;
-    for (const lv of book.yes) if (!wall || lv[1] > wall.size) wall = { side: 'YES', price: lv[0], size: lv[1] };
-    for (const lv of book.no) if (!wall || lv[1] > wall.size) wall = { side: 'NO', price: lv[0], size: lv[1] };
+    for (const lv of book.yes) if (lv[0] >= 0.03 && lv[0] <= 0.97 && (!wall || lv[1] > wall.size)) wall = { side: 'YES', price: lv[0], size: lv[1] };
+    for (const lv of book.no) if (lv[0] >= 0.03 && lv[0] <= 0.97 && (!wall || lv[1] > wall.size)) wall = { side: 'NO', price: lv[0], size: lv[1] };
 
     const yesRest = book.yes.reduce((s, lv) => s + lv[1], 0);
     const noRest = book.no.reduce((s, lv) => s + lv[1], 0);
@@ -155,12 +160,16 @@ async function buildSmartMoney(raw) {
       restingYes: yesRest,
       restingNo: noRest,
       totalResting: yesRest + noRest,
+      nearTouchYes: nearYes,
+      nearTouchNo: nearNo,
+      nearTouchTotal,
+      yesImbalancePct,
       biggestWall: wall,
       kalshiUrl: et ? `https://kalshi.com/markets/${et}` : 'https://kalshi.com',
     });
   }
 
-  const bigMoney = [...signals].sort((a, b) => b.totalResting - a.totalResting).slice(0, 15);
+  const bigMoney = [...signals].sort((a, b) => (b.nearTouchTotal ?? b.totalResting) - (a.nearTouchTotal ?? a.totalResting)).slice(0, 15);
   const momentum = [...signals]
     .filter((s) => s.priceChangeCents != null && Math.abs(s.priceChangeCents) >= 0.5)
     .sort((a, b) => Math.abs(b.priceChangeCents) - Math.abs(a.priceChangeCents))

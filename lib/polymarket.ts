@@ -252,15 +252,29 @@ export async function fetchRewardMarkets(): Promise<ScannerMarket[]> {
     .sort((a, b) => b.rewardScore - a.rewardScore);
 }
 
+/**
+ * Polymarket quadratic LP spread scoring: S(s) = ((v - s) / v)^2
+ * Orders right at the midpoint earn 1.0x weight; orders near maxSpread earn ~0x.
+ */
+export function polymarketSpreadWeight(spread: number, maxSpread: number): number {
+  if (maxSpread <= 0) return 1;
+  const distFromMid = spread / 2;
+  if (distFromMid >= maxSpread) return 0;
+  const ratio = (maxSpread - distFromMid) / maxSpread;
+  return ratio * ratio;
+}
+
 function toScannerMarket(m: RewardMarketRaw): ScannerMarket {
-  const yesToken = m.tokens.find((t) => t.outcome === 'Yes') ?? m.tokens[0];
-  const noToken = m.tokens.find((t) => t.outcome === 'No') ?? m.tokens[1];
+  const yesToken = m.tokens.find((t) => t.outcome === 'Yes' || t.outcome === 'YES') ?? m.tokens[0];
+  const noToken = m.tokens.find((t) => t.outcome === 'No' || t.outcome === 'NO') ?? m.tokens[1];
 
   const yesPrice = yesToken?.price ?? 0.5;
-  const noTokenPrice = noToken?.price ?? 0.5;
-  const noPrice = 1 - noTokenPrice; // Kalshi/poly convention: NO = 1 - YES
+  // CLOB noToken.price is ALREADY the NO token price (e.g. 0.30 when YES is 0.70).
+  const noPrice = noToken?.price != null ? noToken.price : 1 - yesPrice;
+  const twoSidedRequired = yesPrice < 0.10 || yesPrice > 0.90;
   const cheaperPrice = Math.min(yesPrice, noPrice);
-  const entryCost = m.rewards_min_size * cheaperPrice;
+  // Outside [10¢, 90¢], Polymarket requires two-sided quoting (YES + NO = $1/pair)
+  const entryCost = m.rewards_min_size * (twoSidedRequired ? 1.0 : cheaperPrice);
 
   // Sum daily rewards from all active configs
   const totalRewardPerDay = m.rewards_config.reduce(

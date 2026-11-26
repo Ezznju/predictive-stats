@@ -120,21 +120,67 @@ export default async function WalletPage({ params }: WalletPageProps) {
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
             {[
-              { label: 'Total Volume', value: formatUSD(data.totalVolume) },
-              { label: 'Trade Count', value: String(data.tradeCount) },
-              { label: 'Unique Markets', value: String(data.uniqueMarkets) },
-              { label: 'Avg Position', value: formatUSD(data.avgPositionSize) },
-              { label: 'Win Rate', value: `${(data.scores.winRate * 100).toFixed(1)}%` },
-              { label: 'ROI', value: `${(data.scores.roi * 100).toFixed(1)}%` },
-              { label: 'Consistency', value: `${(data.scores.consistency * 100).toFixed(0)}%` },
-              { label: 'Copy Score', value: `${(data.scores.copyTradeScore * 100).toFixed(0)}` },
+              {
+                label: 'Total P&L',
+                value: `${(data.totalPnl ?? 0) >= 0 ? '+' : '-'}${formatUSD(Math.abs(data.totalPnl ?? 0))}`,
+                tone: (data.totalPnl ?? 0) >= 0 ? 'text-[#0E7A38]' : 'text-red-600',
+              },
+              {
+                label: 'Win Rate (Closed)',
+                value:
+                  (data.wonCount ?? 0) + (data.lostCount ?? 0) > 0
+                    ? `${(data.scores.winRate * 100).toFixed(1)}% (${data.wonCount}W–${data.lostCount}L)`
+                    : 'No closed markets',
+                tone: 'text-ink',
+              },
+              {
+                label: 'True ROI',
+                value: `${data.scores.roi >= 0 ? '+' : ''}${(data.scores.roi * 100).toFixed(1)}%`,
+                tone: data.scores.roi >= 0 ? 'text-[#0E7A38]' : 'text-red-600',
+              },
+              { label: 'Copy Score', value: `${(data.scores.copyTradeScore * 100).toFixed(0)} / 100`, tone: 'text-ink' },
+              { label: 'Total Volume', value: formatUSD(data.totalVolume), tone: 'text-ink' },
+              { label: 'Open Value', value: formatUSD(data.openValue ?? 0), tone: 'text-ink' },
+              { label: 'Unique Markets', value: String(data.uniqueMarkets), tone: 'text-ink' },
+              { label: 'Avg Position', value: formatUSD(data.avgPositionSize), tone: 'text-ink' },
             ].map((stat) => (
               <div key={stat.label} className="bg-white border-2 border-black rounded-xl p-3 shadow-pop-sm">
                 <div className="text-[10px] font-bold text-ink-faint uppercase tracking-wider mb-1">{stat.label}</div>
-                <div className="text-sm font-display font-bold text-ink">{stat.value}</div>
+                <div className={`text-sm font-display font-bold ${stat.tone}`}>{stat.value}</div>
               </div>
             ))}
           </div>
+
+          {/* Active Open Positions */}
+          {Array.isArray(data.openPositions) && data.openPositions.length > 0 && (
+            <div className="space-y-3 mb-8">
+              <h2 className="font-display font-bold text-lg text-ink flex items-center gap-2">
+                <div className="heading-chip bg-neon-green w-3 h-5 border border-black rounded-sm" />
+                Top Active Positions
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {data.openPositions.map((pos, i) => (
+                  <div
+                    key={`${pos.title}-${i}`}
+                    className="bg-white border-2 border-black rounded-xl p-4 shadow-pop-sm flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-ink truncate">{pos.title}</div>
+                      <div className="text-[11px] font-mono text-ink-faint mt-0.5">
+                        {pos.outcome} · avg {(pos.avgPrice * 100).toFixed(1)}¢ → now {(pos.curPrice * 100).toFixed(1)}¢
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-display font-bold text-ink">{formatUSD(pos.currentValue)}</div>
+                      <div className={`text-[11px] font-mono font-bold ${pos.cashPnl >= 0 ? 'text-[#0E7A38]' : 'text-red-600'}`}>
+                        {pos.cashPnl >= 0 ? '+' : '-'}{formatUSD(Math.abs(pos.cashPnl))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Recent trades */}
           <div className="space-y-3">

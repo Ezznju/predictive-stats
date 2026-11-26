@@ -45,6 +45,8 @@ export default function KalshiFeeCalculatorPage() {
   const [dollarsInput, setDollarsInput] = useState<string>('250');
   const [tier, setTier] = useState<OrderTier>('taker');
   const [roundTrip, setRoundTrip] = useState<boolean>(false);
+  const [trueProbPct, setTrueProbPct] = useState<number>(58);
+  const [bankrollInput, setBankrollInput] = useState<string>('2000');
   const [copiedMode, setCopiedMode] = useState<'link' | 'receipt' | null>(null);
 
   // Hydrate scenario from URL query params (?price=50&mode=contracts&qty=500&tier=taker&rt=0)
@@ -133,6 +135,18 @@ export default function KalshiFeeCalculatorPage() {
     const makerBreakEven = ((notionalCost + makerFee) / grossWinPayout) * 100;
     const polyBreakEven = priceCents;
 
+    // Pro Quant: Net Expected Value (+EV) & Kelly Optimal Position Sizing (net of exact fee)
+    const pTrue = Math.min(0.99, Math.max(0.01, trueProbPct / 100));
+    const effectiveCostPerContract = Math.min(0.999, Math.max(0.001, totalOutlay / contracts));
+    const netEvUsd = pTrue * grossWinPayout - totalOutlay;
+    const netEvPct = totalOutlay > 0 ? (netEvUsd / totalOutlay) * 100 : 0;
+    const edgeVsBreakEven = trueProbPct - breakEvenProb;
+    const bOdds = (1 - effectiveCostPerContract) / effectiveCostPerContract;
+    const fullKelly = bOdds > 0 ? Math.max(0, (bOdds * pTrue - (1 - pTrue)) / bOdds) : 0;
+    const halfKelly = fullKelly / 2;
+    const quarterKelly = fullKelly / 4;
+    const bankroll = Math.max(0, Number(bankrollInput) || 0);
+
     return {
       P,
       contracts,
@@ -153,8 +167,15 @@ export default function KalshiFeeCalculatorPage() {
       polyBreakEven,
       makerSavings: Math.max(0, takerFee - makerFee),
       polySavings: takerFee,
+      netEvUsd,
+      netEvPct,
+      edgeVsBreakEven,
+      halfKellyPct: halfKelly * 100,
+      quarterKellyPct: quarterKelly * 100,
+      halfKellyUsd: bankroll * halfKelly,
+      quarterKellyUsd: bankroll * quarterKelly,
     };
-  }, [priceCents, sizeMode, contractsInput, dollarsInput, tier, roundTrip]);
+  }, [priceCents, sizeMode, contractsInput, dollarsInput, tier, roundTrip, trueProbPct, bankrollInput]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
@@ -454,6 +475,83 @@ export default function KalshiFeeCalculatorPage() {
                 {copiedMode === 'receipt' ? <Check className="w-3.5 h-3.5" /> : <ClipboardCopy className="w-3.5 h-3.5" />}
                 {copiedMode === 'receipt' ? 'Copied Receipt!' : 'Copy X/Reddit Receipt'}
               </button>
+            </div>
+          </div>
+
+          {/* Pro Quant: +EV & Kelly Sizing Card */}
+          <div className="bg-[#FFFDF9] border-2 border-black rounded-2xl shadow-pop p-5 space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-display font-bold text-sm text-ink">
+                Pro Mode: Net Expected Value (+EV) &amp; Kelly Sizing
+              </h3>
+              <span
+                className={`text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full border border-black ${
+                  calc.netEvUsd > 0 ? 'bg-[#C6F23A] text-black' : 'bg-[#FFE2E2] text-black'
+                }`}
+              >
+                {calc.netEvUsd > 0 ? `+EV EDGE` : `-EV (NO EDGE)`}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <div className="flex justify-between text-xs font-semibold mb-1">
+                  <span className="text-ink-secondary">Your True Win %</span>
+                  <span className="font-mono font-bold text-black">{trueProbPct}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={99}
+                  value={trueProbPct}
+                  onChange={(e) => setTrueProbPct(Number(e.target.value))}
+                  aria-label="Your estimated true win probability"
+                  className="w-full accent-black cursor-pointer"
+                />
+              </div>
+              <div>
+                <label htmlFor="fee-bankroll" className="block text-xs font-semibold text-ink-secondary mb-1">
+                  Bankroll (for Kelly $)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-mono text-xs font-bold text-black">$</span>
+                  <input
+                    id="fee-bankroll"
+                    type="number"
+                    min={10}
+                    max={10000000}
+                    value={bankrollInput}
+                    onChange={(e) => setBankrollInput(e.target.value)}
+                    className="w-full pl-6 pr-2.5 py-1 rounded-lg bg-white border-2 border-black font-mono font-bold text-xs text-ink"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className={`rounded-xl border-2 border-black p-2.5 ${calc.netEvUsd > 0 ? 'bg-[#C6F23A]/40' : 'bg-[#FFE2E2]/60'}`}>
+                <span className="block text-[10px] font-mono font-bold uppercase text-black/70">Net EV</span>
+                <span className="block font-display font-extrabold text-base text-black">
+                  {calc.netEvUsd >= 0 ? '+' : '-'}{fmtUsd(Math.abs(calc.netEvUsd))}
+                </span>
+                <span className="block text-[10px] font-mono text-black/75">
+                  {calc.edgeVsBreakEven >= 0 ? '+' : ''}{calc.edgeVsBreakEven.toFixed(1)} pts edge
+                </span>
+              </div>
+              <div className="rounded-xl border-2 border-black bg-white p-2.5">
+                <span className="block text-[10px] font-mono font-bold uppercase text-black/70">Half-Kelly</span>
+                <span className="block font-display font-extrabold text-base text-black">
+                  {fmtUsd(calc.halfKellyUsd)}
+                </span>
+                <span className="block text-[10px] font-mono text-ink-muted">{calc.halfKellyPct.toFixed(1)}% bankroll</span>
+              </div>
+              <div className="rounded-xl border-2 border-black bg-white p-2.5">
+                <span className="block text-[10px] font-mono font-bold uppercase text-black/70">Quarter-Kelly</span>
+                <span className="block font-display font-extrabold text-base text-black">
+                  {fmtUsd(calc.quarterKellyUsd)}
+                </span>
+                <span className="block text-[10px] font-mono text-ink-muted">{calc.quarterKellyPct.toFixed(1)}% bankroll</span>
+              </div>
             </div>
           </div>
 

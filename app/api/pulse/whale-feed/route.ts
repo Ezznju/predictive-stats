@@ -23,6 +23,16 @@ function isParking(side: string, price: number): boolean {
   return side === 'BUY' && price > 0.95;
 }
 
+/** Infer market category from question text instead of hardcoding POLITICS. */
+function inferMarketCategory(title: string): string {
+  const t = (title || '').toLowerCase();
+  if (/\b(btc|bitcoin|eth|ethereum|sol|solana|crypto|token|coinbase|binance)\b/.test(t)) return 'CRYPTO';
+  if (/\b(nba|nfl|mlb|nhl|ufc|fifa|premier league|champions league|la liga|serie a|bundesliga|goal|match|playoffs|super bowl|world cup|tennis|f1)\b/.test(t)) return 'SPORTS';
+  if (/\b(fed|fomc|cpi|inflation|gdp|recession|rate cut|tariff|unemployment|s&p|nasdaq|treasury)\b/.test(t)) return 'ECONOMICS';
+  if (/\b(openai|gpt|ai|claude|gemini|apple|nvidia|tesla|spacex|ipo|tiktok)\b/.test(t)) return 'TECH';
+  return 'POLITICS';
+}
+
 /** Edge room: how much room before $1 payout (in percentage points) */
 function edgeRoom(side: string, price: number): number {
   if (side === 'BUY') return Math.max(0, (1 - price) * 100);
@@ -103,11 +113,12 @@ export async function GET(request: Request) {
         const wallet = whaleMap.get(trade.proxyWallet);
 
         // Score using conviction engine
+        const resolvedTitle = marketInfo?.title ?? trade.title ?? '';
         const convictionInput = {
           wallet: trade.proxyWallet,
           marketId: trade.conditionId,
-          marketTitle: marketInfo?.title ?? trade.title ?? '',
-          category: 'POLITICS',
+          marketTitle: resolvedTitle,
+          category: inferMarketCategory(resolvedTitle),
           side: trade.side,
           outcome: trade.outcome ?? '',
           sizeUsd: usdcSize,
@@ -236,7 +247,7 @@ export async function GET(request: Request) {
       wallet: item.walletAddress,
       marketId: item.conditionId,
       marketTitle: item.marketTitle,
-      category: 'POLITICS',
+      category: inferMarketCategory(item.marketTitle),
       side: item.side as 'BUY' | 'SELL',
       outcome: item.outcome,
       sizeUsd: item.usdcSize,

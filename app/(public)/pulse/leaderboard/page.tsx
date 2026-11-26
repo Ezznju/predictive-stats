@@ -99,8 +99,8 @@ export default async function LeaderboardPage() {
           <div className="bg-white border-2 border-black rounded-2xl p-5 shadow-pop mb-8">
             <h2 className="font-display font-bold text-sm text-ink mb-2">How skill is scored</h2>
             <p className="text-xs text-ink-secondary leading-relaxed">
-              Skill = 30% win rate + 30% P&L (capped at $500K) + 40% volume (capped at $1M).
-              Higher skill means more consistent, profitable trading across more markets.
+              Skill = 35% ROI-on-volume efficiency + 35% realized P&amp;L (capped at $500K) + 30% trading volume (capped at $1M).
+              Click any wallet to inspect true closed-market Win/Loss counts and active on-chain positions.
             </p>
             <div className="flex flex-wrap gap-3 mt-3">
               {[
@@ -129,7 +129,7 @@ export default async function LeaderboardPage() {
               <span className="text-[10px] font-bold text-ink-faint uppercase">Wallet</span>
               <span className="text-[10px] font-bold text-ink-faint uppercase text-right">P&L</span>
               <span className="text-[10px] font-bold text-ink-faint uppercase text-right">Volume</span>
-              <span className="text-[10px] font-bold text-ink-faint uppercase text-right hidden sm:block">Win Rate</span>
+              <span className="text-[10px] font-bold text-ink-faint uppercase text-right hidden sm:block">ROI / Vol</span>
               <span className="text-[10px] font-bold text-ink-faint uppercase text-right">Skill</span>
             </div>
 
@@ -167,8 +167,8 @@ export default async function LeaderboardPage() {
                   <span className="text-xs font-mono text-ink text-right">
                     {formatUSD(wallet.volume)}
                   </span>
-                  <span className="text-xs font-mono text-ink text-right hidden sm:block">
-                    {formatPct(wallet.winRate)}
+                  <span className={`text-xs font-mono font-semibold text-right hidden sm:block ${wallet.winRate >= 0 ? 'text-[#0E7A38]' : 'text-red-500'}`}>
+                    {wallet.winRate >= 0 ? '+' : ''}{formatPct(wallet.winRate)}
                   </span>
                   <div className="flex justify-end">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded border border-black ${grade.color}`}>

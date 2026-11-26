@@ -95,6 +95,8 @@ export default function KalshiComboCalculatorPage() {
   const [feeMode, setFeeMode] = useState<FeeMode>('taker');
   const [useCustomQuote, setUseCustomQuote] = useState<boolean>(false);
   const [customQuoteCents, setCustomQuoteCents] = useState<string>('17');
+  const [trueHitPct, setTrueHitPct] = useState<number>(22);
+  const [bankrollInput, setBankrollInput] = useState<string>('2000');
   const [copiedMode, setCopiedMode] = useState<'link' | 'receipt' | null>(null);
 
   // Hydrate scenario from URL query params (?stake=100&fee=taker&legs=55:dnp:25,60:win:60,50:win:50&q=17)
@@ -264,6 +266,16 @@ export default function KalshiComboCalculatorPage() {
 
     const impliedMultiplier = rawComboPrice > 0 ? 1 / rawComboPrice : 0;
 
+    // Pro Quant: Combo Net EV & Half-Kelly Sizing (using all-win payout net of exact fee)
+    const pTrue = Math.min(0.99, Math.max(0.01, trueHitPct / 100));
+    const effectiveCost = Math.min(0.999, Math.max(0.001, totalOutlay / contracts));
+    const comboEvUsd = pTrue * fullWinGross - totalOutlay;
+    const bOdds = (1 - effectiveCost) / effectiveCost;
+    const fullKelly = bOdds > 0 ? Math.max(0, (bOdds * pTrue - (1 - pTrue)) / bOdds) : 0;
+    const halfKelly = fullKelly / 2;
+    const quarterKelly = fullKelly / 4;
+    const bankroll = Math.max(0, Number(bankrollInput) || 0);
+
     return {
       independentProb,
       rawComboPrice,
@@ -284,8 +296,13 @@ export default function KalshiComboCalculatorPage() {
       sportsbookNet,
       blueArrowDiff,
       impliedMultiplier,
+      comboEvUsd,
+      halfKellyPct: halfKelly * 100,
+      quarterKellyPct: quarterKelly * 100,
+      halfKellyUsd: bankroll * halfKelly,
+      quarterKellyUsd: bankroll * quarterKelly,
     };
-  }, [legs, stakeInput, feeMode, useCustomQuote, customQuoteCents]);
+  }, [legs, stakeInput, feeMode, useCustomQuote, customQuoteCents, trueHitPct, bankrollInput]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
@@ -739,6 +756,75 @@ export default function KalshiComboCalculatorPage() {
               </p>
             </div>
           )}
+
+          {/* Pro Quant: +EV & Kelly Sizing */}
+          <div className="bg-[#FFFDF9] border-2 border-black rounded-2xl shadow-pop p-5 space-y-3.5">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="font-display font-bold text-sm text-ink">
+                Pro Mode: Combo +EV &amp; Kelly Sizing
+              </h3>
+              <span
+                className={`text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full border border-black ${
+                  calc.comboEvUsd > 0 ? 'bg-[#C6F23A] text-black' : 'bg-[#FFE2E2] text-black'
+                }`}
+              >
+                {calc.comboEvUsd > 0 ? '+EV COMBO' : '-EV COMBO'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="flex justify-between text-[11px] font-semibold mb-1">
+                  <span className="text-ink-secondary">Your True Hit %</span>
+                  <span className="font-mono font-bold text-black">{trueHitPct}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={95}
+                  value={trueHitPct}
+                  onChange={(e) => setTrueHitPct(Number(e.target.value))}
+                  aria-label="Your estimated true combo hit probability"
+                  className="w-full accent-black cursor-pointer"
+                />
+              </div>
+              <div>
+                <label htmlFor="combo-bankroll" className="block text-[11px] font-semibold text-ink-secondary mb-1">
+                  Bankroll ($)
+                </label>
+                <input
+                  id="combo-bankroll"
+                  type="number"
+                  min={10}
+                  max={10000000}
+                  value={bankrollInput}
+                  onChange={(e) => setBankrollInput(e.target.value)}
+                  className="w-full px-2.5 py-1 rounded-lg bg-white border-2 border-black font-mono font-bold text-xs text-ink"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className={`rounded-xl border-2 border-black p-2 ${calc.comboEvUsd > 0 ? 'bg-[#C6F23A]/40' : 'bg-[#FFE2E2]/60'}`}>
+                <span className="block text-[9px] font-mono font-bold uppercase text-black/70">Net EV</span>
+                <span className="block font-display font-extrabold text-sm text-black">
+                  {fmtSignedUsd(calc.comboEvUsd)}
+                </span>
+              </div>
+              <div className="rounded-xl border-2 border-black bg-white p-2">
+                <span className="block text-[9px] font-mono font-bold uppercase text-black/70">Half-Kelly</span>
+                <span className="block font-display font-extrabold text-sm text-black">
+                  {fmtUsd(calc.halfKellyUsd)}
+                </span>
+                <span className="block text-[9px] font-mono text-ink-muted">{calc.halfKellyPct.toFixed(1)}%</span>
+              </div>
+              <div className="rounded-xl border-2 border-black bg-white p-2">
+                <span className="block text-[9px] font-mono font-bold uppercase text-black/70">Quarter-Kelly</span>
+                <span className="block font-display font-extrabold text-sm text-black">
+                  {fmtUsd(calc.quarterKellyUsd)}
+                </span>
+                <span className="block text-[9px] font-mono text-ink-muted">{calc.quarterKellyPct.toFixed(1)}%</span>
+              </div>
+            </div>
+          </div>
 
           {/* Contextual Guides & Platform CTA */}
           <div className="bg-[#FFF7E6] border-2 border-black rounded-2xl shadow-pop-sm p-5 space-y-3">
